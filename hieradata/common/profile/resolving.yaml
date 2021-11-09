@@ -6,4 +6,5 @@ profile::resolving::attempts: 3
 profile::resolving::domain_search:
   - "%{facts.networking.domain}"
 profile::resolving::nameservers:
-  - 10.3.0.1  # anycast
+  - 208.80.154.143
+  - 208.80.154.24
