@@ -1,0 +1,34 @@
+input {
+  kafka {
+    # Some options have not been added, if you want to add more options, see:
+    # https://www.elastic.co/guide/en/logstash/current/plugins-inputs-kafka.html
+<%- if @tags -%>
+    tags                    => ["<%= @tags.join('", "') %>"]
+<%- end -%>
+<%- if @topics_pattern.nil? -%>
+    topics                  => ["<%= @topic %>"]
+<% else -%>
+    topics_pattern          => "<%= @topics_pattern %>"
+<% end -%>
+<%- if @group_id -%>
+    group_id                => "<%= @group_id %>"
+<%- end -%>
+<%- if @type -%>
+    type                    => "<%= @type %>"
+<%- end -%>
+    codec                   => "<%= @codec %>"
+    consumer_threads        => <%= @consumer_threads %>
+    bootstrap_servers       => "<%= @bootstrap_servers %>"
+<%- unless @plugin_id.empty? -%>
+    id                      => "<%= @plugin_id %>"
+<%- end -%>
+<% if @security_protocol == 'SSL' -%>
+    security_protocol       => "<%= @security_protocol %>"
+    ssl_truststore_location => "<%= @ssl_truststore_location %>"
+    ssl_truststore_password => "<%= @ssl_truststore_password %>"
+<% end -%>
+<% if @ssl_endpoint_identification_algorithm -%>
+    ssl_endpoint_identification_algorithm => "<%=@ssl_endpoint_identification_algorithm %>"
+<% end -%>
+  }
+}

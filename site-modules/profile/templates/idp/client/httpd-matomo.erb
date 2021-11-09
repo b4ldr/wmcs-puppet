@@ -1,0 +1,73 @@
+# Apache configuration for Matomo (formerly Piwik).
+# This file is managed by Puppet.
+<VirtualHost *:80>
+  ServerName <%= @virtual_host %>
+  DocumentRoot <%= @document_root %>
+
+  <%- @cas_settings.each_pair do |key, setting| -%>
+    <%- unless setting.nil? or setting == :undef -%>
+  <%= key %> <%= setting %>
+    <%-end -%>
+  <%-end -%>
+
+  <Directory /var/www>
+      AllowOverride None
+      Require all denied
+      <Files health_check>
+          Require all granted
+      </Files>
+  </Directory>
+
+
+# We deploy piwik rarely perhaps once a quarter so do cache
+# piwik javascript for a week
+ <Directory "/usr/share/matomo">
+    <Files "piwik.js">
+        Header set Cache-Control "max-age=604800"
+    </Files>
+
+    <Files "matomo.js">
+        Header set Cache-Control "max-age=604800"
+    </Files>
+</Directory>
+
+  <Location /health_check>
+    Require all granted
+    Alias /var/www/health_check
+  </Location>
+
+  <Directory "/usr/share/matomo">
+    php_admin_flag engine on
+
+    <%- @cas_auth_settings.each_pair do |key, setting| -%>
+      <%- if setting.is_a?(Array) -%>
+        <%- setting.each do |_setting| -%>
+      <%= key %> <%= _setting %>
+        <%- end -%>
+      <%- else -%>
+        <%= key %> <%= setting %>
+      <%- end -%>
+    <%- end -%>
+    # Public endpoints -- must be open to all for piwik to work properly.
+    # See <http://piwik.org/docs/how-to-secure-piwik/>.
+    Require expr %{REQUEST_URI} in { '/piwik.php', '/piwik.js', '/matomo.php', '/matomo.js' }
+
+    # The query string regex deliberately omits the end-of-line anchor ('$').
+    # To successfully opt-out, the user must be able to POST to a URL which
+    # can contain additional query parameters ('language=en', for example).
+    Require expr %{REQUEST_URI} == '/index.php' && %{QUERY_STRING} =~ /^module=CoreAdminHome&action=optOut/
+  </Directory>
+
+  <Files "console">
+    Require all denied
+  </Files>
+
+  <Directory "/usr/share/matomo/misc">
+    Require all denied
+  </Directory>
+
+  <Directory "/usr/share/matomo/vendor">
+    Require all denied
+  </Directory>
+
+</VirtualHost>

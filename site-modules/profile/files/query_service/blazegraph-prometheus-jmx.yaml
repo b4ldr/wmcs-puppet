@@ -1,0 +1,8 @@
+---
+lowercaseOutputLabelNames: true
+lowercaseOutputName: false
+startDelaySeconds: 10
+whitelistObjectNames:
+  - 'metrics:name=*'
+  - 'wdqs-blazegraph:name=*'
+  - 'org.wikidata.query.rdf.blazegraph.throttling.ThrottlingFilter:*'

@@ -1,0 +1,5 @@
+groups:
+- name: self
+  rules:
+    - record: job:up:avail
+      expr: sum by (job) (up) / count by (job) (up)

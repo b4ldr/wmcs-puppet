@@ -1,0 +1,69 @@
+[DEFAULT]
+bind_ip = 0.0.0.0
+bind_port = 6000
+devices = /srv/swift-storage/
+<% if @object_server_default_workers -%>
+workers = <%= @object_server_default_workers %>
+<% end -%>
+<% if @statsd_host -%>
+log_statsd_host = <%= @statsd_host %>
+log_statsd_port = <%= @statsd_port %>
+log_statsd_metric_prefix = <%= @statsd_metric_prefix %>
+log_statsd_sample_rate_factor = <%= @statsd_sample_rate_factor %>
+<% end -%>
+<% if @servers_per_port > 1 -%>
+servers_per_port = <%= @servers_per_port %>
+<% end -%>
+
+
+[pipeline:main]
+pipeline = recon object-server
+
+[filter:recon]
+use = egg:swift#recon
+recon_cache_path = /var/cache/swift
+
+[app:object-server]
+use = egg:swift#object
+# 5G, ought to be enough for everybody
+keep_cache_size = 5368709120
+allowed_headers = content-disposition,
+	content-encoding,
+	x-delete-at,
+	x-object-manifest,
+	x-static-large-object,
+	x-content-duration,
+	x-content-dimensions
+
+[object-replicator]
+<% if @object_replicator_concurrency -%>
+concurrency = <%= @object_replicator_concurrency %>
+<% end -%>
+<% if @object_replicator_interval -%>
+interval = <%= @object_replicator_interval %>
+<% end -%>
+# Don't let replication rsyncs starve other processes of CPU or I/O.
+nice_priority = 1
+# ionice_class and ionice_priority must be specified together.
+# (However, we currently use the deadline I/O schedule everywhere, which
+# does not pay attention to ionice settings.  But set them here anyway, as
+# schedulers can be changed via sysfs, and this makes experimentation
+# easier.)
+# BE is the default
+ionice_class = IOPRIO_CLASS_BE
+# default is 4; higher number => less important
+ionice_priority = 5
+
+# Double the default (900 seconds) to give aged filesystems a better chance of completion
+rsync_timeout = 1800
+
+[object-updater]
+concurrency = 1
+
+[object-auditor]
+files_per_second = 5
+bytes_per_second = 5000000
+# object auditing is less important than replication
+nice_priority = 2
+ionice_class = IOPRIO_CLASS_BE
+ionice_priority = 6

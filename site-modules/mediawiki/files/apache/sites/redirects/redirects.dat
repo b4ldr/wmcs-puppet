@@ -1,0 +1,299 @@
+# domain-redirects.dat -- The oyster knife of URL manipulation
+# vim: ft=conf ts=12
+#
+# Each non-blank line consists of a rule with whitespace-separated
+# parameters. The first parameter is the command name, which may be funnel,
+# rewrite or override.
+#
+# funnel	<domain-wildcard>	<dest>
+#
+#   Redirect a whole domain (or set of domains) to a single URL
+#
+# rewrite	<domain-wildcard>	<dest>
+#
+#   Rewrite the URLs in one domain (or set of domains) to URLs in another
+#   domain with an optional path prefix. A trailing slash in <dest> is ignored.
+#   A leading slash is implied in the source path.
+#
+# override	<domain-wildcard><path>	<dest>
+#
+#   Override a rewrite or funnel rule for a certain domain wildcard by sending
+#   a certain path to a specified destination URL.
+#
+# Where:
+#   <domain-wildcard> may take one of the following forms:
+#
+#        <domain>             -- A simple domain name
+#        *.<domain>           -- Any subdomain of the given domain
+#        *<domain>            -- Matches *.<domain> or <domain>, i.e. the
+#                                specified domain or any subdomain of it.
+#
+#   <dest> is a fully-qualified or protocol-relative URL. If the URL is
+#   protocol-relative, the behaviour will depend on X-Forwarded-Proto. The
+#   path part of the URL is optional, "/" is implied if it is absent.
+#
+#   If the special character "*" is present, it will be substituted with the
+#   subdomain part matched by a *.<domain> style domain wildcard. If "*" occurs
+#   in a rule where such a wildcard is not used, it will be interpreted as a
+#   literal "*".
+#
+#   <path> is the path part of a URL.
+#
+# Double-redirects are not allowed -- the domain part of the destination may
+# not be specified as a source elsewhere in the file. This prevents redirect
+# loops and accidental listing of important domains such as en.wikipedia.org
+# as a source.
+#
+# Please add redirects from non canonical domains to
+# modules/ncredir/files/nc_redirects.dat
+
+# Shop redirects
+funnel	shop.wikimedia.org	https://store.wikimedia.org
+funnel	shop.wikipedia.org	https://store.wikimedia.org
+funnel	store.wikipedia.org	https://store.wikimedia.org
+
+funnel	sep11.wikipedia.org	https://wayback.archive.org/web/20030315000000*/http://sep11.wikipedia.org/wiki/In_Memoriam
+
+# Language aliases
+rewrite	be-x-old.wikisource.org	https://be.wikisource.org # T43755
+
+rewrite	cz.wikipedia.org	https://cs.wikipedia.org
+rewrite	cz.wikibooks.org	https://cs.wikibooks.org
+rewrite	cz.wikiquote.org	https://cs.wikiquote.org
+rewrite	cz.wikisource.org	https://cs.wikisource.org
+rewrite	cz.wikiversity.org	https://cs.wikiversity.org
+rewrite	cz.wiktionary.org	https://cs.wiktionary.org
+rewrite	cz.wikinews.org	https://cs.wikinews.org
+rewrite	dk.wikipedia.org	https://da.wikipedia.org
+rewrite	dk.wikibooks.org	https://da.wikibooks.org
+rewrite	dk.wiktionary.org	https://da.wiktionary.org
+rewrite	epo.wikipedia.org	https://eo.wikipedia.org
+rewrite	jp.wikipedia.org	https://ja.wikipedia.org
+rewrite	nb.wikipedia.org	https://no.wikipedia.org
+rewrite	nb.wiktionary.org	https://no.wiktionary.org
+rewrite	nb.wikiquote.org	https://no.wikiquote.org
+rewrite	nb.wikibooks.org	https://no.wikibooks.org
+rewrite	nb.wikivoyage.org	https://no.wikivoyage.org
+rewrite	nb.wikisource.org	https://no.wikisource.org
+rewrite	nb.wikinews.org	https://no.wikinews.org
+funnel	nb.wikiversity.org	https://beta.wikiversity.org/wiki/Hovedside
+rewrite	lzh.wikipedia.org	https://zh-classical.wikipedia.org
+# Although there is a rename of zh-yue pending (T30441), content
+# already exists at zh-yue so the rewrite must go that way for now (T105999)
+rewrite	yue.wikipedia.org	https://zh-yue.wikipedia.org
+# The projects not yet live have content on the incubator under yue.* and
+# redirects for Wx/zh-yue to Wx/yue so we can add the redirs now (T209693)
+# Not sure about betawikiversity/wikisource so skipping those
+rewrite	zh-yue.wiktionary.org	https://yue.wiktionary.org
+rewrite	zh-yue.wikibooks.org	https://yue.wikibooks.org
+rewrite	zh-yue.wikivoyage.org	https://yue.wikivoyage.org
+rewrite	zh-yue.wikinews.org	https://yue.wikinews.org
+rewrite	zh-yue.wikiquote.org	https://yue.wikiquote.org
+
+# renamed chapter wiki - T40763
+
+rewrite	chapcom.wikimedia.org	https://affcom.wikimedia.org
+rewrite	et.wikimedia.org	https://ee.wikimedia.org
+
+rewrite	be-x-old.wikipedia.org	https://be-tarask.wikipedia.org
+
+rewrite	zh-cfr.wikipedia.org	https://zh-min-nan.wikipedia.org
+rewrite	minnan.wikipedia.org	https://zh-min-nan.wikipedia.org
+rewrite	nan.wikipedia.org	https://zh-min-nan.wikipedia.org
+
+rewrite	zh-tw.wikipedia.org	https://zh.wikipedia.org
+
+# Education program
+
+funnel	educacao.wikimedia.org	https://pt.wikipedia.org/wiki/Wikip%C3%A9dia:WU
+
+override	education.wikimedia.org/evaluating	https://commons.wikimedia.org/wiki/File:Evaluating_Wikipedia_brochure.pdf
+override	education.wikimedia.org/illustrating	https://commons.wikimedia.org/wiki/File:Illustrating_Wikipedia_brochure.pdf
+
+override	education.wikimedia.org/casestudies	https://outreach.wikimedia.org/wiki/Education/Case_Studies
+
+override	education.wikimedia.org/content	https://outreach.wikimedia.org/wiki/Education/Case_Studies/content
+override	education.wikimedia.org/copyediting	https://outreach.wikimedia.org/wiki/Education/Case_Studies/copyediting
+override	education.wikimedia.org/definitions	https://outreach.wikimedia.org/wiki/Education/Case_Studies/definitions
+override	education.wikimedia.org/featuredarticle	https://outreach.wikimedia.org/wiki/Education/Case_Studies/featuredarticle
+override	education.wikimedia.org/fivecriteria	https://outreach.wikimedia.org/wiki/Special:MyLanguage/Education/Case_Studies/fivecriteria
+override	education.wikimedia.org/illustrations	https://outreach.wikimedia.org/wiki/Education/Case_Studies/illustrations
+override	education.wikimedia.org/milestones	https://outreach.wikimedia.org/wiki/Education/Case_Studies/milestones
+override	education.wikimedia.org/peerreviews	https://outreach.wikimedia.org/wiki/Education/Case_Studies/peerreviews
+override	education.wikimedia.org/photos	https://outreach.wikimedia.org/wiki/Education/Case_Studies/photos
+override	education.wikimedia.org/reflectivepapers	https://outreach.wikimedia.org/wiki/Education/Case_Studies/reflectivepapers
+override	education.wikimedia.org/translationarabic	https://outreach.wikimedia.org/wiki/Education/Case_Studies/translationarabic
+override	education.wikimedia.org/translationspanish	https://outreach.wikimedia.org/wiki/Education/Case_Studies/translationspanish
+override	education.wikimedia.org/videos	https://outreach.wikimedia.org/wiki/Education/Case_Studies/videos
+override	education.wikimedia.org/writearticle	https://outreach.wikimedia.org/wiki/Education/Case_Studies/writearticle
+
+override	education.wikimedia.org/syllabus	https://outreach.wikimedia.org/wiki/Education/Syllabi
+override	education.wikimedia.org/welcometowikipedia	https://commons.wikimedia.org/wiki/File:Welcome_to_Wikipedia_brochure_EN.pdf
+override	education.wikimedia.org/instructorbasics	https://commons.wikimedia.org/wiki/File:Instructor_Basics_How_to_Use_Wikipedia_as_a_Teaching_Tool.pdf
+
+funnel	education.wikimedia.org	https://outreach.wikimedia.org/wiki/Special:MyLanguage/Education
+
+# Wikibooks - T87039
+
+rewrite	textbook.wikipedia.org	https://www.wikibooks.org
+
+# Wikisource
+
+rewrite	sources.wikipedia.org	https://wikisource.org
+
+# Wikiquote
+
+rewrite	quote.wikipedia.org	https://en.wikiquote.org
+
+# Wikispecies
+
+rewrite	species.wikipedia.org	https://species.wikimedia.org
+
+# Commons
+
+rewrite	commons.wikipedia.org	https://commons.wikimedia.org
+
+# Bookshelf Project
+rewrite	bookshelf.wikimedia.org	https://outreach.wikimedia.org/wiki/Bookshelf
+
+# Other projects
+
+rewrite	meta.wikipedia.org	https://meta.wikimedia.org
+
+rewrite	quality.wikipedia.org	https://quality.wikimedia.org
+
+rewrite	bugzilla.wikipedia.org	https://bugzilla.wikimedia.org
+rewrite	bugs.mediawiki.org	https://bugzilla.wikimedia.org
+rewrite	bugzilla.mediawiki.org	https://bugzilla.wikimedia.org
+
+rewrite	wiki.mediawiki.org	https://www.mediawiki.org
+
+# VRT wiki was previously at otrs-wiki.wikimedia.org (T280400)
+rewrite	otrs-wiki.wikimedia.org	https://vrt-wiki.wikimedia.org
+
+# Continuous Integration T83381, T83399
+rewrite	doc.mediawiki.org	https://doc.wikimedia.org
+rewrite	integration.mediawiki.org	https://integration.wikimedia.org
+
+# CI docs -> doc (T100349)
+funnel	docs.mediawiki.org	https://doc.wikimedia.org
+funnel	docs.wikimedia.org	https://doc.wikimedia.org
+
+rewrite	nostalgia.wikimedia.org	https://nostalgia.wikipedia.org
+
+rewrite	mail.wikipedia.org	https://lists.wikimedia.org
+
+funnel	cs.wikimedia.org	https://www.wikimedia.cz
+funnel	cz.wikimedia.org	https://www.wikimedia.cz
+
+###############
+## projects
+###############
+#wikipedia is in wwwportals.conf
+rewrite	mediawiki.org	https://www.mediawiki.org
+rewrite	wikimedia.org	https://www.wikimedia.org
+rewrite	wikinews.org	https://www.wikinews.org
+rewrite	wikiquote.org	https://www.wikiquote.org
+rewrite	wikiversity.org	https://www.wikiversity.org
+rewrite	wikivoyage.org	https://www.wikivoyage.org
+rewrite	wikibooks.org	https://www.wikibooks.org
+rewrite	wiktionary.org	https://www.wiktionary.org
+rewrite	wikidata.org	https://www.wikidata.org #T47005
+
+rewrite	www.wikisource.org	https://wikisource.org
+
+###############
+## chapters
+###############
+funnel	ch.wikimedia.org	https://www.wikimedia.ch
+
+rewrite	hu.wikimedia.org	https://wikimedia.hu
+
+rewrite	it.wikimedia.org	https://www.wikimedia.it
+
+funnel	kr.wikimedia.org	https://meta.wikimedia.org/wiki/위키미디어_한국
+
+# pk.wikimedia.org (T56780)
+funnel	pk.wikimedia.org	https://wikimediapakistan.org
+
+rewrite	uk.wikimedia.org	https://wikimedia.org.uk/
+
+rewrite	ve.wikimedia.org	https://wikimedia.org.ve
+
+# Wikimania
+rewrite	wikimania2019.wikimedia.org	https://wikimania.wikimedia.org
+
+# Labs redirects -> wikitech
+funnel	labs.wikimedia.org	https://wikitech.wikimedia.org
+funnel	labsconsole.wikimedia.org	https://wikitech.wikimedia.org
+
+# coffee - keep for historic reasons:)
+funnel	coffee.wikimedia.org	https://en.wikipedia.org/wiki/Hyper_Text_Coffee_Pot_Control_Protocol
+
+# moon - T136557
+funnel	moon.wikimedia.org	https://meta.wikimedia.org/wiki/Wikipedia_to_the_Moon
+
+# jobs/careers - T82975
+rewrite	careers.wikimedia.org	https://wikimediafoundation.org/about/jobs/
+rewrite	careers.wikipedia.org	https://wikimediafoundation.org/about/jobs/
+rewrite	jobs.wikimedia.org	https://wikimediafoundation.org/about/jobs/
+rewrite	jobs.wikipedia.org	https://wikimediafoundation.org/about/jobs/
+override	careers.wikimedia.org/	https://wikimediafoundation.org/about/jobs/
+override	careers.wikipedia.org/	https://wikimediafoundation.org/about/jobs/
+override	jobs.wikimedia.org/	https://wikimediafoundation.org/about/jobs/
+override	jobs.wikipedia.org/	https://wikimediafoundation.org/about/jobs/
+
+# w.wiki - upcoming URL shortener
+funnel	*w.wiki	https://meta.wikimedia.org/wiki/Special:UrlShortener
+
+# T264367
+funnel	20.wikipedia.org	https://wikimediafoundation.org/wikipedia20
+
+# T84277, T259979
+override	wikimedia.org/research	https://research.wikimedia.org
+
+# dev.wikimedia.org - T372
+funnel	dev.wikimedia.org	https://www.mediawiki.org/wiki/API:Data_and_developer_hub
+
+# T97341
+override	wikimedia.org/stopsurveillance	https://policy.wikimedia.org/stopsurveillance/
+# T239141
+funnel	fixcopyright.wikimedia.org	https://policy.wikimedia.org/policy-landing/copyright/
+
+# rewrite old-bugzilla to the static version
+rewrite	old-bugzilla.wikimedia.org	https://static-bugzilla.wikimedia.org
+rewrite	bug-attachment.wikimedia.org	https://static-bugzilla.wikimedia.org
+
+# svn.wikimedia.org decomissioning
+override	svn.wikimedia.org/doc	https://doc.wikimedia.org/mediawiki-core/master/php/
+override	svn.wikimedia.org/viewvc/mediawiki	https://phabricator.wikimedia.org/diffusion/SVN/
+override	svn.wikimedia.org/viewvc/mysql	https://phabricator.wikimedia.org/diffusion/SVNM/
+override	svn.wikimedia.org/viewvc/pywikipedia	https://phabricator.wikimedia.org/diffusion/SVNP/
+funnel	svn.wikimedia.org	https://phabricator.wikimedia.org/diffusion/
+override	svn.mediawiki.org/doc	https://doc.wikimedia.org/mediawiki-core/master/php/
+override	svn.mediawiki.org/viewvc/mediawiki	https://phabricator.wikimedia.org/diffusion/SVN/
+override	svn.mediawiki.org/viewvc/mysql	https://phabricator.wikimedia.org/diffusion/SVNM/
+override	svn.mediawiki.org/viewvc/pywikipedia	https://phabricator.wikimedia.org/diffusion/SVNP/
+funnel	svn.mediawiki.org	https://phabricator.wikimedia.org/diffusion/
+
+# rewrite download.wiki(m|p)edia to dumps.wikimedia - T107575
+rewrite	download.wikimedia.org	https://dumps.wikimedia.org
+rewrite	download.wikipedia.org	https://dumps.wikimedia.org
+
+# keep redirect as the domain moved (in 2012?) – T126281, T80444
+funnel	stats.wikipedia.org	https://stats.wikimedia.org
+
+# redirect 2030.wikimedia.org to meta (T158981, T202498, T264797)
+funnel	2030.wikimedia.org	https://meta.wikimedia.org/wiki/Wikimedia_2030
+
+# redirect wikimedia.org/resources to meta (T172417)
+override	wikimedia.org/resources	https://meta.wikimedia.org/wiki/Wikimedia_Resource_Center
+
+# redirect "als" sister projects - T169450
+funnel	als.wiktionary.org	 https://als.wikipedia.org/wiki/Wort:Houptsyte
+funnel	als.wikiquote.org	https://als.wikipedia.org/wiki/Spruch:Houptsyte
+funnel	als.wikibooks.org	https://als.wikipedia.org/wiki/Buech:Houptsyte
+
+# redirect Moldovan Wikipedia and Wiktionary to Romanian Wikipedia and Wiktionary - T169450
+funnel	mo.wikipedia.org	https://ro.wikipedia.org/wiki/Pagina_principală
+funnel	mo.wiktionary.org	https://ro.wiktionary.org/wiki/Pagina_principală

@@ -1,0 +1,17 @@
+# NOTE: This file is managed by Puppet
+# Systemd unit for <%= @title %>-daemon
+[Unit]
+Description="<%= @title %>-daemon service"
+
+[Service]
+User=otrs
+Group=otrs
+Restart=always
+RestartSec=2s
+TimeoutStopSec=60
+Type=forking
+ExecStart=/opt/otrs/bin/otrs.Daemon.pl start
+ExecStop=/opt/otrs/bin/otrs.Daemon.pl stop
+
+[Install]
+WantedBy=multi-user.target

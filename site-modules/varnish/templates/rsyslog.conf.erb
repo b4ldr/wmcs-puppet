@@ -1,0 +1,7 @@
+# rsyslog configuration for Varnish
+# This file is managed by Puppet
+
+# Forward Varnish logs to logging pipeline
+if $programname contains "varnish" then {
+    set $.log_outputs = "kafka local";
+}

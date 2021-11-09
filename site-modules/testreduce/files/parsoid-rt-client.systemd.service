@@ -1,0 +1,12 @@
+[Unit]
+Description=Testing test client for Parsoid rt-testing
+After=network.target
+
+[Service]
+User=testreduce
+Group=testreduce
+WorkingDirectory=/srv/testreduce/client
+ExecStart=/usr/bin/nodejs client-cluster.js -c 28 /etc/testreduce/parsoid-rt-client.config.js
+StandardOutput=journal
+StandardError=journal
+RestartSec=2

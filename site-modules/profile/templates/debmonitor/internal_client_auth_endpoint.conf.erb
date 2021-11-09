@@ -1,0 +1,25 @@
+# vim: filetype=apache
+<VirtualHost *:443>
+    ServerName <%= @internal_server_name -%>
+
+    SSLEngine on
+    SSLCertificateFile <%= @cert %>
+    SSLCertificateKeyFile <%= @key %>
+    <%= @ssl_config.join("\n    ") %>
+    SSLVerifyClient require
+    # The debmonitor CA is signed by the Wikimedia Internal Root CA
+    SSLVerifyDepth 2
+    SSLCACertificateFile <%= @trusted_ca_file %>
+
+    RequestHeader set X-Forwarded-Proto https
+    RequestHeader set X-Client-IP "%{REMOTE_ADDR}s"
+    RequestHeader set X-Client-Cert-Subject-Dn "%{SSL_CLIENT_S_DN}s"
+    RequestHeader set X-Client-Cert-Verify "%{SSL_CLIENT_VERIFY}s"
+
+    ProxyPreserveHost On
+    ProxyPass / unix://<%= @socket %>|uwsgi://127.0.0.1:<%= @port %>/
+
+    LogLevel warn
+    ErrorLog /var/log/apache2/<%= @internal_server_name %>_error.log
+    CustomLog /var/log/apache2/<%= @internal_server_name %>_access.log wmf
+</VirtualHost>

@@ -1,0 +1,54 @@
+###
+## kubernetes system config
+##
+## The following values are used to configure the kube-apiserver
+##
+#
+<%-
+daemon_args = [
+  "--logtostderr=#{@logtostderr}",
+  "--v=#{@v_log_level}",
+  "--allow-privileged=#{@allow_privileged}",
+  "--etcd-servers=#{@etcd_servers}",
+  "--token-auth-file=/etc/kubernetes/infrastructure-users",
+  "--tls-cert-file=#{@ssl_cert_path}",
+  "--tls-private-key-file=#{@ssl_key_path}",
+  "--service-account-key-file=#{@ssl_cert_path}",
+]
+
+if @service_cluster_ip_range
+  daemon_args.push("--service-cluster-ip-range=#{@service_cluster_ip_range}")
+end
+if @service_node_port_range
+  daemon_args.push("--service-node-port-range=#{@service_node_port_range}")
+end
+
+if @authz_mode == 'abac'
+  daemon_args.push("--authorization-mode=ABAC")
+  daemon_args.push("--authorization-policy-file=/etc/kubernetes/abac")
+elsif @authz_mode && @authz_mode != ''
+  daemon_args.push("--authorization-mode=#{@authz_mode}")
+end
+
+if @apiserver_count
+  daemon_args.push("--apiserver-count=#{@apiserver_count}")
+end
+
+if @admission_plugins
+  @admission_plugins.each do |k, v|
+    if !v.empty?
+      daemon_args.push("--#{k}-admission-plugins=#{v.sort.join(',')}")
+    end
+  end
+end
+
+if @runtime_config
+  daemon_args.push("--runtime-config=#{@runtime_config}")
+end
+
+if @admission_configuration
+  daemon_args.push("--admission-control-config-file=#{@admission_configuration_file}")
+end
+
+-%>
+DAEMON_ARGS="<%= daemon_args.sort.join(" \\\n ") %>"

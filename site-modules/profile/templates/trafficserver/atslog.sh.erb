@@ -1,0 +1,7 @@
+#!/bin/sh
+# atslog -- print ATS <%= @atslog_filename %> logs to standard output
+
+socket="<%= @paths['runtimedir'] %>/<%= @atslog_filename %>.sock"
+regexp="${1:- }"
+
+fifo-log-tailer -socket "$socket" -regexp "$regexp"

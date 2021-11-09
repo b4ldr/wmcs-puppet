@@ -1,0 +1,264 @@
+/*****************************************************************************
+ * Varnish VCL for WMF-Last-Access Cookie
+ * Please see what this cookie is trying to acomplish:
+ * https://wikitech.wikimedia.org/wiki/Analytics/Unique_clients/Last_visit_solution
+ *
+ * General notes on timestamp format strings used here:
+ * "now" stringifies as "Wed, 01 Jan 2000 01:01:01 GMT", which is the same
+ * format used by Set-Cookie "Expires" data.  The format for the last access
+ * value, and thus X-NowDay and X-WMF-LastStamp as well, is "01-Jan-2000"
+ * (because the other info is redundant or too-specific, and cookie values
+ * shouldn't have whitespace or commas).
+ *
+ * This file depends upon blocked-nets.inc.vcl.  Include that first.
+ ****************************************************************************/
+
+/*****************************************************************************
+ * This must be called *before* any vcl_recv cookie munging.  It more-properly
+ * belongs in _deliver, but putting it here avoids all of the issues
+ * surrounding consistent access to Cookie vs X-Orig-Cookie in vcl_deliver
+ * It does so at the cost of sending a pointless and unintended
+ * "X-WMF-LastStamp: 01-Jan-2000" header to the application layer as well on
+ * cache miss/bypass.
+ * Note we don't validate that the cookie's 3-letter month abbreviation is
+ * legal, or that the numeric values for the date/year are legal, just that
+ * they have the right count of the right kinds of characters.
+ ****************************************************************************/
+sub analytics_last_access_recv_ {
+    unset req.http.X-WMF-LastStamp; // clear any sent by the user
+    if (req.http.Cookie ~ "(^|;\s*)WMF-Last-Access=[0-9]{2}-[A-Za-z]{3}-[0-9]{4}(;|$)") {
+        // Save the value for use later in _deliver
+        set req.http.X-WMF-LastStamp = regsub(
+            req.http.Cookie,
+            "^(?:.*;\s*)?WMF-Last-Access=([^;]+).*$",
+            "\1"
+        );
+    }
+}
+
+sub analytics_last_access_global_recv_ {
+    unset req.http.X-WMF-LastGlobalStamp; // clear any sent by the user
+    if (req.http.Cookie ~ "(^|;\s*)WMF-Last-Access-Global=[0-9]{2}-[A-Za-z]{3}-[0-9]{4}(;|$)") {
+        // Save the value for use later in _deliver
+        set req.http.X-WMF-LastGlobalStamp = regsub(
+            req.http.Cookie,
+            "^(?:.*;\s*)?WMF-Last-Access-Global=([^;]+).*$",
+            "\1"
+        );
+    }
+}
+
+/*****************************************************************************
+ * !!! private to analytics_last_access_deliver !!!!
+ * Use a 12h-resolution expiry so people cannot infer an exact request time.
+ ****************************************************************************/
+sub set_last_access_cookie__ {
+	header.append(resp.http.Set-Cookie,
+		"WMF-Last-Access="
+		+ req.http.X-NowDay
+		+ ";Path=/;HttpOnly;secure;Expires="
+		+ std.time(std.time2integer(now + 32d, 0) / 43200 * 43200, now)
+	);
+}
+
+/******************************************************************************
+ * Same as set_last_access_cookie__ but with Domain attribute
+ * (eg: Domain=.wikipedia.org)
+ ******************************************************************************/
+sub set_last_access_global_cookie__ {
+	header.append(resp.http.Set-Cookie,
+		"WMF-Last-Access-Global="
+		+ req.http.X-NowDay
+		+ ";Path=/;Domain=."
+		+ regsub(req.http.Host, "^([a-z0-9-]+\.)*([a-z0-9-]+\.<%= @vcl_config.fetch('top_domain', 'org') %>)$", "\2")
+		+ ";HttpOnly;secure;Expires="
+		+ std.time(std.time2integer(now + 32d, 0) / 43200 * 43200, now)
+	);
+}
+
+// Call from vcl_deliver near other X-Analytics code
+sub analytics_last_access_deliver_ {
+    // Create X-NowDay in "01-Jan-2000" form, from "now"
+    set req.http.X-NowDay = regsub(
+        now, "^..., (..) (...) (....) .*$", "\1-\2-\3"
+    );
+
+    /*
+     * WMF-Last-Access
+     */
+    if(req.http.X-WMF-LastStamp) {
+        set resp.http.X-Analytics = resp.http.X-Analytics
+            + ";WMF-Last-Access="
+            + req.http.X-WMF-LastStamp;
+
+        // re-set the cookie if it's not from today
+        if (req.http.X-NowDay != req.http.X-WMF-LastStamp) {
+            call set_last_access_cookie__;
+        }
+
+    }
+    else {
+        // sets the initial cookie if no valid one existed
+        call set_last_access_cookie__;
+    }
+
+    /*
+     * WMF-Last-Access-Global (not for wikimedia.org)
+     */
+    if(req.http.Host !~ "\.wikimedia\.org$") {
+        if(req.http.X-WMF-LastGlobalStamp) {
+            set resp.http.X-Analytics = resp.http.X-Analytics
+                + ";WMF-Last-Access-Global="
+                + req.http.X-WMF-LastGlobalStamp;
+
+            // re-set the cookie if it's not from today
+            if (req.http.X-NowDay != req.http.X-WMF-LastGlobalStamp) {
+                call set_last_access_global_cookie__;
+            }
+        }
+        else {
+            // sets the initial cookie if no valid one existed
+            call set_last_access_global_cookie__;
+        }
+    }
+
+    // we could clean up req.http.X-WMF-LastStamp + req.http.X-NowDay
+    // here, but they're not being sent anywhere (else) at this point
+    // anyways, so why bother?
+}
+
+/*****************************************************************************
+ * Analytics for "wprov" Provenance data
+ * See https://www.mediawiki.org/wiki/Provenance for reserved values.
+ ****************************************************************************/
+
+sub analytics_provenance_recv_ {
+    // Avoid cache fragmentation for well-formed provenance parameters
+    // Refer to discussion starting from
+    // https://lists.wikimedia.org/pipermail/analytics/2015-February/003426.html
+    // Look for wprov parameter with a value
+    if (req.url ~ "(?i)[?&]wprov=[^&]+") {
+        // Ready a variable for later X-Analytics tagging in vcl_deliver.
+
+        // Grab just the value of the wprov parameter, excluding the rest of the URL
+        set req.http.X-WMF-WPROV = regsub(req.url, "(?i).+[?&]wprov=([^&]+).*", "\1");
+
+        // Remove the wprov=X parameter from req.url to avoid cache
+        // fragmentation using two regexes to cover distinct cases:
+
+        // (1) Simple strip if final query arg:
+        set req.url = regsub(req.url, "(?i)[?&]wprov=[^&]+$", "");
+
+        // (2) When not the final arg, we need to capture the leading
+        //     [?&] to reuse with the parameter that follows:
+        set req.url = regsub(req.url, "(?i)([?&])wprov=[^&]+&", "\1");
+    }
+}
+
+sub analytics_provenance_deliver_ {
+    // In case there was a provenance parameter with a value, add it to X-Analytics
+    if (req.http.X-WMF-WPROV) {
+        set resp.http.X-Analytics = resp.http.X-Analytics + ";wprov=" + req.http.X-WMF-WPROV;
+    }
+}
+
+/*****************************************************************************
+ * Combined analytics recv and deliver hooks, to be included directly in
+ * vcl_recv and vcl_deliver in common wikimedia.vcl - these are the only
+ * "public" interfaces in this file!
+ ****************************************************************************/
+
+sub analytics_recv {
+    // If this request had no cookies whatsoever mark it as such
+    // to later report this fact to X-Analytics
+    if (!req.http.Cookie) {
+        set req.http.X-WMF-NOCOOKIES = 1;
+    }
+
+    call analytics_last_access_recv_;
+
+    // Global last access cookies not used w/ wikimedia.org
+    if(req.http.Host !~ "\.wikimedia\.org$") {
+        call analytics_last_access_global_recv_;
+    }
+
+    call analytics_provenance_recv_;
+}
+
+sub analytics_deliver {
+    // Create empty header if none, to avoid tons of if/else clauses; will
+    // clean up at the end.  Note that if we defined one of the k=v pairs as
+    // required (having a real value for the false/negative case), we could
+    // set that one first and this would get a bit cleaner...
+    if (!resp.http.X-Analytics) {
+        set resp.http.X-Analytics = "";
+    }
+
+    call analytics_last_access_deliver_;
+    call analytics_provenance_deliver_;
+
+    # We check allowed values inbound in X-Analytics header
+    #
+    # At this time there are only two values we let clients send:
+    # pageview=1 and preview=1 and they are mutually exclusive
+    # https://wikitech.wikimedia.org/wiki/X-Analytics#Keys
+
+    # Any value that we decide clients can send in the future should be
+    # whitelisted here
+    if (req.http.X-Analytics ~ "(^|;)pageview=1(;|$)") {
+            set resp.http.X-Analytics = resp.http.X-Analytics + ";pageview=1";
+    } else if (req.http.X-Analytics ~ "(^|;)preview=1(;|$)") {
+            set resp.http.X-Analytics = resp.http.X-Analytics + ";preview=1";
+    }
+
+    if (req.http.X-Trusted-Proxy) {
+        set resp.http.X-Analytics = resp.http.X-Analytics + ";proxy=" + req.http.X-Trusted-Proxy;
+    }
+
+    if (req.http.X-Forwarded-Proto) {
+        set resp.http.X-Analytics = resp.http.X-Analytics + ";https=1";
+    }
+
+    if (req.http.X-WMF-UUID) {
+        set resp.http.X-Analytics = resp.http.X-Analytics + ";wmfuuid=" + req.http.X-WMF-UUID;
+    }
+
+    # We set debug=1, so analytics won't count those requests as real pageviews.
+    if (req.http.X-Wikimedia-Debug) {
+        set resp.http.X-Analytics = resp.http.X-Analytics + ";debug=1";
+    }
+
+    # Add client TCP source port to webrequest (T271953, T181368)
+    if (req.http.X-Client-Port) {
+        set resp.http.X-Analytics = resp.http.X-Analytics + ";client_port=" + req.http.X-Client-Port;
+    }
+
+    // Add proxy=IORG X-Analytics tag if appropriate.
+    // Although Via: Internet.org usually comes via proxying, it isn't guaranteed to come that way.
+    // Nonetheless, as it is tagged with Via and the equipment is under Internet.org, we proxy tag.
+    if (req.http.Via ~ "(?i)Internet\.org") {
+        set resp.http.X-Analytics = resp.http.X-Analytics + ";proxy=IORG";
+    }
+
+    // Add Google Translate translationengine X-Analytics tag for measuring impact.
+    // Via is largely standardized and is likely to stay. Other characteristics of the
+    // request, including the Referer, can be combined for greater confidence.
+    if (req.http.X-WMF-Translation-Engine) {
+        set resp.http.X-Analytics = resp.http.X-Analytics + ";translationengine=" + req.http.X-WMF-Translation-Engine;
+    }
+
+    if (req.http.X-WMF-NOCOOKIES) {
+        set resp.http.X-Analytics = resp.http.X-Analytics + ";nocookies=1";
+    }
+
+    if (std.ip(req.http.X-Client-IP, "192.0.2.1") ~ public_cloud_nets) {
+        set resp.http.X-Analytics = resp.http.X-Analytics + ";public_cloud=1";
+    }
+
+    // Clean up header from setting to empty at the start...
+    if (resp.http.X-Analytics == "") {
+        unset resp.http.X-Analytics;
+    } else {
+        set resp.http.X-Analytics = regsub(resp.http.X-Analytics, "^;", "");
+    }
+}

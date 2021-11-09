@@ -1,0 +1,36 @@
+Job {
+  Name = "RestoreFiles"
+  Type = Restore
+  FileSet = "root"
+  Pool = Default
+  Client = <%= @fqdn -%>-fd
+  Messages = Standard
+  Where = /var/tmp/bacula-restores
+  Priority = 1
+}
+
+Job {
+  Name = "Migrate Job"
+  Type = Migrate
+  Level = Full
+  Pool = production
+  FileSet = "root"
+  Client = <%= @fqdn -%>-fd
+  Messages = Standard
+  Selection Type = SQLQuery
+  Selection Pattern = "SELECT 15515"
+  Priority = 20
+}
+
+Job {
+  Name = "Offsite Job"
+  Type = Copy
+  Level = Full
+  Pool = production
+  Schedule = Weekly-Tue
+  FileSet = "root"
+  Client = <%= @fqdn -%>-fd
+  Messages = Standard
+  Selection Type = PoolUncopiedJobs
+  Priority = 20
+}

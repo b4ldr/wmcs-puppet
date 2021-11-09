@@ -1,0 +1,81 @@
+global
+
+<%- if @lua_scripts -%>
+<%- @lua_scripts.each do |lua_script| -%>
+    lua-load <%= lua_script %>
+<%- end -%>
+<%- end -%>
+
+    ssl-default-bind-options ssl-min-ver <%= @min_tls_version -%> ssl-max-ver <%= @max_tls_version %>
+    ssl-default-bind-ciphers <%= @tls_ciphers %>
+    ssl-default-bind-ciphersuites <%= @tls13_ciphers %>
+    ssl-dh-param-file <%= @tls_dh_param_path %>
+    tune.ssl.cachesize <%= @tls_cachesize %>
+    tune.ssl.lifetime <%= @tls_session_lifetime %>
+    maxconn 130000
+
+
+    tune.h2.header-table-size <%= @h2settings['header_table_size'] %>
+    tune.h2.initial-window-size <%= @h2settings['initial_window_size'] %>
+    tune.h2.max-concurrent-streams <%= @h2settings['max_concurrent_streams'] %>
+
+listen tls
+    maxconn 120000
+    bind :<%= @port -%> tfo ssl crt-list <%= @crt_list_path %><%- if @tls_ticket_keys_path -%> tls-ticket-keys <%= @tls_ticket_keys_path %><%- end %>
+
+    bind :::<%= @port -%> tfo v6only ssl crt-list <%= @crt_list_path %><%- if @tls_ticket_keys_path -%> tls-ticket-keys <%= @tls_ticket_keys_path %><%- end %>
+
+    # time to wait for a complete HTTP request, It only applies to the header part of the HTTP request (unless option http-buffer-request is used)
+    timeout http-request <%= @timeout['http_request'] %>s
+    # set the maximum allowed time to wait for a new HTTP request to appear
+    timeout http-keep-alive <%= @timeout['keep_alive'] %>s
+    # set the maximum inactivity time on the client side
+    timeout client <%= @timeout['client'] %>s
+    # inactivity timeout on the client side for half-closed connections
+    timeout client-fin <%= @timeout['client_fin'] %>s
+    # connect timeout against a backend server
+    timeout connect <%= @timeout['connect'] %>s
+    # set the maximum inactivity time on the server side
+    timeout server <%= @timeout['server'] %>s
+    # timeout used after upgrading a connection (websockets) or after the first response when no keepalive/close option is specified
+    timeout tunnel <%= @timeout['tunnel'] %>s
+
+<%- if @vars -%>
+<%- @vars.each do |var| -%>
+    http-<%= var['direction'] %> set-var(<%= var['name'] %>) <%= var['value'] %>
+<%- end -%>
+<%- end -%>
+
+<%- @acls.each do |acl| -%>
+    acl <%= acl['name'] %> <%= acl['criterion'] %> <%= acl['operator'] %> <%= acl['value'] %>
+<%- end -%>
+
+<%- @add_headers.each do |add_header| -%>
+<%- if add_header['value'] -%>
+    http-<%= add_header['direction'] %> set-header <%= add_header['name'] %> <%= add_header['value'] %>
+<%- end -%>
+<%- end -%>
+<%- @del_headers.each do |del_header| -%>
+    http-<%= del_header['direction'] %> del-header <%= del_header['name'] %> <%- if del_header['acl'] %> if <%= del_header['acl'] %> <%- end %>
+<%- end -%>
+
+<%- if @proxy_protocol == nil -%>
+    server backend_server unix@<%= @backend_socket %>
+<%- elsif @proxy_protocol == 'V1' -%>
+    server backend_server unix@<%= @backend_socket %> send-proxy
+<%- elsif @proxy_protocol == 'V2' -%>
+    server backend_server unix@<%= @backend_socket %> send-proxy-v2
+<%- elsif @proxy_protocol == 'V2-ssl' -%>
+    server backend_server unix@<%= @backend_socket %> send-proxy-v2-ssl
+<%- end -%>
+
+<%- if @prometheus_port -%>
+frontend stats
+    maxconn 1000
+    bind :<%= @prometheus_port %>
+    bind :::<%= @prometheus_port %> v6only
+    http-request use-service prometheus-exporter if { path /metrics }
+    stats enable
+    stats uri /stats
+    stats refresh 10s
+<%- end -%>

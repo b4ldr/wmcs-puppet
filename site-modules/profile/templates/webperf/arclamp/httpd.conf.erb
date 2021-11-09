@@ -1,0 +1,41 @@
+# This file is managed by Puppet.
+
+# Apache configuration for hosting of sampling profiler logs
+# and SVG Flame graphs.
+<VirtualHost *:80>
+    DocumentRoot "/var/www"
+    Alias /arclamp "/srv/xenon"
+
+    <Directory />
+        AllowOverride None
+    </Directory>
+
+    <Directory /srv/xenon>
+        Options +Indexes
+        AllowOverride None
+        Require all granted
+
+        AddType image/svg+xml svg svgz
+        AddEncoding gzip svgz
+
+        IndexOptions +Charset=UTF-8 +FancyIndexing +IgnoreCase +FoldersFirst +XHTML +HTMLTable +SuppressRules +SuppressDescription +NameWidth=* +IconsAreLinks
+        IndexHeadInsert "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">"
+        IndexOrderDefault Descending Date
+
+        AddIcon /lib/apaxy/icons/blank.png ^^BLANKICON^^
+        AddIcon /lib/apaxy/icons/folder.png ^^DIRECTORY^^
+        AddIcon /lib/apaxy/icons/folder-home.png ..
+        AddIcon /lib/apaxy/icons/draw.png .svg .svgz
+        AddIcon /lib/apaxy/icons/doc.png .log
+        DefaultIcon /lib/apaxy/icons/default.png
+
+        HeaderName /lib/apaxy/header.html
+        ReadmeName /lib/apaxy/footer.html
+        IndexStyleSheet /lib/apaxy/style.css
+    </Directory>
+
+    # Permit external tools such as speedscope.app to display logs
+    <Location /arclamp/logs>
+        Header set Access-Control-Allow-Origin '*'
+    </Location>
+</VirtualHost>

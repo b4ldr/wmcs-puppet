@@ -1,0 +1,17 @@
+input {
+  # Log4j socket-based logger
+  log4j {
+    type => "log4j"
+    port => "<%= @port %>"
+    mode => "<%= @mode %>"
+    host => "<%= @host %>"
+<%- unless @plugin_id.empty? -%>
+    id   => "<%= @plugin_id %>"
+<%- end -%>
+<%- if @tags -%>
+    tags => ["<%= @tags.join('", "') %>", "deprecated-input"]
+<%- else -%>
+  tags => [ "deprecated-input" ]
+<%- end -%>
+  }
+}

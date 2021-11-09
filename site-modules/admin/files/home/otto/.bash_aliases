@@ -1,0 +1,12 @@
+alias pupt='sudo puppet agent -tv'
+alias mya='mysql --defaults-extra-file=/etc/mysql/conf.d/analytics-research-client.cnf '
+alias myr='mysql --defaults-extra-file=/etc/mysql/conf.d/research-client.cnf '
+alias cdr='cd /srv/deployment/analytics/refinery'
+alias hproxy="export http_proxy=http://webproxy.eqiad.wmnet:8080; export https_proxy=http://webproxy.eqiad.wmnet:8080; export no_proxy=127.0.0.1,localhost,.wmnet"
+alias slog='sudo tail -n 200 -f /var/log/syslog'
+alias pvl='pv -l > /dev/null'
+alias klog='sudo tail -f /var/log/kafka/server.log /var/log/kafka/kafka-authorizer.log'
+alias dt='date +%FT%T'
+alias ds='date +%s'
+alias dcamus='date +%Y/%m/%d/%H'
+alias dhive='date +year=%Y/month=%-m/day=%-d/hour=%-H'

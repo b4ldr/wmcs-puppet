@@ -1,0 +1,22 @@
+# This file is managed by Puppet.
+#
+[kdcdefaults]
+    kdc_ports = 750,88
+
+[realms]
+    <%= @krb_realm_name.upcase %> = {
+        database_name = /var/lib/krb5kdc/principal
+        admin_keytab = FILE:/etc/krb5kdc/kadm5.keytab
+        acl_file = /etc/krb5kdc/kadm5.acl
+        key_stash_file = /etc/krb5kdc/stash
+        kdc_ports = 750,88
+        max_life = 2d 0h 0m 0s
+        max_renewable_life = 14d 0h 0m 0s
+        master_key_type = aes256-cts
+        # Encryption types with stronger HMAC types are only supported
+        # in Java 11, we can tighten this once we've phased out Java 8
+        # https://bugs.java.com/bugdatabase/view_bug.do?bug_id=8193851
+        # https://www.rfc-editor.org/info/rfc8009
+        supported_enctypes = aes256-cts:normal
+        default_principal_flags = +preauth
+    }

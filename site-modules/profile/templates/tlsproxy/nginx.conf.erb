@@ -1,0 +1,119 @@
+# This file is managed by Puppet!
+<%
+# Shortcuts for convenience
+realm =  @realm
+-%>
+
+user www-data www-data;
+<%
+    # Adapted from:
+    # https://github.com/priestjim/chef-openresty/blob/master/recipes/commons_conf.rb
+    # For each hyperthread sibling set (usually a pair), create a number of
+    # worker processes equal to the number of logical cores in the set, bound to
+    # the entire set.  It also restricts itself to the cpus sharing the NUMA
+    # domain of @numa_iface
+    ncpus = @facts['processorcount']
+    htsets = @facts['numa']['device_to_htset'][@numa_iface]
+    worker_procs = htsets.flatten.size
+    affinity_mask = []
+    htsets.each do |htset|
+      bitmask = htset.map { |c| (1 << c) }.reduce(:|).to_s(2)
+      bitstring = '0' * (ncpus - bitmask.size) + bitmask.to_s
+      htset.each do
+        affinity_mask << bitstring
+      end
+    end
+-%>
+worker_processes <%= worker_procs %>;
+worker_cpu_affinity <%= affinity_mask.join(" ") %>;
+worker_rlimit_nofile <%= @nginx_worker_connections.to_i * 2 %>;
+
+error_log  /var/log/nginx/error.log;
+pid        /run/nginx.pid;
+
+events {
+    worker_connections <%= @nginx_worker_connections %>;
+    multi_accept off; # accept 1 conn per epoll hit, basically
+    accept_mutex off; # better latencies at high connection rates
+}
+
+http {
+<% if realm == 'labs' then -%>
+    # On labs nginx find a CPU cache size of 32 bytes which is
+    # not enough to hold the keys defined by mime types.
+    # See T50210
+    types_hash_bucket_size 64;
+    server_names_hash_bucket_size 64;
+<% end -%>
+    include       /etc/nginx/mime.types;
+
+    access_log	/var/log/nginx/access.log;
+
+    client_max_body_size <%= @nginx_client_max_body_size %>;
+    client_body_buffer_size 64k;
+    http2_max_field_size 8k;
+
+    sendfile        on;
+    #tcp_nopush     on;
+
+    #keepalive_timeout  0;
+    keepalive_timeout  65;
+    tcp_nodelay        on;
+
+    gzip  off;
+    gzip_disable "MSIE [1-6]\.(?!.*SV1)";
+
+    # SSL sessionid caching.  1m is ~4000 sessions.
+    # Still experimenting!
+<% if realm == 'labs' then -%>
+    ssl_session_cache shared:SSL:32m;
+<% else -%>
+    ssl_session_cache shared:SSL:1024m;
+<% end -%>
+    ssl_session_timeout 25h;
+
+    # Disable RFC5077 tickets (may revisit later when client support is better)
+    ssl_session_tickets off;
+
+<% if @nginx_ssl_dyn_rec -%>
+    # dynamic ssl_buffer_size from Cloudflare's patch, with two
+    # cases: general-case, and media-specific (faster ramp-in,
+    # more idle time before dropping back).  Note the packet
+    # overhead estimates are different than Cloudflare's defaults
+    # (closer to Google and others).  We could spend some time
+    # fine-tuning this, but it may take a lot of time to find
+    # optimal values in production, especially being inclusive of
+    # the perf-outlier cases.
+    ssl_dyn_rec_enable on;    # cf patch default: off
+    ssl_dyn_rec_size_lo 1300; # cf patch default: 1369
+    ssl_dyn_rec_size_hi 4096; # cf patch default: 4229
+    ssl_buffer_size 16k;      # nginx default: 16k (also max possible)
+<% if @nginx_tune_for_media -%>
+    ssl_dyn_rec_threshold 20; # cf patch default: 40
+    ssl_dyn_rec_timeout 3s;   # cf patch default: 1s
+<% else -%>
+    ssl_dyn_rec_threshold 40; # cf patch default: 40
+    ssl_dyn_rec_timeout 1s;   # cf patch default: 1s
+<% end -%>
+<% end -%>
+
+    # nginx's $http2 is either 'h2' or '' (empty string) for http/1
+    # Map it to $h2 as a boolean string value '1' or '0' for use in headers
+    map $http2 $h2 {
+        default '1';
+        '' '0';
+    }
+
+    # Nginx indicates session reuse with 'r' and '.', which is rather cryptic.
+    # Map this value to '1' and '0' instead.
+    map $ssl_session_reused $session_reused {
+        'r' '1';
+        '.' '0';
+    }
+
+
+    <%= @nginx_ssl_conf.join("\n    ") %>
+
+    include /etc/nginx/conf.d/*.conf;
+    include /etc/nginx/sites-enabled/*;
+}

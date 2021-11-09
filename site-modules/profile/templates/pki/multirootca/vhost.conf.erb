@@ -1,0 +1,56 @@
+#####################################################################
+### THIS FILE IS MANAGED BY PUPPET
+#####################################################################
+# vim: filetype=apache
+<VirtualHost *:80>
+  ServerName <%= @vhost %>
+  ServerAlias <%= @facts['fqdn'] %>
+  DocumentRoot <%= @document_root %>
+
+  <Directory  <%= @document_root %>>
+    Require all granted
+  </Directory>
+  
+  <Location /metrics>
+    Require host <%= @prometheus_nodes.join(' ') %>
+    ProxyPass http://127.0.0.1:8888/metrics
+    ProxyPassReverse http://127.0.0.1:8888/metrics
+  </Location>
+
+  # <%= @root_ca_cn %>
+  ProxyPass /ocsp/<%= @root_ca_cn.gsub(/\W/, '_') %>/  http://localhost:<%= @root_ocsp_port %>/
+  ProxyPassReverse /ocsp/<%= @root_ca_cn.gsub(/\W/, '_') %>/  http://localhost:<%= @root_ocsp_port %>/
+<%- @intermediates.each_pair do |intermediate, config| -%>
+  # <%= intermediate %>
+  ProxyPass /ocsp/<%= intermediate.gsub(/\W/, '_') %>/  http://localhost:<%= config['ocsp_port'] %>/
+  ProxyPassReverse /ocsp/<%= intermediate.gsub(/\W/, '_') %>/  http://localhost:<%= config['ocsp_port'] %>/
+<%- end -%>
+
+  LogLevel warn
+  ErrorLog /var/log/apache2/<%= @vhost %>_error.log
+  CustomLog /var/log/apache2/<%= @vhost %>_access.log wmf
+</VirtualHost>
+
+<VirtualHost *:443>
+  ServerName <%= @vhost %>
+  ServerAlias <%= @facts['fqdn'] %>
+  DocumentRoot <%= @document_root %>
+
+  SSLEngine on
+  SSLCertificateFile <%= @tls_termination_cert %>
+  SSLCertificateKeyFile <%= @tls_termination_key %>
+  SSLCertificateChainFile <%= @tls_termination_chain %>
+  <%= @ssl_settings.join("\n  ") %>
+<%- if @enable_client_auth -%>
+  SSLVerifyClient require
+  SSLVerifyDepth 1
+  SSLCACertificateFile <%= @client_auth_ca_file %>
+<%- end -%>
+
+  ProxyPass /  http://127.0.0.1:8888/
+  ProxyPassReverse / http://127.0.0.1:8888/
+
+  LogLevel warn
+  ErrorLog /var/log/apache2/<%= @vhost %>_ssl_error.log
+  CustomLog /var/log/apache2/<%= @vhost %>_ssl_access.log wmf
+</VirtualHost>

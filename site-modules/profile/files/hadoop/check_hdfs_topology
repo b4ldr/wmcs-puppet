@@ -1,0 +1,11 @@
+#!/bin/bash
+
+# The HDFS topology should not contain any host in the 'default' rack.
+hdfs dfsadmin -printTopology | egrep -q 'Rack:.*default.*'
+
+if [ $? -eq 1 ]; then
+    echo "OK"
+else
+    echo "CRITICAL: There is at least one node in the default rack."
+    exit 2
+fi

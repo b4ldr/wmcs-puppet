@@ -1,0 +1,327 @@
+# https://netbox.wikimedia.org/ipam/aggregates/
+network::external: &external
+- 91.198.174.0/24
+- 208.80.152.0/22
+- 2620:0:860::/46
+- 198.35.26.0/23
+- 185.15.56.0/24 # cloud-eqiad
+- 185.71.138.0/24 # Wikidough
+- 2a02:ec80::/32
+- 2001:df2:e500::/48
+- 103.102.166.0/24
+- 185.15.58.0/24
+
+network::aggregate_networks:
+  production:
+  - *external
+  - 10.0.0.0/8
+  - 127.0.0.0/8 # localhost is always implicitly trusted
+  - '::1/128'
+  labs:
+  - 172.16.0.0/12
+  - 2620:0:860:117::/64 # labs-hosts1-a-codfw. Not on proper boundary aggregation wise
+  - 2620:0:860:118::/63 # labs-hosts codfw
+  - 2620:0:860:120::/64 # labs-hosts1-d-codfw. Not on proper boundary aggregation wise
+  - 2620:0:860:121::/64 # labs-support1-a-codfw. Not on proper boundray aggregation wise
+  - 2620:0:860:122::/63 # labs-support codfw
+  - 2620:0:860:124::/64 # labs-support1-d-codfw. Not on proper boundray aggregation wise
+  - 2620:0:861:117::/64 # labs-support1-a-eqiad. Not on proper boundary aggregation wise
+  - 2620:0:860:118::/63 # labs-hosts and support
+  - 127.0.0.0/8 # localhost is always implicitly trusted
+  - '::1/128'
+
+
+# Loopbacks & interconnects (role=loopbacks-interconnects on Netbox)
+network::infrastructure:
+  esams:
+    - 91.198.174.224/27
+    - 2620:0:862:fe00::/55
+  ulsfo:
+    - 198.35.26.192/27
+    - 2620:0:863:fe00::/55
+  codfw:
+    - 208.80.153.192/27
+    - 2620:0:860:fe00::/55
+  eqiad:
+    - 208.80.154.192/27
+    - 2620:0:861:fe00::/55
+  eqsin:
+    - 103.102.166.128/27
+    - 2001:df2:e500:fe00::/55
+  drmrs:
+    - 185.15.58.128/27
+    - 2a02:ec80:600:fe00::/55
+
+network::management:
+  eqiad:
+    - 10.65.0.0/16
+  ulsfo:
+    - 10.128.128.0/17
+  codfw:
+    - 10.193.0.0/16
+  esams:
+    - 10.21.0.0/24
+  eqsin:
+    - 10.132.128.0/17
+  drmrs:
+    - 10.136.128.0/17
+
+network::subnets:
+  production:
+    eqiad:
+      public:
+        public1-a-eqiad:
+          ipv4: 208.80.154.0/26
+          ipv6: 2620:0:861:1::/64
+        public1-b-eqiad:
+          ipv4: 208.80.154.128/26
+          ipv6: 2620:0:861:2::/64
+        public1-c-eqiad:
+          ipv4: 208.80.154.64/26
+          ipv6: 2620:0:861:3::/64
+        public1-d-eqiad:
+          ipv4: 208.80.155.96/27
+          ipv6: 2620:0:861:4::/64
+        public1-lvs-eqiad:
+          ipv4: 208.80.154.224/27
+          ipv6: 2620:0:861:ed1a::/64
+      private:
+        private1-a-eqiad:
+          ipv4: 10.64.0.0/22
+          ipv6: 2620:0:861:101::/64
+        private1-b-eqiad:
+          ipv4: 10.64.16.0/22
+          ipv6: 2620:0:861:102::/64
+        private1-c-eqiad:
+          ipv4: 10.64.32.0/22
+          ipv6: 2620:0:861:103::/64
+        private1-d-eqiad:
+          ipv4: 10.64.48.0/22
+          ipv6: 2620:0:861:107::/64
+        labs-hosts1-b-eqiad:
+          ipv4: 10.64.20.0/24
+          ipv6: 2620:0:861:118::/64
+        labs-hosts1-d-eqiad:
+          ipv4: 10.64.52.0/24
+        labs-support1-a-eqiad:
+          ipv4: 10.64.4.0/24
+          ipv6: 2620:0:861:117::/64
+        labs-support1-c-eqiad:
+          ipv4: 10.64.37.0/24
+          ipv6: 2620:0:861:119::/64
+        analytics1-a-eqiad:
+          ipv4: 10.64.5.0/24
+          ipv6: 2620:0:861:104::/64
+        analytics1-b-eqiad:
+          ipv4: 10.64.21.0/24
+          ipv6: 2620:0:861:105::/64
+        analytics1-c-eqiad:
+          ipv4: 10.64.36.0/24
+          ipv6: 2620:0:861:106::/64
+        analytics1-d-eqiad:
+          ipv4: 10.64.53.0/24
+          ipv6: 2620:0:861:108::/64
+        private1-lvs-eqiad:
+          ipv4: 10.2.2.0/24
+        private1-services-kubepods-eqiad:
+          ipv4: 10.64.64.0/21
+          ipv6: 2620:0:861:cabe::/64
+        private1-services-kubesvc-eqiad:
+          ipv4: 10.64.72.0/24
+          ipv6: 2620:0:861:cabf::/64
+        private1-staging-kubepods-eqiad:
+          ipv4: 10.64.75.0/24
+          ipv6: 2620:0:861:babe::/64
+        private1-staging-kubesvc-eqiad:
+          ipv4: 10.64.76.0/24
+          ipv6: 2620:0:861:babf::/64
+        private1-mlserve-kubepods-eqiad:
+          ipv4: 10.64.78.0/23
+          ipv6: 2620:0:861:300::/64
+        private1-mlserve-kubesvc-eqiad:
+          ipv4: 10.64.77.0/24
+          ipv6: 2620:0:861:301::/64
+    codfw:
+      public:
+        public1-a-codfw:
+          ipv4: 208.80.153.0/27
+          ipv6: 2620:0:860:1::/64
+        public1-b-codfw:
+          ipv4: 208.80.153.32/27
+          ipv6: 2620:0:860:2::/64
+        public1-c-codfw:
+          ipv4: 208.80.153.64/27
+          ipv6: 2620:0:860:3::/64
+        public1-d-codfw:
+          ipv4: 208.80.153.96/27
+          ipv6: 2620:0:860:4::/64
+        public1-lvs-codfw:
+          ipv4: 208.80.153.224/27
+          ipv6: 2620:0:860:ed1a::/64
+      private:
+        private1-a-codfw:
+          ipv4: 10.192.0.0/22
+          ipv6: 2620:0:860:101::/64
+        private1-b-codfw:
+          ipv4: 10.192.16.0/22
+          ipv6: 2620:0:860:102::/64
+        private1-c-codfw:
+          ipv4: 10.192.32.0/22
+          ipv6: 2620:0:860:103::/64
+        private1-d-codfw:
+          ipv4: 10.192.48.0/22
+          ipv6: 2620:0:860:104::/64
+        labs-hosts1-b-codfw:
+          ipv4: 10.192.20.0/24
+          ipv6: 2620:0:860:118::/64
+        labs-support1-b-codfw:
+          ipv4: 10.192.21.0/24
+          ipv6: 2620:0:860:122::/64
+        private1-lvs-codfw:
+          ipv4: 10.2.1.0/24
+        private1-services-kubepods-codfw:
+          ipv4: 10.192.64.0/21
+          ipv6: 2620:0:860:cabe::/64
+        private1-services-kubesvc-codfw:
+          ipv4: 10.192.72.0/24
+          ipv6: 2620:0:860:cabf::/64
+        private1-staging-kubepods-codfw:
+          ipv4: 10.192.75.0/24
+          ipv6: 2620:0:860:babe::/64
+        private1-staging-kubesvc-codfw:
+          ipv4: 10.192.76.0/24
+          ipv6: 2620:0:860:babf::/64
+        private1-mlserve-kubepods-codfw:
+          ipv4: 10.192.78.0/23
+          ipv6: 2620:0:860:300::/64
+        private1-mlserve-kubesvc-codfw:
+          ipv4: 10.192.77.0/24
+          ipv6: 2620:0:860:301::/64
+    esams:
+      public:
+        public1-esams:
+          ipv4: 91.198.174.0/25
+          ipv6: 2620:0:862:1::/64
+        public1-lvs-esams:
+          ipv4: 91.198.174.192/27
+          ipv6: 2620:0:862:ed1a::/64
+      private:
+        private1-esams:
+          ipv4: 10.20.0.0/24
+          ipv6: 2620:0:862:102::/64
+        private1-lvs-esams:
+          ipv4: 10.2.3.0/24
+    ulsfo:
+      public:
+        public1-ulsfo:
+          ipv4: 198.35.26.0/28
+          ipv6: 2620:0:863:1::/64
+        public1-lvs-ulsfo:
+          ipv4: 198.35.26.96/27
+          ipv6: 2620:0:863:ed1a::/64
+      private:
+        private1-ulsfo:
+          ipv4: 10.128.0.0/24
+          ipv6: 2620:0:863:101::/64
+        private1-lvs-ulsfo:
+          ipv4: 10.2.4.0/24
+    eqsin:
+      public:
+        public1-eqsin:
+          ipv4: 103.102.166.0/28
+          ipv6: 2001:df2:e500:1::/64
+        public1-lvs-eqsin:
+          ipv4: 103.102.166.224/27
+          ipv6: 2001:df2:e500:ed1a::/64
+      private:
+        private1-eqsin:
+          ipv4: 10.132.0.0/24
+          ipv6: 2001:df2:e500:101::/64
+        private1-lvs-eqsin:
+          ipv4: 10.2.5.0/24
+    drmrs:
+      public:
+        public1-b12-drmrs:
+          ipv4: 185.15.58.0/27
+          ipv6: 2a02:ec80:600:1::/64
+        public1-b13-drmrs:
+          ipv4: 185.15.58.32/27
+          ipv6: 2a02:ec80:600:2::/64
+      private:
+        private1-b12-drmrs:
+          ipv4: 10.136.0.0/24
+          ipv6: 2a02:ec80:600:101::/64
+        private1-b13-drmrs:
+          ipv4: 10.136.1.0/24
+          ipv6: 2a02:ec80:600:102::/64
+  frack:
+    eqiad:
+      public:
+        frack-external1-c-eqiad:
+          ipv4: 208.80.155.0/27
+      private:
+        frack-payments1-c-eqiad:
+          ipv4: 10.64.40.0/27
+        frack-bastion1-c-eqiad:
+          ipv4: 10.64.40.32/27
+        frack-administration1-c-eqiad:
+          ipv4: 10.64.40.64/27
+        frack-fundraising1-c-eqiad:
+          ipv4: 10.64.40.96/27
+        frack-DMZ1-c-eqiad:
+          ipv4: 10.64.40.128/27
+        frack-listenerdmz1-c-eqiad:
+          ipv4: 10.64.40.160/27
+    codfw:
+      public:
+        frack-external-codfw:
+          ipv4: 208.80.152.224/28
+      private:
+        frack-payments-codfw:
+          ipv4: 10.195.0.0/27
+        frack-bastion-codfw:
+          ipv4: 10.195.0.128/29
+        frack-administration-codfw:
+          ipv4: 10.195.0.64/28
+        frack-fundraising-codfw:
+          ipv4: 10.195.0.32/27
+        frack-listenerdmz-codfw:
+          ipv4: 10.195.0.80/29
+        frack-management-codfw:
+          ipv4: 10.195.0.96/27
+  sandbox:
+    eqiad:
+      public:
+        sandbox1-b-eqiad:
+          ipv4: 208.80.155.64/28
+          ipv6: 2620:0:861:202::/64
+    codfw:
+      public:
+        sandbox1-a-codfw:
+          ipv4: 208.80.152.240/28
+          ipv6: 2620:0:860:201::/64
+    ulsfo:
+      public:
+        sandbox1-ulsfo:
+          ipv4: 198.35.26.240/28
+          ipv6: 2620:0:863:201::/64
+    eqsin:
+      public:
+        sandbox1-eqsin:
+          ipv4: 103.102.166.16/28
+          ipv6: 2001:df2:e500:201::/64
+  labs:
+    eqiad:
+      private:
+        cloud-instances2-b-eqiad:
+          ipv4: 172.16.0.0/21
+      public:
+        cloud-eqiad1-floating:
+          ipv4: 185.15.56.0/25
+    codfw:
+      private:
+        cloud-instances2-b-codfw:
+          ipv4: 172.16.128.0/24
+      public:
+        cloud-codfw1dev-floating:
+          ipv4: 185.15.57.0/29

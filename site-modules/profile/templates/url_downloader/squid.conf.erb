@@ -1,0 +1,77 @@
+######################################################################
+### THIS FILE IS MANAGED BY PUPPET
+######################################################################
+
+http_port <%= @url_downloader_port %>
+hierarchy_stoplist cgi-bin ?
+
+acl everything src all
+cache deny everything
+acl apache rep_header Server ^Apache
+maximum_object_size 1010 MB
+cache_replacement_policy heap LFUDA
+access_log /var/log/squid/access.log squid
+coredump_dir /var/spool/squid
+log_mime_hdrs on
+hosts_file /etc/hosts
+request_header_max_size 8 KB
+request_body_max_size 8 KB
+refresh_pattern ^ftp:		1440	20%	10080
+refresh_pattern ^gopher:	1440	0%	1440
+refresh_pattern .		0	20%	4320
+quick_abort_min 0 KB
+quick_abort_max 0 KB
+read_ahead_gap 1024 KB
+forward_timeout 30 seconds
+connect_timeout 10 seconds
+read_timeout 30 seconds
+request_timeout 30 seconds
+client_lifetime 5 minutes
+
+acl SSL_ports port 443	# https
+acl Safe_ports port 80 443		# http, https
+acl Safe_ports port 21		# ftp
+acl purge method PURGE
+acl CONNECT method CONNECT
+
+<%- @wikimedia.each do |x| -%>
+acl wikimedia src <%= x %>
+<%- end -%>
+
+<%- @towikimedia.each do |x| -%>
+acl to-wikimedia dst <%= x %>
+<%- end -%>
+
+http_access allow manager localhost
+http_access deny manager
+http_access allow purge localhost
+http_access deny purge
+http_access deny !Safe_ports
+
+http_access deny CONNECT !SSL_ports
+http_access deny !CONNECT SSL_ports
+http_access deny to_localhost
+
+http_access deny to-wikimedia
+
+http_access allow localhost
+http_access allow wikimedia
+
+http_access deny all
+
+http_reply_access allow all
+
+icp_access deny all
+
+reply_body_max_size 1010 MB all
+
+cache_mgr root@wikimedia.org
+
+cache_effective_user proxy
+cache_effective_group proxy
+
+visible_hostname url-downloader.wikimedia.org
+
+via off
+
+netdb_filename none

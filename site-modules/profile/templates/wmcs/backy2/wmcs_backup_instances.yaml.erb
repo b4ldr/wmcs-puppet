@@ -1,0 +1,86 @@
+ceph_pool: <%= @ceph_vm_pool %>
+exclude_servers:
+  admin:
+    - ".*"
+  admin-monitoring:
+    - ".*"
+  cloudvirt-canary:
+    - ".*"
+  codesearch:
+    - ".*"
+  deployment-prep:
+    - "^.*snapshot0.*$"
+    - "^deployment-docker.*$"
+    - "^deployment-elastic.*$"
+    - "^deployment-mediawiki-.*"
+    - "^deployment-mwmaint.*"
+  dumps:
+    # negative lookahead, maybe we should use an include_servers too
+    - "^(?!dumps-0).*"
+  extdist:
+    - ".*"
+  integration:
+    - "^integration-agent.*$"
+  mwoffliner:
+    - ".*"
+  paws:
+    - "^paws-k8s-worker.*$"
+  sre-sandbox:
+    - ".*"
+  testlabs:
+    - ".*"
+  tools:
+    - "^.*worker.*$"
+    - "^.*etcd.*$"
+    - "^tools-sgeexec-.*$"
+    - "^.*sgewebgrid-lighttpd.*$"
+  toolsbeta:
+    - ".*"
+  transferpy-test:
+    - ".*"
+  video:
+    - "encoding.*$"
+  wmf-research-tools:
+    - "^.*-test.*$"
+    - "^.*-prototype.*$"
+    - "^.*-build.*$"
+  recommendation-api:
+    - "^.*-test.*$"
+    - "^.*-prototype.*$"
+    - "^.*-build.*$"
+  wikidata-query:
+    - "^wcqs-beta-01$"
+
+project_assignments:
+  admin: ignore
+  analytics: cloudvirt1023
+  clouddb-services: ignore
+  cloudinfra: cloudvirt1021
+  cyberbot: cloudvirt1021
+  wikitextexp: cloudvirt1021
+  wmflabsdotorg: ignore
+  deployment-prep: cloudvirt1023
+  integration: cloudvirt1021
+  language: cloudvirt1023
+  monitoring: cloudvirt1021
+  mwoffliner: cloudvirt1021
+  ores: cloudvirt1021
+  paws: cloudvirt1023
+  recommendation-api: cloudvirt1021
+  tools: cloudvirt1022
+  wikidata-query: cloudvirt1021
+  wikidata-dev: cloudvirt1025
+  packaging: cloudvirt1025
+  dwl: cloudvirt1025
+  maps: cloudvirt1025
+  wmde-dashboards: cloudvirt1025
+  download: cloudvirt1025
+  ign2commons: cloudvirt1025
+  metricsinfra: cloudvirt1025
+  wmf-research-tools: cloudvirt1025
+  wikidumpparse: cloudvirt1025
+  devtools: cloudvirt1025
+  dumps: cloudvirt1024
+  ALLOTHERS: cloudvirt1024
+
+live_for_days: 5

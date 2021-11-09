@@ -1,0 +1,114 @@
+# this is the kafka output config, so load the kafka output module
+module(load="omkafka")
+
+# load mmrm1stspace to remove leading space from msg field in output
+# (leading space breaks existing grok/regex message filters)
+module(load="mmrm1stspace")
+
+# load mmutf8fix to convert non-utf8 charsets to utf8
+module(load="mmutf8fix")
+
+# parse json messages when @cee cookie is found
+module(load="mmjsonparse")
+
+# define a template to be used by omkafka dynatopic
+template(name="kafka_topic" type="string" string="rsyslog-%syslogseverity-text%")
+
+# send to kafka if lookup table contains "kafka" for relevant programname
+# $.log_outputs defined by lookup table in lookup_output.conf
+if ( $.log_outputs contains "kafka" ) then {
+
+    # remove leading white space from msg field
+    action(type="mmrm1stspace")
+
+    # attempt to convert log charset to utf8
+    action(type="mmutf8fix")
+
+    # try parsing the message as json if @cee cookie is found
+    action(type="mmjsonparse" name="mmjsonparse_kafka")
+
+    # if parsing of @cee cookie fails, try parsing raw message as json
+    if $parsesuccess != "OK" then {
+        action(type="mmjsonparse" name="mmjsonparse_kafka_raw" cookie="" useRawMsg="on")
+    }
+
+    # if parsing of @cee cookie AND raw message fails, try parsing "msg" field as json
+    # https://www.rsyslog.com/doc/v8-stable/configuration/modules/mmjsonparse.html
+    if $parsesuccess != "OK" then {
+        action(type="mmjsonparse" name="mmjsonparse_kafka_msg" cookie="")
+    }
+
+    # the message is json, use a different template (syslog_cee vs syslog_json)
+    # unfortunately rsyslog doesn't allow variables to be used as template
+    # names, so the kafka action is duplicated here.
+    if $parsesuccess == "OK" then {
+        action(type="omkafka"
+               broker=<%= scope.lookupvar('logging_kafka_brokers').to_json %>
+               topic="kafka_topic"
+               dynatopic="on"
+               dynatopic.cachesize="1000"
+               partitions.auto="on"
+               template="syslog_cee"
+            <%- if scope['queue_size'] > 0 -%>
+               queue.type="LinkedList" queue.size="<%= scope['queue_size'] %>" queue.filename="output_kafka_cee"
+               queue.highWatermark="<%= (scope['queue_size'] * 0.7).to_i %>" queue.lowWatermark="<%= (scope['queue_size'] * 0.6).to_i %>"
+               queue.checkpointInterval="5"
+            <%- end -%>
+               confParam=[ "security.protocol=ssl",
+                           "ssl.ca.location=/etc/ssl/certs/Puppet_Internal_CA.pem",
+                           "compression.codec=snappy",
+                           "socket.timeout.ms=10000",
+                           "socket.keepalive.enable=true",
+                           "queue.buffering.max.ms=50",
+                           "batch.num.messages=1000" ]
+        )
+    } else {
+        # if ecs_170 in log_outputs, use that template to format
+        # non-json-formatted syslog events into an ecs-compatible form
+        if ( $.log_outputs contains "ecs_170" ) then {
+            action(type="omkafka"
+                   broker=<%= scope.lookupvar('logging_kafka_brokers').to_json %>
+                   topic="kafka_topic"
+                   dynatopic="on"
+                   dynatopic.cachesize="1000"
+                   partitions.auto="on"
+                   template="ecs_170"
+               <%- if scope['queue_size'] > 0 -%>
+                   queue.type="LinkedList" queue.size="<%= scope['queue_size'] %>" queue.filename="output_kafka_json"
+                   queue.highWatermark="<%= (scope['queue_size'] * 0.7).to_i %>" queue.lowWatermark="<%= (scope['queue_size'] * 0.6).to_i %>"
+                   queue.checkpointInterval="5"
+               <%- end -%>
+                   confParam=[ "security.protocol=ssl",
+                               "ssl.ca.location=/etc/ssl/certs/Puppet_Internal_CA.pem",
+                               "compression.codec=snappy",
+                               "socket.timeout.ms=10000",
+                               "socket.keepalive.enable=true",
+                               "queue.buffering.max.ms=50",
+                               "batch.num.messages=1000" ]
+            )
+        } else {
+            # fall back to legacy json format
+            action(type="omkafka"
+                   broker=<%= scope.lookupvar('logging_kafka_brokers').to_json %>
+                   topic="kafka_topic"
+                   dynatopic="on"
+                   dynatopic.cachesize="1000"
+                   partitions.auto="on"
+                   template="syslog_json"
+               <%- if scope['queue_size'] > 0 -%>
+                   queue.type="LinkedList" queue.size="<%= scope['queue_size'] %>" queue.filename="output_kafka_json"
+                   queue.highWatermark="<%= (scope['queue_size'] * 0.7).to_i %>" queue.lowWatermark="<%= (scope['queue_size'] * 0.6).to_i %>"
+                   queue.checkpointInterval="5"
+               <%- end -%>
+                   confParam=[ "security.protocol=ssl",
+                               "ssl.ca.location=/etc/ssl/certs/Puppet_Internal_CA.pem",
+                               "compression.codec=snappy",
+                               "socket.timeout.ms=10000",
+                               "socket.keepalive.enable=true",
+                               "queue.buffering.max.ms=50",
+                               "batch.num.messages=1000" ]
+            )
+        }
+    }
+
+}

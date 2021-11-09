@@ -1,0 +1,30 @@
+type: 'dump'
+user: '<%= @user %>'
+password: '<%= @password %>'
+rotate: True
+compress: False
+archive: False
+retention: 18
+stats_file: '/etc/wmfbackups/statistics.cnf'
+sections:
+  s4:
+    host: 'db1150.eqiad.wmnet'
+    port: 3314
+  s5:
+    host: 'db1150.eqiad.wmnet'
+    port: 3315
+  s6:
+    host: 'db1140.eqiad.wmnet'
+    port: 3316
+  m1:
+    host: 'db1117.eqiad.wmnet'
+    port: 3321
+  m2:
+    host: 'db1117.eqiad.wmnet'
+    port: 3322
+  m3:
+    host: 'db1117.eqiad.wmnet'
+    port: 3323
+  m5:
+    host: 'db1117.eqiad.wmnet'
+    port: 3325

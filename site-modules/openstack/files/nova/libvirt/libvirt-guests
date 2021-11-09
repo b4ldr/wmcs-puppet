@@ -1,0 +1,9 @@
+# This file is managed by Puppet
+
+# Let OpenStack restart active VMs
+ON_BOOT=ignore
+START_DELAY=15
+
+ON_SHUTDOWN=shutdown
+PARALLEL_SHUTDOWN=5
+SHUTDOWN_TIMEOUT=300

@@ -1,0 +1,31 @@
+#####################################################################
+### THIS FILE IS MANAGED BY PUPPET
+### puppet:///wikistats/apache/wikistats.erb
+#####################################################################
+# vim: filetype=apache
+
+<VirtualHost *:80>
+
+    ServerName wikistats-cloud-vps
+
+    DocumentRoot /var/www/wikistats
+
+    <Directory />
+        Options FollowSymLinks
+        AllowOverride None
+    </Directory>
+
+    <Directory /var/www/wikistats/>
+        Options Indexes FollowSymLinks MultiViews
+        AllowOverride None
+        Order allow,deny
+        allow from all
+    </Directory>
+
+    ErrorLog /var/log/apache2/error.log
+    LogLevel warn
+    CustomLog /var/log/apache2/access.log wmf
+    ServerSignature On
+
+</VirtualHost>
+

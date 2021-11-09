@@ -1,0 +1,15 @@
+{
+<% if @tls -%>
+  "security.protocol":        "SSL",
+  "ssl.ca.location":          "<%= @tls['ca_location'] %>",
+  "ssl.cipher.suites":        "<%= @tls['cipher_suites'] %>",
+  "ssl.curves.list":          "<%= @tls['curves_list'] %>",
+  "ssl.sigalgs.list":         "<%= @tls['sigalgs_list'] %>",
+<% end -%>
+  "client.id":                "purged",
+  "bootstrap.servers":        "<%= @brokers.join ',' %>",
+  "statistics.interval.ms":   <%= @stats_interval_ms %>,
+  "compression.codec":        "<%= @compression_codec %>",
+  "group.id":                 "<%= @group_id %>",
+  "go.events.channel.enable": true
+}

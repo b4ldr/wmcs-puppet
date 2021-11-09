@@ -1,0 +1,44 @@
+# Apache configuration for Grafana.
+# This file is managed by Puppet.
+<VirtualHost *:80>
+  ServerName <%= @domain %>
+<%- @server_aliases.each do |name| -%>
+  ServerAlias <%= name %>
+<%- end -%>
+  DocumentRoot /usr/share/grafana/public
+
+  RewriteEngine On
+
+  # Reject access to snapshots API to prevent similar issues to CVE-2019-1504:
+  RewriteCond %{REQUEST_METHOD} POST
+  RewriteCond %{REQUEST_URI} ^/api/snapshots
+  RewriteRule .* - [F,L]
+
+<% if @enable_cas %>
+  # User has clicked 'login' on a dashboard.
+  # Redirect to the same dashboard on the 'rw' vhost.
+  RewriteCond "%{REQUEST_URI}" "^/login"
+  RewriteCond "%{HTTP_REFERER}" "^https://<%= @domain %>/d/(.*)"
+  # Add ForceLogin to prevent a redirect loop T269272
+  # grafana always adds an orgid QSA so we don't need to worry about '?' vs '&' below
+  RewriteRule "^" "https://<%= @domainrw %>/d/%1&forceLogin=true" [R=302,L,NE]
+
+  # Direct /login visit, redirect to 'rw' homepage
+  RewriteCond "%{REQUEST_URI}" "^/login"
+  RewriteRule "^" "https://<%= @domainrw %>" [R=302,L]
+
+  # /explore requires login, also backwards compatibility
+  RewriteCond "%{REQUEST_URI}" "^/explore"
+  RewriteRule "^" "https://<%= @domainrw %>/explore" [R=302,L]
+<% end %>
+
+  ProxyPreserveHost On
+  ProxyPass / http://localhost:3000/
+  ProxyPassReverse / http://localhost:3000/
+
+  RequestHeader unset X-CAS-uid
+  RequestHeader unset X-WEBAUTH-USER
+
+  # Automatically log in all visitors as anonymous.
+  RequestHeader set X-WEBAUTH-USER "Anonymous"
+</VirtualHost>

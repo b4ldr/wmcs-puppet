@@ -1,0 +1,39 @@
+<%
+#
+# Nginx ERb template for a simple reverse proxy site.
+# Parameters:
+#   @listen              - Example:  host:port
+#   @proxy_pass          - Example:  http://host:port/
+#   @server_properties   - Example: ['client_max_body_size 256M;', 'other_thing 123;']
+#   @location_properties - Example: ['this_prop yes;', 'one_more_prop 456;']
+#
+
+
+-%>
+<% if @ssl_enabled %>
+server {
+    listen [::]:80;
+    listen 80;
+    return 301 https://$host$request_uri;
+    }
+<% end %>
+
+server {
+  listen [::]:<%= @listen %>;
+  listen <%= @listen %>;
+
+<% if @server_properties -%>
+  <%= @server_properties.sort.join("\n  ") -%>
+<% end -%>
+
+  location / {
+    proxy_pass <%= @proxy_pass %>;
+    proxy_redirect off;
+    proxy_buffering off;
+    proxy_set_header Host $host;
+    proxy_set_header Proxy ""; # https://httpoxy.org/
+<% if @location_properties -%>
+    <%= @location_properties.sort.join("\n    ") -%>
+<% end -%>
+  }
+}

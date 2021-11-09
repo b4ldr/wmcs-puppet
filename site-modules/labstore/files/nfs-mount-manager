@@ -1,0 +1,107 @@
+#!/bin/bash
+
+set -e
+
+log () {
+    /usr/bin/logger -i -t 'nfs-mount-manager' $@
+}
+
+msg () {
+    /bin/echo $1
+    log $1
+}
+
+to_umount () {
+
+            # -f = force an unmount (in case of an unreachable NFS system).  \
+            # (Requires kernel 2.1.116 or later.)
+            #
+            # -l = Lazy  unmount.  Detach the filesystem from the file hierarchy now, \
+            # and clean up all references to this \
+            #  filesystem as soon as it is not busy anymore.
+            msg "$1 is being unmounted"
+            /usr/bin/timeout --preserve-status -k 10s 20s /bin/umount -fl $1
+            # While a mount path is not associated we don't
+            # want files being dumped their on local disk
+            /bin/chmod 600 $1
+}
+
+case "$1" in
+        check)
+
+            # notify if check path is a symlink
+            if /usr/bin/test -L $2; then
+                /usr/bin/file -s $2
+
+               # TODO: it should be safe to exit if link is
+               # true but there are some legacy cases we
+               # need to verify are removed.
+               msg "$2 is a symlink"
+            fi
+
+            if ! /bin/cat /proc/mounts | /usr/bin/awk '{print $2}' \
+                | /bin/grep -qs "^$2$"; then
+                msg "$2 is not mounted."
+                exit 1
+            fi
+
+            if ! /usr/bin/timeout --preserve-status -k 10s 30s /usr/bin/stat $2 &> /dev/null; then
+                msg "$2 does not seem healthy."
+                exit 1
+            fi
+            ;;
+        mount)
+           if [ "${2}" == "all" ]; then
+               msg 'attempting to mount all present in /etc/fstab'
+               /bin/mount -a
+               $0 list check
+            else
+                msg "mounting $2"
+                # mount understands to look in /etc/fstab so it is possible
+                # to only pass the mount path in that case and the mount
+                # options will be filled in
+                /usr/bin/timeout --preserve-status -k 10s 20s /bin/mount -v $2
+                $0 check $2
+            fi
+            ;;
+        umount)
+            to_umount $2
+            $0 check $2
+            ;;
+        clean)
+            # If defined in /etc/fstab unmount for NFS
+            for mount_point in $(/bin/findmnt -n --fstab -t nfs | /usr/bin/awk '{print $1}' | egrep '^\/'); do
+                to_umount $mount_point;
+            done
+            ;;
+        list)
+            for mount_point in $(/bin/findmnt -n --fstab -t nfs | /usr/bin/awk '{print $1}' | egrep '^\/'); do
+                echo $mount_point;
+                if [ "${2}" == "check" ]; then
+                    $0 check $mount_point
+                fi
+            done
+            ;;
+        kill-active)
+            if [ -z "$2" ]; then
+                echo "No mount path supplied"
+                exit 1
+            fi
+            if /usr/bin/test -e $2; then
+                # print active processes first
+                lsof +f -- $2 | tail -n +2
+                # Use the terse flag for lsof to extract just pids and then pipe to kill
+                lsof -t +f -- $2 | xargs --no-run-if-empty kill -9
+            else
+                echo "Invalid path"
+            fi
+            ;;
+        *)
+            /bin/echo 'list   [check]                - list locally defined NFS mount paths'
+            /bin/echo 'check  <mount_path>           - validate stat(1) returns successfully'
+            /bin/echo 'mount  [ all | <mount_path> ] - mount a path defined in /etc/fstab'
+            /bin/echo 'umount <mount_path>           - umount a path defined in /etc/fstab'
+            /bin/echo 'clean                         - remove all mounts defined in /etc/fstab'
+            /bin/echo 'kill-active <mount_path>      - WARNING: kills procs actively accessing a mount path'
+            ;;
+esac

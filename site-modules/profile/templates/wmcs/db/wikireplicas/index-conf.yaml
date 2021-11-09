@@ -1,0 +1,93 @@
+port: 3306
+mysql_user: "<%= @idx_user %>"
+mysql_password: "<%= @idx_pass %>"
+mysql_instances:
+<%- if defined?(@instances) -%>
+  <%- @instances.each do |instance, buffer| -%>
+  - <%= instance %>
+  <%- end -%>
+<%- else -%>
+  - all
+<%- end -%>
+
+indexes:
+  - table: page_props
+    name: pp_value_prefix
+    columns:
+      - pp_value(767)
+  - table: logging
+    name: log_comment_type
+    columns:
+      - log_comment_id
+      - log_type
+      - log_deleted
+  - table: protected_titles
+    name: pt_reason_id
+    columns:
+      - pt_reason_id
+  - table: oldimage
+    name: oi_description_deleted
+    columns:
+      - oi_description_id
+      - oi_deleted
+  - table: ipblocks
+    name: ipb_reason_deleted
+    columns:
+      - ipb_reason_id
+      - ipb_deleted
+  - table: recentchanges
+    name: rc_comment_deleted
+    columns:
+      - rc_comment_id
+      - rc_deleted
+  - table: filearchive
+    name: fa_description_deleted
+    columns:
+      - fa_description_id
+      - fa_deleted
+  - table: filearchive
+    name: fa_reason
+    columns:
+      - fa_deleted_reason_id
+  - table: revision_comment_temp
+    name: revcomment_comment_id
+    columns:
+      - revcomment_comment_id
+  - table: image
+    name: img_description_id
+    columns:
+      - img_description_id
+  - table: slots
+    name: slot_content_id
+    columns:
+      - slot_content_id
+  - table: archive
+    name: ar_actor_deleted
+    columns:
+        - ar_actor
+        - ar_deleted
+  - table: ipblocks
+    name: ipb_actor_deleted
+    columns:
+        - ipb_by_actor
+        - ipb_deleted
+  - table: oldimage
+    name: oi_actor_deleted
+    columns:
+        - oi_actor
+        - oi_deleted
+  - table: filearchive
+    name: fa_actor_deleted
+    columns:
+        - fa_actor
+        - fa_deleted
+  - table: recentchanges
+    name: rc_actor_deleted
+    columns:
+       - rc_actor
+       - rc_deleted
+  - table: logging
+    name: log_actor_deleted
+    columns:
+       - log_actor
+       - log_deleted

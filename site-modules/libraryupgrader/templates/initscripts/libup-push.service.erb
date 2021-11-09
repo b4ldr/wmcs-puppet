@@ -1,0 +1,17 @@
+[Unit]
+Description=libup push celery daemon
+After=rabbitmq-server.target
+
+[Service]
+PIDFile=/run/libup-push/pid
+User=libup
+Group=libup
+RuntimeDirectory=libup-push
+WorkingDirectory=/srv/libraryupgrader/
+ExecStart=/srv/libraryupgrader/venv/bin/libup-celery worker --loglevel=info \
+          --pidfile /run/libup-push/pid --concurrency=1 -Q push -n libup-push@
+ExecReload=/bin/kill -s HUP $MAINPID
+ExecStop=/bin/kill -s TERM $MAINPID
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,40 @@
+# rsyslog configuration for MediaWiki
+# This file is managed by Puppet
+
+# Emulate MediaWiki's wfDebugLog / wfErrorLog format
+template(name="MediaWiki" type="string" string="%programname% %timegenerated% %HOSTNAME%: %msg%\n")
+
+# The trailing tilde in the filter definitions below excludes
+# the messages from further processing.
+
+# Rotate /var/log/apache2.log when it exceeds 100MB.
+$outchannel apache2, /var/log/apache2.log, 100000000, /usr/sbin/logrotate -f /etc/logrotate.d/mediawiki_apache
+
+# Forward Apache to /var/log/apache2.log and log aggregator.
+if $programname == "apache2" then {
+    :omfile:$apache2
+    @<%= @log_aggregator %>;MediaWiki
+<% if @forward_syslog -%>
+    @<%= @forward_syslog %>
+<% end -%>
+    stop
+}
+
+# Forward PHP7 logs and stacktraces to the log aggregator
+if ($programname startswith 'php7.')  then {
+    @<%= @log_aggregator %>;MediaWiki
+<% if @forward_syslog -%>
+    @<%= @forward_syslog %>
+<% end -%>
+    stop
+}
+
+# Forward messages logged by the kernel and containing the string
+# "php7" (such as warnings that the process was killed or respawned)
+# to the log aggregator.
+if $msg contains "php7" and $programname == "kernel" then {
+    @<%= @log_aggregator %>;MediaWiki
+<% if @forward_syslog -%>
+    @<%= @forward_syslog %>
+<% end -%>
+}

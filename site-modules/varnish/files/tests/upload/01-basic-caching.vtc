@@ -1,0 +1,61 @@
+varnishtest "Basic caching behavior"
+
+server s1 {
+    rxreq
+    txresp -bodylen 1024
+} -start
+
+varnish v1 -arg "-p vcl_path=${vcl_path} -p vcc_err_unref=false -p vcc_allow_inline_c=true -p cc_command='${cc_command}'" -vcl+backend {
+    backend vtc_backend {
+        .host = "${s1_addr}"; .port = "${s1_port}";
+    }
+
+    include "${basepath}/usr/share/varnish/tests/wikimedia_upload-frontend.vcl";
+} -start
+
+client c1 {
+    txreq
+    rxresp
+    expect resp.status == 400
+}
+
+client c2 {
+    txreq -hdr "X-Forwarded-Proto: https" -hdr "Host: w.wiki"
+    rxresp
+    expect resp.status == 421
+}
+
+client c3 {
+    txreq -url "/banana" -hdr "X-Forwarded-Proto: https" -hdr "Host: upload.wikimedia.org"
+    rxresp
+    expect resp.status == 200
+}
+
+varnish v1 -expect cache_miss == 0
+varnish v1 -expect cache_hit == 0
+varnish v1 -expect n_object == 0
+
+# c1 does not send the Host header. We expect to get a 400 in that case.
+client c1 -run
+varnish v1 -expect cache_miss == 0
+varnish v1 -expect cache_hit == 0
+varnish v1 -expect n_object == 0
+
+# c2 sends a request for a domain not served here (example.org). Again we
+# expect to get a 404.
+client c2 -run
+varnish v1 -expect cache_miss == 0
+varnish v1 -expect cache_hit == 0
+varnish v1 -expect n_object == 0
+
+# Cache miss with Host: upload.wikimedia.org
+client c3 -run
+varnish v1 -expect cache_miss == 1
+varnish v1 -expect cache_hit == 0
+varnish v1 -expect n_object == 1
+
+# Cache hit with Host: upload.wikimedia.org
+client c3 -run
+varnish v1 -expect cache_miss == 1
+varnish v1 -expect cache_hit == 1
+varnish v1 -expect n_object == 1

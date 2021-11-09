@@ -1,0 +1,7 @@
+fixtures:
+    symlinks:
+        aptrepo: "#{source_dir}"
+        apt: "../../../../apt"
+        ssh: "../../../../ssh"
+        wmflib: "../../../../wmflib"
+        stdlib: "../../../../stdlib"

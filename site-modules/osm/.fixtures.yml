@@ -1,0 +1,6 @@
+fixtures:
+    symlinks:
+        osm: "#{source_dir}"
+        stdlib: "../../../../stdlib"
+        wmflib: "../../../../wmflib"
+        logrotate: "../../../../logrotate"

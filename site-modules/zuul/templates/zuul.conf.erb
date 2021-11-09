@@ -1,0 +1,62 @@
+# WARNING: this file is managed by puppet
+# modules/zuul/templates/zuul.conf.erb
+
+# Configuration file for the Zuul server and the Zuul merger. Vary depending on
+# $zuul_server (either 'merger' or 'server').
+#
+# The only sections needed by zuul-merger are gearman, connections to gerrit,
+# zuul and merger.
+
+[gearman]
+server=<%= @gearman_server %>
+
+<% if @zuul_role == 'server' -%>
+[gearman_server]
+start=<%= @gearman_server_start %>
+log_config=/etc/zuul/gearman-logging.conf
+<% end -%>
+
+[connection gerrit]
+driver=gerrit
+server=<%= @gerrit_server %>
+user=<%= @gerrit_user %>
+<% if @gerrit_baseurl %>baseurl=<%= @gerrit_baseurl %><% end %>
+sshkey=/var/lib/zuul/.ssh/id_rsa
+<% if @gerrit_event_delay -%>
+event_delay=<%= @gerrit_event_delay %>
+<% end -%>
+
+[zuul]
+layout_config=/etc/zuul/wikimedia/zuul/layout.yaml
+log_config=/etc/zuul/logging.conf
+state_dir=/var/lib/zuul
+<% if @zuul_role == 'server' -%>
+url_pattern=<%= @url_pattern %>
+status_url=<%= @status_url %>
+# Whether to prefix the url/success report with the job name.
+# That was used with Gerrit 2.x to nicely format reports using commentlink but
+# is no more possible with Gerrit 3. T256575
+job_name_in_report = false
+<% end -%>
+
+<% if @zuul_role == 'merger' -%>
+[merger]
+git_dir=<%= @git_dir %>
+zuul_url=<%= @zuul_url %>
+log_config=/etc/zuul/merger-logging.conf
+<% if @git_email != "" -%>
+git_user_email=<%= @git_email %>
+<% end -%>
+<% if @git_name != "" -%>
+git_user_name=<%= @git_name %>
+<% end -%>
+<% end -%>
+
+<% if @zuul_role == 'server' && ! @email_server.nil? -%>
+[connection smtp]
+driver=smtp
+server=<%= @email_server %>
+port=<%= @email_server_port %>
+default_from=<%= @email_default_from %>
+default_to=<%= @email_default_to %>
+<% end -%>

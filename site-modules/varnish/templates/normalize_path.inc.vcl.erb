@@ -1,0 +1,187 @@
+C{
+
+/******************************************************************************
+ * normalize_path_encoding(): URL-Path (not Query!) normalization
+ *
+ * This function requires as input a "decoder_ring", which must be a pointer
+ * to a 256-element array of size_t elements.  The indices are the 256
+ * possible byte values, and the values control the normalization of the given
+ * character in the URL path.  Legal values are currently 0, 1, and 2:
+ *
+ * 0 -> Always encode this character as a hex escape (%XX)
+ * 1 -> Always decode a hex escape representing this character back into the
+ *      literal character byte.
+ * 2 -> Do not change the encoding of this character, allowing both forms to
+ *      pass through.
+ *
+ * The parsing of the input URL's existing hex escapes is case-insensitive
+ * (%AB == %ab == %Ab == %aB).  All hex escapes in the final normalized URL
+ * are normalized to upper case hex digits, even if they didn't need any other
+ * normalization transformation (even case "2" above).
+ *
+ * RFC 3986 splits the 256 possible byte values completely into 3 sets:
+ * 66 Unreserved: 0-9 A-Z a-z - . _ ~
+ * 18 Reserved: : / ? # [ ] @ ! $ & ' ( ) * + , ; =
+ * 172 Disallowed: 0x00-0x20 0x7F-0xFF < > | { } " % \ ^ `
+ *
+ * As a generic URL normalizer without application-specific knowledge, the best
+ * one can do at normalization by the RFC rules is:
+ * * Unreserved: always decode (array value 1)
+ * * Reserved: do not touch (array value 2)
+ * * Disallowed: input is malformed if these exist, but encoding them is best
+ *               reasonable option in that case (array value 0)
+ *
+ * A generic normalizer that matches the above values is provided as
+ * "generic_decoder_ring" below which can be used as the decoder_ring argument.
+ *
+ * More-specific decoder rings which increase the amount of normalization can
+ * be built with application-specific knowledge, while still conforming to
+ * RFCs, by changing some of the Reserved set's 2s into 0s or 1s as warranted.
+ *
+ * Note that since we're specifically operating on the Path component, which is
+ * delimited by literal '?' or '#', that these Reserved characters should not
+ * be changed from their 2 value given in the generic_decoder_ring definition.
+ * Changing them to 0 will do nothing due to implementation details (which
+ * could change in the future!), and changing them to 1 would break the
+ * normalized interpretation.
+ *
+ * Therefore, there are 16 reasonable characters, all from Reserved, that
+ * custom application-specific decoders can set to 0 or 1 instead of their
+ * default value of 2 from the generic_decoder_ring, if warranted.  We'll call
+ * these 16 the Customizable Set:
+ * : / [ ] @ ! $ & ' ( ) * + , ; =
+ *
+ * Changing any others (Unreserved, Disallowed, ?, or #) outside of the
+ * Customizable set to values other than those shown in the
+ * generic_decoder_ring is allowed by the code, but will almost certainly lead
+ * to broken or buggy URL normalization.
+ *****************************************************************************/
+
+#include <inttypes.h>
+#include <string.h>
+
+static const size_t generic_decoder_ring[256] = {
+  // 0x00-0x1F (all unprintable)
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+  //  ! " # $ % & ' ( ) * + , - . / 0 1 2 3 4 5 6 7 8 9 : ; < = > ?
+    0,2,0,2,2,0,2,2,2,2,2,2,2,1,1,2,1,1,1,1,1,1,1,1,1,1,2,2,0,2,0,2,
+  //@ A B C D E F G H I J K L M N O P Q R S T U V W X Y Z [ \ ] ^ _
+    2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,0,2,0,1,
+  //` a b c d e f g h i j k l m n o p q r s t u v w x y z { | } ~ <DEL>
+    0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,1,0,
+  // 0x80-0xFF (all unprintable)
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+};
+
+static const size_t hex_finder[256] = {
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+  //  ! " # $ % & ' ( ) * + , - . / 0 1 2 3 4 5 6 7 8 9 : ...
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,
+  //@ A B C D E F G ...
+    0,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+  //` a b c d e f g ...
+    0,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+};
+
+static const size_t hex_dec[256] = {
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,2,3,4,5,6,7,8,9,0,0,0,0,0,0,
+    0,10,11,12,13,14,15,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+    0,10,11,12,13,14,15,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+};
+
+static const char hex_enc[16] = {
+    '0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F'
+};
+
+#define DO_DECODE(_c) (decoder_ring[(uint8_t)(_c)])
+#define IS_HEX(_c) (hex_finder[(uint8_t)(_c)])
+#define HEX_DECODE(_c1,_c2) \
+    ((hex_dec[(uint8_t)(_c1)] << 4) | hex_dec[(uint8_t)(_c2)])
+#define HEX_ENC_TOP(_c) (hex_enc[((uint8_t)(_c)) >> 4])
+#define HEX_ENC_BOTTOM(_c) (hex_enc[((uint8_t)(_c)) & 0xF])
+#define HEX_IS_LOWER(_c) ((uint8_t)(((((uint8_t)(_c)) & 0x40) >> 6) \
+                                  & ((((uint8_t)(_c)) & 0x20) >> 5)))
+
+void normalize_path_encoding(const struct vrt_ctx *ctx, const size_t* decoder_ring)
+{
+    const char* vrt_url = VRT_r_req_url(ctx);
+    const size_t in_url_len = strlen(vrt_url);
+
+    // Copy input URL to new array with double-NUL termination (this allows
+    // us to not worry about running off the end when checking for %XX hex
+    // encodings):
+    char in_url[in_url_len + 2];
+    memcpy(in_url, vrt_url, in_url_len + 1);
+    in_url[in_url_len + 1] = '\0';
+
+    // worst-case is every input character requires encoding:
+    char out_url[(in_url_len * 3) + 1];
+
+    const char* in_p = in_url;
+    char* out_p = out_url;
+    unsigned dirty = 0;
+
+    while (1) {
+        const char c = *in_p++;
+        if (c == '\0') {
+            *out_p = '\0';
+            break;
+        } else if (c == '?' || c == '#') {
+            if (dirty) {
+                *out_p++ = c;
+                strcpy(out_p, in_p);
+            }
+            break;
+        } else if (c == '%' && IS_HEX(*in_p) && IS_HEX(*(in_p + 1))) {
+            const char x1 = *in_p++;
+            const char x2 = *in_p++;
+            const char x = HEX_DECODE(x1, x2);
+            if (DO_DECODE(x) == 1U) {
+                dirty = 1U;
+                *out_p++ = x;
+            }
+            else {
+                // mark dirty if input hex had lowercase letters
+                dirty |= HEX_IS_LOWER(x1) | HEX_IS_LOWER(x2);
+                *out_p++ = '%';
+                *out_p++ = HEX_ENC_TOP(x);
+                *out_p++ = HEX_ENC_BOTTOM(x);
+            }
+        } else if (DO_DECODE(c)) {
+            *out_p++ = c;
+        } else {
+            dirty = 1U;
+            *out_p++ = '%';
+            *out_p++ = HEX_ENC_TOP(c);
+            *out_p++ = HEX_ENC_BOTTOM(c);
+        }
+    }
+
+    /* Set req.url. This will copy our stack buffer into the workspace.
+     * VRT_l_req_url() is varadic, and concatenates its arguments. The
+     * vrt_magic_string_end marks the end of the list.
+     */
+    if (dirty)
+        VRT_l_req_url(ctx, out_url, vrt_magic_string_end);
+}
+
+#undef DO_DECODE
+#undef IS_HEX
+#undef HEX_DECODE
+#undef HEX_ENC_TOP
+#undef HEX_ENC_BOTTOM
+#undef HEX_IS_LOWER
+
+}C

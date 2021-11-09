@@ -1,0 +1,838 @@
+port: 3306
+mysql_user: "<%= @view_user %>"
+mysql_password: "<%= @view_pass %>"
+mysql_instances:
+<%- if defined?(@instances) -%>
+  <%- @instances.each do |instance, buffer| -%>
+  - <%= instance %>
+  <%- end -%>
+<%- else -%>
+  - all
+<%- end -%>
+
+add_to_all_dbs:
+  s6:
+    - labswiki
+  s7:
+    - centralauth
+
+# These lists will be excluded entirely
+sensitive_db_lists:
+  - private
+  - deleted
+
+# by list name for internal processing
+metadata:
+  small:
+    size: 1
+  medium:
+    size: 2
+  large:
+    size: 3
+
+# Tables we 1:1 to a view
+#
+#  Note that the maintain-view script will ignore tables
+#   that don't exist.  So for example globalblocks is only
+#   present in centralauth but we want it there so it stays
+#   in this list.
+fullviews:
+  - abuse_filter_action
+  - article_assessment
+  - article_assessment_pages
+  - article_assessment_ratings
+  - article_feedback
+  - article_feedback_pages
+  - article_feedback_properties
+  - article_feedback_ratings
+  - article_feedback_revisions
+  - article_feedback_stats
+  - article_feedback_stats_types
+  - babel
+  - category
+  - categorylinks
+  - change_tag
+  - change_tag_def
+  - cn_assignments
+  - cn_known_devices
+  - cn_known_mobile_carriers
+  - cn_notice_countries
+  - cn_notice_languages
+  - cn_notice_log
+  - cn_notice_mixin_params
+  - cn_notice_mixins
+  - cn_notice_mobile_carriers
+  - cn_notice_projects
+  - cn_notices
+  - cn_template_devices
+  - cn_template_log
+  - cn_template_mixins
+  - cn_templates
+  - content_models
+  - externallinks
+  - flaggedpage_config
+  - flaggedpage_pending
+  - flaggedpages
+  - flaggedrevs
+  - flaggedrevs_promote
+  - flaggedrevs_statistics
+  - flaggedrevs_stats
+  - flaggedrevs_stats2
+  - flaggedrevs_tracking
+  - flaggedtemplates
+  - geo_killlist
+  - geo_tags
+  - geo_updates
+  - globalimagelinks
+  - global_block_whitelist
+  - hashs
+  - imagelinks
+  - imagelinks_old
+  - interwiki
+  - ipblocks_restrictions
+  - iwlinks
+  - l10n_cache
+  - langlinks
+  - links
+  - linter
+  - machine_vision_freebase_mapping
+  - machine_vision_image
+  - machine_vision_label
+  - machine_vision_provider
+  - machine_vision_safe_search
+  - machine_vision_suggestion
+  - module_deps
+  - msg_resource_links
+  - namespaces
+  - ores_classification
+  - ores_model
+  - page
+  - page_broken
+  - pagelinks
+  - page_assessments
+  - page_assessments_projects
+  - page_props
+  - page_restrictions
+  - pagetriage_log
+  - pagetriage_page
+  - pagetriage_page_tags
+  - pagetriage_tags
+  - pif_edits
+  - protected_titles
+  - pr_index
+  - redirect
+  - renameuser_status
+  - revtag                 # T289952
+  - site_identifiers
+  - sites
+  - site_stats
+  - slot_roles
+  - templatelinks
+  - translate_groupreviews # T289952
+  - translate_groupstats   # T289952
+  - translate_metadata     # T289952
+  - translate_reviews      # T289952
+  - translate_sections     # T289952
+  - transcode
+  - updatelog
+  - updates
+  - user_former_groups
+  - user_groups
+  - wikilove_image_log
+  - wikilove_log
+  - global_group_permissions
+  - global_group_restrictions
+  - global_user_groups
+  - globalblocks
+  - localuser
+  - wikiset
+  - wb_changes_dispatch
+  - wb_changes_subscription
+  - wb_id_counters
+  - wb_items_per_site
+  - wb_property_info
+  - wb_terms
+  - wbc_entity_usage
+  - wbqc_constraints
+  - wbs_propertypairs
+  - watchlist_count
+  - wbt_text           # T225038
+  - wbt_type           # T225038
+  - wbt_text_in_lang   # T225038
+  - wbt_term_in_lang   # T225038
+  - wbt_property_terms # T225038
+  - wbt_item_terms     # T225038
+
+# Deliberately excluded:
+# - abusefilterprivatedetails  T187455
+# - suppress                   T178052
+# - oathauth_users             T218165
+# - titleblacklist             T178052
+# To show a log in the DB, it must appear here and this must be
+# referenced in the "logging_where" key under customviews.  The resulting
+# expression is contatenated unless there is a placeholder '$INSERTED_EXPR$'.
+# In the latter case, the expression is added to the existing query at that spot.
+allowed_logtypes: &allowed_logtypes
+  - abusefilter
+  - articlefeedbackv5
+  - block
+  - campus
+  - close
+  - contentmodel
+  - course
+  - create
+  - delete
+  - eparticle
+  - gather
+  - gblblock
+  - gblrename
+  - gblrights
+  - globalauth
+  - growthexperiments
+  - gwtoolset
+  - import
+  - institution
+  - instructor
+  - interwiki
+  - liquidthreads
+  - lock
+  - managetags
+  - massmessage
+  - merge
+  - moodbar
+  - move
+  - mwoauthconsumer
+  - newsletter
+  - newusers
+  - notifytranslators
+  - online
+  - pagelang
+  - pagetranslation
+  - pagetriage-curation
+  - pagetriage-deletion
+  - patrol
+  - protect
+  - renameuser
+  - review
+  - rights
+  - spamblacklist
+  - stable
+  - student
+  - tag
+  - thanks
+  - timedmediahandler
+  - translationreview
+  - upload
+  - usermerge
+
+customviews:
+  abuse_filter:
+    source: abuse_filter
+    view: >
+      select af_id, if(af_hidden,null,af_pattern) as af_pattern,
+      af_user, af_user_text, af_timestamp, af_enabled,
+      if(af_hidden,null,af_comments) as af_comments, af_public_comments,
+      af_hidden, af_hit_count, af_throttled, af_deleted, af_actions, af_global, af_group
+  abuse_filter_log:
+    source: abuse_filter_log
+    view: >
+      select afl_id, afl_global, afl_filter_id, afl_user, afl_user_text,
+      NULL as afl_ip, afl_action, afl_actions, afl_var_dump, afl_timestamp,
+      afl_namespace, afl_title, afl_wiki, afl_deleted, afl_patrolled_by, afl_rev_id
+    where:
+      afl_deleted=0
+  abuse_filter_history:
+    source: abuse_filter_history
+    view: >
+      select afh_id, afh_filter, afh_user, afh_user_text, afh_timestamp,
+      if (find_in_set("hidden",afh_flags),null,afh_pattern) as afh_pattern,
+      if (find_in_set("hidden",afh_flags),null,afh_comments) as afh_comments,
+      afh_flags, afh_public_comments,
+      if (find_in_set("hidden",afh_flags),null,afh_actions) as afh_actions,
+      afh_deleted, afh_changed_fields, afh_group
+  actor:
+    source: actor
+    view: select actor_id, actor_user, actor_name
+    where: >
+      exists( select 1 from user where user_id = actor_user )
+      AND (SELECT 1 from ipblocks where ipb_auto=0 AND ipb_deleted=1 AND ipb_user=actor_user) is NULL
+      OR exists( select 1 from archive where ar_actor = actor_id AND ar_deleted&4 = 0 )
+      OR exists( select 1 from ipblocks where ipb_by_actor = actor_id AND ipb_deleted=0 )
+      OR exists( select 1 from image where img_actor = actor_id )
+      OR exists( select 1 from oldimage where oi_actor = actor_id AND oi_deleted&4 = 0 )
+      OR exists( select 1 from filearchive where fa_actor = actor_id AND fa_deleted&4 = 0 )
+      OR exists( select 1 from recentchanges where rc_actor = actor_id AND rc_deleted&4 = 0 )
+      OR exists( select 1 from logging where log_actor = actor_id AND log_deleted&4 = 0 AND $INSERTED_EXPR$ )
+      OR exists( select 1 from revision JOIN revision_actor_temp ON(revactor_rev = rev_id) where revactor_actor = actor_id AND rev_deleted&4 = 0 )
+    logging_where:
+      *allowed_logtypes
+  actor_user:
+    source: actor
+    view: select actor_id, actor_user, actor_name
+    where: >
+      exists( select 1 from user where user_id = actor_user ) AND
+      (SELECT 1 from ipblocks where ipb_auto=0 AND ipb_deleted=1 AND ipb_user=actor_user) is NULL
+  actor_archive:
+    source: actor
+    view: select actor_id, actor_user, actor_name
+    where: >
+      exists( select 1 from archive where ar_actor = actor_id AND ar_deleted&4 = 0 )
+  actor_ipblocks:
+    source: actor
+    view: select actor_id, actor_user, actor_name
+    where: >
+      exists( select 1 from ipblocks where ipb_by_actor = actor_id AND ipb_deleted=0 )
+  actor_image:
+    source: actor
+    view: select actor_id, actor_user, actor_name
+    where: >
+      exists( select 1 from image where img_actor = actor_id )
+  actor_oldimage:
+    source: actor
+    view: select actor_id, actor_user, actor_name
+    where: >
+      exists( select 1 from oldimage where oi_actor = actor_id AND oi_deleted&4 = 0 )
+  actor_filearchive:
+    source: actor
+    view: select actor_id, actor_user, actor_name
+    where: >
+      exists( select 1 from filearchive where fa_actor = actor_id AND fa_deleted&4 = 0 )
+  actor_recentchanges:
+    source: actor
+    view: select actor_id, actor_user, actor_name
+    where: >
+      exists( select 1 from recentchanges where rc_actor = actor_id AND rc_deleted&4 = 0 )
+  actor_logging:
+    source: actor
+    view: select actor_id, actor_user, actor_name
+    where: >
+      exists( select 1 from logging where log_actor = actor_id AND log_deleted&4 = 0 AND $INSERTED_EXPR$ )
+    logging_where:
+      *allowed_logtypes
+  actor_revision:
+    source: actor
+    view: select actor_id, actor_user, actor_name
+    where: >
+      exists( select 1 from revision JOIN revision_actor_temp ON(revactor_rev = rev_id) where revactor_actor = actor_id AND rev_deleted&4 = 0 )
+  archive:
+    source: archive
+    view: >
+      select ar_id, ar_namespace, ar_title, NULL as ar_text, NULL as ar_comment_id,
+      if(ar_deleted&4,0,ar_actor) as ar_actor, ar_timestamp, ar_minor_edit, NULL as ar_flags, ar_rev_id,
+      ar_deleted, if(ar_deleted&1,null,ar_len) as ar_len,
+      ar_page_id, ar_parent_id, if(ar_deleted&1,null,ar_sha1) as ar_sha1
+  archive_compat:
+    source: archive
+    view: >
+      select ar_id, ar_namespace, ar_title, NULL as ar_text, NULL as ar_comment, NULL as ar_comment_id,
+      case when ar_deleted&4 != 0 then null else COALESCE( actor_user, 0 ) END AS ar_user,
+      case when ar_deleted&4 != 0 then null else actor_name END AS ar_user_text,
+      if(ar_deleted&4,0,ar_actor) as ar_actor, ar_timestamp, ar_minor_edit, NULL as ar_flags, ar_rev_id,
+      if(ar_deleted&1,null,content_id) as ar_text_id,
+      ar_deleted, if(ar_deleted&1,null,ar_len) as ar_len,
+      ar_page_id, ar_parent_id, if(ar_deleted&1,null,ar_sha1) as ar_sha1,
+      if(ar_deleted&1,null,model_name) as ar_content_model,
+      NULL as ar_content_format
+    join:
+      - table:
+        - table: slots
+        - type: JOIN
+          table: slot_roles
+          condition: on (slot_role_id = role_id AND role_name = 'main')
+        - type: JOIN
+          table: content
+          condition: on (slot_content_id = content_id)
+        - type: JOIN
+          table: content_models
+          condition: on (content_model = model_id)
+        condition: on slot_revision_id = ar_rev_id
+      - table: actor
+        condition: on ar_actor = actor_id
+  archive_userindex:
+    source: archive
+    view: >
+      select ar_id, ar_namespace, ar_title, NULL as ar_text, NULL as ar_comment_id,
+      ar_actor, ar_timestamp, ar_minor_edit, NULL as ar_flags, ar_rev_id,
+      ar_deleted, if(ar_deleted&1,null,ar_len) as ar_len, ar_page_id, ar_parent_id,
+      if(ar_deleted&1,null,ar_sha1) as ar_sha1
+    where: (ar_deleted&4)=0
+  comment:
+    source: comment
+    view: >
+      select comment_id, comment_hash, comment_text, comment_data
+    where: >
+      exists( select 1 from image where img_description_id = comment_id )
+      OR exists( select 1 from filearchive where fa_deleted_reason_id = comment_id )
+      OR exists( select 1 from filearchive where fa_description_id = comment_id AND fa_deleted&2 = 0 )
+      OR exists( select 1 from ipblocks where ipb_reason_id = comment_id and ipb_deleted = 0)
+      OR exists( select 1 from oldimage where oi_description_id = comment_id AND oi_deleted&2 = 0 )
+      OR exists( select 1 from protected_titles where pt_reason_id = comment_id )
+      OR exists( select 1 from recentchanges where rc_comment_id = comment_id AND rc_deleted&2 = 0 )
+      OR exists( select 1 from revision JOIN revision_comment_temp ON(revcomment_rev = rev_id) where revcomment_comment_id = comment_id AND rev_deleted&2 = 0 )
+      OR exists( select 1 from logging where log_comment_id = comment_id AND log_deleted&2 = 0 AND $INSERTED_EXPR$ )
+    logging_where:
+      *allowed_logtypes
+  comment_image:
+    source: comment
+    view: >
+      select comment_id, comment_hash, comment_text, comment_data
+    where: >
+      exists( select 1 from image where img_description_id = comment_id )
+  comment_filearchive:
+    source: comment
+    view: >
+      select comment_id, comment_hash, comment_text, comment_data
+    where: >
+      exists( select 1 from filearchive where fa_deleted_reason_id = comment_id )
+      OR exists( select 1 from filearchive where fa_description_id = comment_id AND fa_deleted&2 = 0 )
+  comment_ipblocks:
+    source: comment
+    view: >
+      select comment_id, comment_hash, comment_text, comment_data
+    where: >
+      exists( select 1 from ipblocks where ipb_reason_id = comment_id and ipb_deleted = 0 )
+  comment_oldimage:
+    source: comment
+    view: >
+      select comment_id, comment_hash, comment_text, comment_data
+    where: >
+      exists( select 1 from oldimage where oi_description_id = comment_id AND oi_deleted&2 = 0 )
+  comment_protected_titles:
+    source: comment
+    view: >
+      select comment_id, comment_hash, comment_text, comment_data
+    where: >
+      exists( select 1 from protected_titles where pt_reason_id = comment_id )
+  comment_recentchanges:
+    source: comment
+    view: >
+      select comment_id, comment_hash, comment_text, comment_data
+    where: >
+      exists( select 1 from recentchanges where rc_comment_id = comment_id AND rc_deleted&2 = 0 )
+  comment_revision:
+    source: comment
+    view: >
+      select comment_id, comment_hash, comment_text, comment_data
+    where: >
+      exists( select 1 from revision JOIN revision_comment_temp ON(revcomment_rev = rev_id) where revcomment_comment_id = comment_id AND rev_deleted&2 = 0 )
+  comment_logging:
+    source: comment
+    view: >
+      select comment_id, comment_hash, comment_text, comment_data
+    where: >
+      exists( select 1 from logging where log_comment_id = comment_id AND log_deleted&2 = 0 AND $INSERTED_EXPR$ )
+    logging_where:
+      *allowed_logtypes
+  content:
+    source: content
+    view: >
+      select content_id, content_size, content_sha1, content_model, content_address
+    where: >
+      exists( select 1 from slots
+      LEFT JOIN archive ON(ar_rev_id = slot_revision_id)
+      LEFT JOIN revision ON(rev_id = slot_revision_id)
+      WHERE content_id = slot_content_id
+      AND (ar_deleted&1=0 OR rev_deleted&1=0))
+  filearchive:
+    source: filearchive
+    view: >
+      select fa_id, fa_name, fa_archive_name, fa_storage_group, NULL as fa_storage_key,
+      fa_deleted_user, fa_deleted_timestamp,
+      fa_deleted_reason_id,
+      if(fa_deleted&1,null,fa_size)
+      as fa_size, if(fa_deleted&1,null,fa_width) as fa_width, if(fa_deleted&1,null,fa_height)
+      as fa_height, if(fa_deleted&1,null,fa_metadata) as fa_metadata, if(fa_deleted&1,null,fa_bits)
+      as fa_bits, if(fa_deleted&1,null,fa_media_type) as fa_media_type, if(fa_deleted&1,null,fa_major_mime)
+      as fa_major_mime, if(fa_deleted&1,null,fa_minor_mime) as fa_minor_mime,
+      if(fa_deleted&2,0,fa_description_id) as fa_description_id,
+      if(fa_deleted&4,null,fa_actor) as fa_actor,
+      fa_timestamp, fa_deleted,
+      if(fa_deleted&1,null,fa_sha1) as fa_sha1
+  filearchive_compat:
+    source: filearchive
+    view: >
+      select fa_id, fa_name, fa_archive_name, fa_storage_group, NULL as fa_storage_key,
+      fa_deleted_user, fa_deleted_timestamp,
+      fa_deleted_reason_id,
+      comment_a.comment_text as fa_deleted_reason,
+      if(fa_deleted&1,null,fa_size)
+      as fa_size, if(fa_deleted&1,null,fa_width) as fa_width, if(fa_deleted&1,null,fa_height)
+      as fa_height, if(fa_deleted&1,null,fa_metadata) as fa_metadata, if(fa_deleted&1,null,fa_bits)
+      as fa_bits, if(fa_deleted&1,null,fa_media_type) as fa_media_type, if(fa_deleted&1,null,fa_major_mime)
+      as fa_major_mime, if(fa_deleted&1,null,fa_minor_mime) as fa_minor_mime,
+      if(fa_deleted&2,0,fa_description_id) as fa_description_id,
+      if(fa_deleted&2,null,comment_b.comment_text) as fa_description,
+      case when fa_deleted&4 != 0 then null else COALESCE( actor_user, 0 ) END AS fa_user,
+      case when fa_deleted&4 != 0 then null else actor_name END AS fa_user_text,
+      if(fa_deleted&4,null,fa_actor) as fa_actor,
+      fa_timestamp, fa_deleted,
+      if(fa_deleted&1,null,fa_sha1) as fa_sha1
+    join:
+    # These two joins could be inner joins, but it is not yet supported in script
+      - table: comment
+        condition: as comment_a on comment_a.comment_id = filearchive.fa_description_id
+      - table: comment
+        condition: as comment_b on comment_b.comment_id = filearchive.fa_deleted_reason_id
+      - table: actor
+        condition: on fa_actor = actor_id
+  filearchive_userindex:
+    source: filearchive
+    view: >
+      select fa_id, fa_name, fa_archive_name, fa_storage_group, NULL as fa_storage_key,
+      fa_deleted_user, fa_deleted_timestamp, fa_deleted_reason_id,
+      if(fa_deleted&1,null,fa_size)
+      as fa_size, if(fa_deleted&1,null,fa_width) as fa_width, if(fa_deleted&1,null,fa_height)
+      as fa_height, if(fa_deleted&1,null,fa_metadata) as fa_metadata, if(fa_deleted&1,null,fa_bits)
+      as fa_bits, if(fa_deleted&1,null,fa_media_type) as fa_media_type, if(fa_deleted&1,null,fa_major_mime)
+      as fa_major_mime, if(fa_deleted&1,null,fa_minor_mime) as fa_minor_mime,
+      if(fa_deleted&2,0,fa_description_id) as fa_description_id,
+      fa_actor, fa_timestamp, fa_deleted, if(fa_deleted&1,null,fa_sha1) as fa_sha1
+    where: (fa_deleted&4)=0
+  global_preferences:
+    source: global_preferences
+    view: select gp_user, gp_property, gp_value
+    where: gp_property in ( 'disablemail', 'fancysig', 'gender', 'nickname' )
+  globaluser:
+    source: globaluser
+    view: >
+      select gu_id, gu_name, gu_enabled, gu_enabled_method, gu_home_db, NULL as gu_email,
+      NULL as gu_email_authenticated, NULL as gu_salt, NULL as gu_password, gu_locked,
+      gu_hidden, gu_registration, NULL as gu_password_reset_key, NULL as gu_password_reset_expiration,
+      NULL as gu_auth_token
+    where: gu_hidden=''
+  ip_changes:
+    source:
+      - ip_changes
+      - revision
+    view: >
+      select ipc_rev_id, ipc_rev_timestamp, ipc_hex
+    # 4 == Revision::DELETED_USER
+    where: ipc_rev_id = rev_id AND (rev_deleted & 4) = 0
+  image:
+    source: image
+    view: >
+      select img_name, img_size, img_width, img_height, img_metadata, img_bits,
+      img_media_type, img_major_mime, img_minor_mime,
+      coalesce(img_description_id,0) as img_description_id,
+      img_actor, img_timestamp, img_sha1
+  image_compat:
+    source:
+      - image
+      - actor
+      - comment
+    view: >
+      select img_name, img_size, img_width, img_height, img_metadata, img_bits,
+      img_media_type, img_major_mime, img_minor_mime,
+      coalesce(img_description_id,0) as img_description_id,
+      comment_text as img_description,
+      actor_user as img_user,
+      actor_name as img_user_text,
+      img_actor, img_timestamp, img_sha1
+    where: comment_id = img_description_id AND img_actor = actor_id
+  ipblocks:
+    source: ipblocks
+    view: >
+      select ipb_id, if(ipb_auto<>0,null,ipb_address) as ipb_address, ipb_user,
+      ipb_reason_id,
+      ipb_timestamp, ipb_auto, ipb_anon_only,
+      ipb_create_account, ipb_expiry, if(ipb_auto<>0,null,ipb_range_start)
+      as ipb_range_start, if(ipb_auto<>0,null,ipb_range_end) as ipb_range_end, ipb_enable_autoblock,
+      ipb_deleted, ipb_block_email, ipb_by_actor, ipb_allow_usertalk, ipb_parent_block_id, ipb_sitewide
+    where: ipb_deleted=0
+  ipblocks_compat:
+    source:
+      - ipblocks
+      - comment
+      - actor
+    view: >
+      select ipb_id, if(ipb_auto<>0,null,ipb_address) as ipb_address, ipb_user,
+      actor_user as ipb_by,
+      ipb_reason_id, comment_text as ipb_reason,
+      ipb_timestamp, ipb_auto, ipb_anon_only,
+      ipb_create_account, ipb_expiry, if(ipb_auto<>0,null,ipb_range_start)
+      as ipb_range_start, if(ipb_auto<>0,null,ipb_range_end) as ipb_range_end, ipb_enable_autoblock,
+      ipb_deleted, ipb_block_email,
+      actor_name as ipb_by_text,
+      ipb_by_actor, ipb_allow_usertalk, ipb_parent_block_id
+    where: ipb_deleted=0 AND comment.comment_id = ipblocks.ipb_reason_id AND ipb_by_actor = actor_id
+  ipblocks_ipindex:
+    source: ipblocks
+    view: >
+      select ipb_id, ipb_address, ipb_user,
+      ipb_reason_id,
+      ipb_timestamp, ipb_auto, ipb_anon_only,
+      ipb_create_account, ipb_expiry, ipb_range_start, ipb_range_end, ipb_enable_autoblock, ipb_deleted,
+      ipb_block_email, ipb_by_actor, ipb_allow_usertalk, ipb_parent_block_id, ipb_sitewide
+    where: ipb_deleted=0 and ipb_auto=0
+  logging:
+    source: logging
+    view: >
+      select log_id, log_type, if(log_deleted&1,null,log_action) as log_action, log_timestamp,
+      if(log_deleted&4,0,log_actor) as log_actor,
+      if(log_deleted&1,null,log_namespace) as log_namespace,
+      if(log_deleted&1,null,log_title) as log_title,
+      if(log_deleted&2,0,log_comment_id) as log_comment_id,
+      if(log_deleted,null,log_params) as log_params, log_deleted,
+      if(log_deleted&1,null,log_page) as log_page
+    where:
+      $INSERTED_EXPR$
+    logging_where:
+      *allowed_logtypes
+  logging_compat:
+    source:
+      - logging
+      - comment
+      - actor
+    view: >
+      select log_id, log_type, if(log_deleted&1,null,log_action) as log_action, log_timestamp,
+      case when log_deleted&4 != 0 then null else COALESCE( actor_user, 0 ) END AS log_user,
+      if(log_deleted&4,0,log_actor) as log_actor,
+      if(log_deleted&1,null,log_namespace) as log_namespace,
+      if(log_deleted&1,null,log_title) as log_title,
+      if(log_deleted&2,null,comment_text) as log_comment,
+      if(log_deleted&2,0,log_comment_id) as log_comment_id,
+      if(log_deleted,null,log_params) as log_params, log_deleted,
+      case when log_deleted&4 != 0 then null else actor_name END AS log_user_text,
+      if(log_deleted&1,null,log_page) as log_page
+    where:
+      $INSERTED_EXPR$ AND comment_id = log_comment_id AND actor_id = log_actor
+    logging_where:
+      *allowed_logtypes
+  logging_logindex:
+    source: logging
+    view: >
+      select log_id, log_type, log_action, log_timestamp,
+      if(log_deleted&4,0,log_actor) as log_actor,
+      log_namespace, log_title,
+      if(log_deleted&2,0,log_comment_id) as log_comment_id,
+      if(log_deleted,null,log_params) as log_params, log_deleted,
+      log_page
+    where:
+      $INSERTED_EXPR$
+    logging_where:
+      *allowed_logtypes
+  logging_userindex:
+    source: logging
+    view: >
+      select log_id, log_type, if(log_deleted&1,null,log_action) as log_action, log_timestamp, log_actor,
+      if(log_deleted&1,null,log_namespace) as log_namespace, if(log_deleted&1,null,log_title) as log_title,
+      if(log_deleted&2,0,log_comment_id) as log_comment_id,
+      if(log_deleted,null,log_params) as log_params,
+      log_deleted, if(log_deleted&1,null,log_page) as log_page
+    where: (log_deleted&4)=0 and
+    logging_where:
+      *allowed_logtypes
+  mark_as_helpful:
+    source: mark_as_helpful
+    view: >
+      select mah_id, mah_type, mah_item, mah_user_id, mah_user_editcount, mah_namespace, mah_title,
+      mah_timestamp, NULL as mah_system_type, NULL as mah_user_agent, NULL as mah_locale
+  oldimage:
+    source: oldimage
+    view: >
+      select oi_name, oi_archive_name, oi_size, oi_width, oi_height, oi_bits,
+      if(oi_deleted&2,0,oi_description_id) as oi_description_id,
+      if(oi_deleted&4,null,oi_actor) as oi_actor,
+      oi_timestamp, oi_metadata, oi_media_type,
+      oi_major_mime, oi_minor_mime, oi_deleted, oi_sha1
+  oldimage_compat:
+    source:
+      - oldimage
+      - comment
+      - actor
+    view: >
+      select oi_name, oi_archive_name, oi_size, oi_width, oi_height, oi_bits,
+      if(oi_deleted&2,0,oi_description_id) as oi_description_id,
+      if(oi_deleted&2,null,comment_text) as oi_description,
+      case when oi_deleted&4 != 0 then null else COALESCE( actor_user, 0 ) END AS oi_user,
+      case when oi_deleted&4 != 0 then null else actor_name END AS oi_user_text,
+      if(oi_deleted&4,null,oi_actor) as oi_actor,
+      oi_timestamp, oi_metadata, oi_media_type,
+      oi_major_mime, oi_minor_mime, oi_deleted, oi_sha1
+    where: comment_id = oi_description_id AND oi_actor = actor_id
+  oldimage_userindex:
+    source: oldimage
+    view: >
+      select oi_name, oi_archive_name, oi_size, oi_width, oi_height, oi_bits,
+      if(oi_deleted&2,0,oi_description_id) as oi_description_id,
+      oi_actor, oi_timestamp, oi_metadata, oi_media_type, oi_major_mime,
+      oi_minor_mime, oi_deleted, oi_sha1
+    where: (oi_deleted&4)=0
+  page_compat:
+    source: page
+    view: >
+      select page_id, page_namespace, page_title, page_restrictions, page_is_redirect,
+      page_is_new, page_random, page_touched, page_links_updated, page_latest, page_len,
+      if(content_models.model_name, content_models.model_name, page_content_model) as page_content_model,
+      page_lang
+    join:
+      - table: revision
+        condition: on rev_id = page_latest
+      - table:
+        - table: slots
+        - type: JOIN
+          table: slot_roles
+          condition: on (slot_role_id = role_id AND role_name = 'main')
+        - type: JOIN
+          table: content
+          condition: on (slot_content_id = content_id)
+        - type: JOIN
+          table: content_models
+          condition: on (content_model = model_id)
+        condition: on slot_revision_id = rev_id
+  protected_titles_compat:
+    source:
+      - protected_titles
+      - comment
+    view: >
+      select pt_namespace, pt_title, pt_user,
+      pt_reason_id, comment.comment_text as pt_reason,
+      pt_timestamp, pt_expiry, pt_create_perm
+    where: comment_id = pt_reason_id
+  recentchanges:
+    source: recentchanges
+    view: >
+      select rc_id, rc_timestamp,
+      if(rc_deleted&4, 0, rc_actor) as rc_actor, rc_namespace, rc_title,
+      if(rc_deleted&2,0,rc_comment_id) as rc_comment_id,
+      rc_minor, rc_bot, rc_new, rc_cur_id, rc_this_oldid, rc_last_oldid, rc_type, rc_source, rc_patrolled,
+      null as rc_ip, rc_old_len, rc_new_len, rc_deleted, rc_logid, rc_log_type, rc_log_action, rc_params
+  recentchanges_compat:
+    source:
+      - recentchanges
+      - comment
+      - actor
+    view: >
+      select rc_id, rc_timestamp, case when rc_deleted&4 != 0 then null else COALESCE( actor_user, 0 ) END AS rc_user,
+      case when rc_deleted&4 != 0 then null else actor_name END AS rc_user_text,
+      if(rc_deleted&4, 0, rc_actor) as rc_actor, rc_namespace, rc_title,
+      if(rc_deleted&2,0,rc_comment_id) as rc_comment_id,
+      if(rc_deleted&2,null,comment_text) as rc_comment,
+      rc_minor, rc_bot, rc_new, rc_cur_id, rc_this_oldid, rc_last_oldid, rc_type, rc_source, rc_patrolled,
+      null as rc_ip, rc_old_len, rc_new_len, rc_deleted, rc_logid, rc_log_type, rc_log_action, rc_params
+    where: comment_id = rc_comment_id AND rc_actor = actor_id
+  recentchanges_userindex:
+    source: recentchanges
+    view: >
+      select rc_id, rc_timestamp, rc_actor, rc_namespace, rc_title,
+      if(rc_deleted&2,0,rc_comment_id) as rc_comment_id,
+      rc_minor, rc_bot, rc_new, rc_cur_id, rc_this_oldid, rc_last_oldid, rc_type, rc_source,
+      rc_patrolled, null as rc_ip, rc_old_len, rc_new_len, rc_deleted, rc_logid, rc_log_type, rc_log_action, rc_params
+    where: (rc_deleted&4)=0
+  revision:
+    source: revision
+    view: >
+      select rev_id, rev_page,
+      if(rev_deleted&2,0,coalesce(revcomment_comment_id,0)) as rev_comment_id,
+      if(rev_deleted&4,0,coalesce(revactor_actor,0)) as rev_actor,
+      rev_timestamp, rev_minor_edit, rev_deleted, rev_len, rev_parent_id,
+      if(rev_deleted&1,null,rev_sha1) as rev_sha1
+    join:
+      - table: revision_comment_temp
+        condition: on revcomment_rev = rev_id
+      - table: revision_actor_temp
+        condition: on revactor_rev = rev_id AND revactor_timestamp = rev_timestamp AND revactor_page = rev_page
+  revision_compat:
+    source: revision
+    view: >
+      select rev_id, rev_page,
+      if(rev_deleted&1,null,content_id) as rev_text_id,
+      if(rev_deleted&2,0,coalesce(revcomment_comment_id,0)) as rev_comment_id,
+      if(rev_deleted&2,null,comment_text) as rev_comment,
+      case when rev_deleted&4 != 0 then null else COALESCE( actor_user, 0 ) END AS rev_user,
+      case when rev_deleted&4 != 0 then null else actor_name END AS rev_user_text,
+      if(rev_deleted&4,0,coalesce(revactor_actor,0)) as rev_actor,
+      rev_timestamp, rev_minor_edit, rev_deleted, rev_len, rev_parent_id,
+      if(rev_deleted&1,null,rev_sha1) as rev_sha1, model_name as rev_content_model,
+      NULL as rev_content_format
+    join:
+      - table: revision_comment_temp
+        condition: on revcomment_rev = rev_id
+      - table: comment
+        condition: on comment_id = revcomment_comment_id
+      - table:
+        - table: slots
+        - type: JOIN
+          table: slot_roles
+          condition: on (slot_role_id = role_id AND role_name = 'main')
+        - type: JOIN
+          table: content
+          condition: on (slot_content_id = content_id)
+        - type: JOIN
+          table: content_models
+          condition: on (content_model = model_id)
+        condition: on slot_revision_id = rev_id
+      - table: revision_actor_temp
+        condition: on revactor_rev = rev_id AND revactor_timestamp = rev_timestamp AND revactor_page = rev_page
+      - table: actor
+        condition: on actor_id = revactor_actor
+  revision_userindex:
+    source: revision
+    # Use aliases revactor_page as rev_page, revactor_timestamp as rev_timestamp so queries against
+    # this view can take advantage of indexes on revision_actor_temp
+    view: >
+      select rev_id, revactor_page as rev_page,
+      if(rev_deleted&2,0,coalesce(revcomment_comment_id,0)) as rev_comment_id,
+      revactor_actor as rev_actor,
+      revactor_timestamp as rev_timestamp, rev_minor_edit, rev_deleted,
+      rev_len, rev_parent_id, if(rev_deleted&1,null,rev_sha1) as rev_sha1
+    where: (rev_deleted&4)=0
+    join:
+      - table: revision_comment_temp
+        condition: on revcomment_rev = rev_id
+      - table: revision_actor_temp
+        condition: on revactor_rev = rev_id AND revactor_timestamp = rev_timestamp AND revactor_page = rev_page
+  revision_actor_temp:
+    source:
+      - revision_actor_temp
+      - revision
+    view: >
+      select revactor_rev, revactor_actor, revactor_timestamp, revactor_page
+    where: revactor_rev = rev_id AND (rev_deleted & 4) = 0
+  slots:
+    source: slots
+    view: >
+      select slot_revision_id, slot_role_id,
+      if(rev_deleted&1 OR ar_deleted&1,null,slot_content_id) as slot_content_id,
+      slot_origin
+    join:
+      - table: revision
+        condition: on rev_id = slot_revision_id
+      - table: archive
+        condition: on ar_rev_id = slot_revision_id
+  user:
+    source: user
+    view: >
+      select user_id, user_name, user_real_name, NULL as user_password, NULL as user_newpassword,
+      NULL as user_email, NULL as user_options, NULL as user_touched, NULL as user_token,
+      NULL as user_email_authenticated, NULL as user_email_token, NULL as user_email_token_expires,
+      user_registration, NULL as user_newpass_time, user_editcount, NULL as user_password_expires
+    where: (SELECT 1 from ipblocks where ipb_auto=0 AND ipb_deleted=1 AND ipb_user=user_id) is NULL
+  user_old:
+    source: user_old
+    view: >
+      select user_id, user_name, NULL as user_password, NULL as user_newpassword, NULL as user_email,
+      NULL as user_options, NULL as user_newtalk, NULL as user_touched, user_real_name, NULL as user_token
+    where: (SELECT 1 from ipblocks where ipb_auto=0 AND ipb_deleted=1 AND ipb_user=user_id) is NULL
+  user_properties:
+    source: user_properties
+    view: select up_user, up_property, up_value
+    where: >
+      up_property in ( 'disablemail', 'fancysig', 'gender', 'nickname' )
+  user_properties_anon:
+    limit: 2
+    source: ["user_properties", "user", "meta_p.properties_anon_whitelist" ]
+    view: select cast(extract(year_month from user_touched)*100+1 as date) upa_touched, up_property, up_value
+    where: user_id=up_user and up_property like pw_property
+  wb_changes:
+    source: wb_changes
+    view: >
+      select change_id, change_type, change_time, change_object_id, change_revision_id,
+      if(rev_deleted&4 OR ar_deleted&4,null,change_user_id) as change_user_id,
+      if(rev_deleted&6 OR ar_deleted&6,null,change_info) as change_info
+    join:
+      - table: revision
+        condition: on rev_id = change_revision_id
+      - table: archive
+        condition: on ar_rev_id = change_revision_id
+

@@ -1,0 +1,9 @@
+---
+lowercaseOutputLabelNames: true
+lowercaseOutputName: false
+startDelaySeconds: 10
+whitelistObjectNames:
+  - 'metrics:name=*'
+  - 'kafka.consumer:*'
+  - 'wdqs-updater:name=*'
+  - 'wdqs-streaming-updater:name=*'

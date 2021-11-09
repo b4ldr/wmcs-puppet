@@ -1,0 +1,51 @@
+<VirtualHost *:80>
+  ServerName analytics.wikimedia.org
+  ServerAlias datasets.wikimedia.org
+
+  DocumentRoot <%= @document_root %>
+
+  # Enable CORS so labs based dashboards can use data files.
+  # We need to set always and early on so that this header is also set for
+  # redirects.
+  Header always set Access-Control-Allow-Origin "*"
+
+  <Directory <%= @document_root %>>
+    Options Indexes FollowSymLinks MultiViews
+    AllowOverride None
+    Require all granted
+  </Directory>
+
+   # Cache json, yaml, csv, and tsv files 1 hour
+   # (could be all files but wanted to be more restrictive to start)
+   <IfModule mod_headers.c>
+      <FilesMatch "\.(json|yaml|csv|tsv)$">
+         Header set Cache-Control "max-age=3600, public, must-revalidate"
+     </FilesMatch>
+   </IfModule>
+
+   <IfModule mod_expires.c>
+       ExpiresActive On
+       ExpiresDefault "modification plus 1 hour"
+   </IfModule>
+
+  <IfModule mod_rewrite.c>
+      # Redirect all requests to datasets.wikimedia.org to
+      # analytics.wikimedia.org/published/datasets/archive
+      RewriteEngine On
+
+      RewriteCond %{HTTP_HOST}  ^datasets.wikimedia.org [nocase]
+      RewriteRule ^(.*)$        https://analytics.wikimedia.org/published/datasets/archive$1 [last,redirect=301]
+
+      # Redirect all requests to analytics.wikimedia.org/datasets to
+      # analytics.wikimedia.org/published/datasets.
+      # See: https://phabricator.wikimedia.org/T235494
+      RewriteCond %{HTTP_HOST}      ^analytics.wikimedia.org [nocase]
+      RewriteRule ^/datasets(.*)$   https://analytics.wikimedia.org/published/datasets$1 [last,redirect=301]
+
+  </IfModule>
+
+  LogLevel warn
+  ErrorLog /var/log/apache2/analytics_error.log
+  CustomLog /var/log/apache2/analytics_access.log wmf
+  ServerSignature Off
+</VirtualHost>

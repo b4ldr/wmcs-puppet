@@ -1,0 +1,20 @@
+##################################
+# THIS FILE IS MANAGED BY PUPPET #
+##################################
+
+# Rotate anything in <%= @log_directory %>/*.log daily
+<%= @log_directory %>/*.log {
+	daily
+	olddir <%= @log_directory %>/archive
+	notifempty
+	nocreate
+	maxage 90
+	rotate <%= @rotate %>
+	dateext
+	compress
+	delaycompress
+	missingok
+	postrotate
+		/usr/bin/killall -HUP udp2log
+	endscript
+}

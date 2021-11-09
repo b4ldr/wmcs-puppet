@@ -1,0 +1,4 @@
+fixtures:
+    symlinks:
+        stdlib: "../../../../stdlib"
+        wmflib: "../../../../wmflib"

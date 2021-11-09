@@ -1,0 +1,33 @@
+<VirtualHost *:80>
+    ServerName <%= @virtual_host %>
+    ServerAlias <%= @server_aliases.join(' ') %>
+
+    DocumentRoot <%= @document_root %>
+<%- @cas_settings.each_pair do |key, setting| -%>
+  <%- unless setting.nil? or setting == :undef -%>
+    <%= key %> <%= setting %>
+  <%-end -%>
+<%-end -%>
+
+
+    <Directory "<%= @document_root %>">
+         Require all granted
+         Options +Indexes +Followsymlinks
+         AllowOverride None
+     </Directory>
+
+     <Directory "<%= @document_root %><%= @protected_uri %>">
+<%- @cas_auth_settings.each_pair do |key, setting| -%>
+  <%- if setting.is_a?(Array) -%>
+    <%- setting.each do |_setting| -%>
+      <%= key %> <%= _setting %>
+     <%- end -%>
+  <%- else -%>
+      <%= key %> <%= setting %>
+  <%- end -%>
+<%- end -%>
+     </Directory>
+
+     CustomLog ${APACHE_LOG_DIR}/configmaster-access.log wmf
+     ErrorLog ${APACHE_LOG_DIR}/configmaster-error.log
+</VirtualHost>

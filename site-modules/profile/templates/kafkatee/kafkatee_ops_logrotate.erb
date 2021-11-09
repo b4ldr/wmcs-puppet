@@ -1,0 +1,17 @@
+# Note:  This file is managed by Puppet.
+#
+<%= ['log', 'json', 'tsv'].sort.map { |e| @webrequest_log_directory + '/*.' + e }.join(' ') %> {
+  daily
+  rotate 62
+  maxage 62
+  olddir <%= @webrequest_log_directory %>/archive
+  missingok
+  notifempty
+  nocreate
+  dateext
+  compress
+  delaycompress
+  postrotate
+    service kafkatee-webrequest reload
+  endscript
+}

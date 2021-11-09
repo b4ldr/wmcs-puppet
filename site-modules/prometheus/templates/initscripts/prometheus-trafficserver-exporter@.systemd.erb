@@ -1,0 +1,16 @@
+[Unit]
+Description=Prometheus exporter for Traffic Server (instance %i)
+Documentation=https://prometheus.io/docs/introduction/overview/
+
+[Service]
+Restart=always
+User=prometheus
+Group=prometheus
+<% if @verify_ssl_certificate -%>
+ExecStart=/usr/bin/prometheus-trafficserver-exporter --no-procstats --endpoint <%= @endpoint %> --port <%= @listen_port %> --metrics-file <%= @metrics_file %>
+<% else -%>
+ExecStart=/usr/bin/prometheus-trafficserver-exporter --no-procstats --no-ssl-verification --endpoint <%= @endpoint %> --port <%= @listen_port %> --metrics-file <%= @metrics_file %>
+<% end -%>
+
+[Install]
+WantedBy=multi-user.target

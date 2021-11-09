@@ -1,0 +1,329 @@
+# These custom values are hardcoded here to persist across Phabricator Wikimedia installs.
+# Values set here should only be default settings that apply to all installs.  Environment
+# specific settings go in the role under manifests.  Changes to these settings usually
+# require a phd daemon restart to be fully affective.  This message will show up as a banner
+# in Phabricator but only for administrators.  If you do not have the ability to restart the
+# associated daemons do not merge changes to this file.
+
+ui.logo:
+  'logoImagePHID': 'PHID-FILE-rs3pf2brupiulr6zcnrg'
+  'wordmarkText': 'Phabricator'
+
+ui.footer-items:
+  - {name: 'Content licensed under Creative Commons Attribution-ShareAlike 3.0 (CC-BY-SA) unless otherwise noted; code licensed under GNU General Public License (GPL) or other open source licenses. By using this site, you agree to the Terms of Use, Privacy Policy, and Code of Conduct.'}
+  - {href: 'https://wikimediafoundation.org/', name: Wikimedia Foundation}
+  - {href: 'https://foundation.wikimedia.org/wiki/Special:MyLanguage/Privacy_policy', name: Privacy Policy}
+  - {href: 'https://www.mediawiki.org/wiki/Special:MyLanguage/Code_of_Conduct', name: Code of Conduct}
+  - {href: 'https://foundation.wikimedia.org/wiki/Terms_of_Use/Phabricator', name: Terms of Use}
+  - {href: 'https://foundation.wikimedia.org/wiki/Wikimedia:General_disclaimer', name: Disclaimer}
+  - {href: 'https://creativecommons.org/licenses/by-sa/3.0/', name: CC-BY-SA}
+  - {href: 'https://www.gnu.org/licenses/old-licenses/gpl-2.0.html', name: GPL}
+
+# Due to issues with 'gd' rending thumbnails for
+# Mimetype image/x-icon and image/icon
+# Disabling previews for icons for now
+# https://secure.phabricator.com/T6573
+files.viewable-mime-types:
+  'image/jpeg': 'image/jpeg'
+  'image/jpg': 'image/jpg'
+  'image/png': 'image/png'
+  'image/gif': 'image/gif'
+  'text/plain': 'text/plain; charset=utf-8'
+  'text/x-diff': 'text/plain; charset=utf-8'
+  'image/vnd.microsoft.icon': 'image/x-icon'
+  'audio/x-wav': 'audio/x-wav'
+  'application/ogg': 'application/ogg'
+  'video/ogg': 'video/ogg'
+  'audio/mpeg': 'audio/mpeg'
+  'text/x-php': 'text/plain; charset=utf-8'
+  'text/x-python': 'text/plain; charset=utf-8'
+  'video/webm': 'video/webm'
+
+files.image-mime-types:
+    'image/jpeg': true
+    'image/jpg': true
+    'image/png': true
+    'image/gif': true
+    'image/vnd.microsoft.icon': true
+
+maniphest.priorities:
+  '100':
+    name: 'Unbreak Now!'
+    short: 'Unbreak!'
+    color: pink
+    keywords: ['unbreak']
+  '90':
+    name: 'Needs Triage'
+    short: Triage
+    color: violet
+    keywords: ['triage']
+  '80':
+    name: High
+    short: High
+    color: red
+    keywords: ['high']
+  '50':
+    name: Medium
+    short: Medium
+    color: orange
+    keywords: ['medium', 'normal']
+  '25':
+    name: Low
+    short: Low
+    color: yellow
+    keywords: ['low']
+  '10':
+    name: Lowest
+    short: Lowest
+    color: sky
+    keywords: ['lowest']
+
+# DO NOT CHANGE THESE VALUES.  Must be updated to match in security extensions.
+maniphest.custom-field-definitions:
+  external_reference:
+    name: Reference
+    type: text
+    caption: Reference
+    search: true
+    edit: false
+    view: true
+  security_topic:
+    instructions: Security settings will override permissions and projects as needed.
+    name: Security
+    description: Used for security oriented custom extensions
+    search: true
+    type: select
+    default: default
+    options:
+      default: 'None'
+      security-bug: 'Software security bug'
+      sensitive: 'Other confidential issue'
+  deadline.due:
+    name: "Due Date"
+    description: Date that this task is due
+    type: date
+    copy: true
+    edit: true
+    view: true
+    search: true
+    fulltext: false
+  bug.version:
+    name: Version
+    description: Affected software version
+    type: text
+    search: true
+    fulltext: true
+  release.version:
+    name: Version
+    description: Version number to be released / deployed
+    type: text
+    search: true
+    fulltext: true
+  release.date:
+    name: "Date"
+    description: Date of the release / deployment
+    type: date
+    search: true
+  risk.rating:
+    name: Risk Rating
+    search: true
+    type: select
+    default: default
+    options:
+      default: 'N/A'
+      info: 'Informational'
+      low: 'Low'
+      medium: 'Medium'
+      high: 'High'
+      critical: 'Critical'
+
+maniphest.subtypes:
+  - { key: "default", name: "Task" }
+  - { key: "bug", name: "Bug" }
+  - { key: "log", name: "LogSpam" }
+  - { key: "deadline", name: "Deadline" }
+  - { key: "release", name: "Release" }
+
+# Security/Operations Macro's for enabling
+# as we rollout to RT and bugzilla.
+#ops-access-request: 'Operations Access Request'
+#ops-sensitive: 'Operations Sensitive'
+#sensitive: 'Another Private Issue'
+
+maniphest.statuses:
+  open:
+    name: Open
+    special: default
+  stalled:
+    name: 'Stalled'
+    name.full: 'Open, Stalled'
+    closed: false
+    prefixes: [stalled]
+    suffixes: ['as stalled']
+  resolved:
+    name: Resolved
+    name.full: 'Closed, Resolved'
+    closed: true
+    special: closed
+    prefixes: [closed, closes, close, fix, fixes, fixed, resolve, resolves, resolved]
+    suffixes: ['as resolved', 'as fixed']
+  invalid:
+    name: Invalid
+    name.full: "Closed, Invalid"
+    closed: true
+    prefixes: [invalidate, invalidates, invalidated]
+    suffixes: ['as invalid']
+  duplicate:
+    name: Duplicate
+    name.full: "Closed, Duplicate"
+    transaction.icon: fa-times
+    special: duplicate
+    closed: true
+  declined:
+    name: Declined
+    name.full: "Closed, Declined"
+    name.action: Declined
+    transaction.icon: fa-thumbs-o-down
+    closed: true
+    prefixes: [decline, declines, declined]
+    suffixes: ['as declined']
+
+user.custom-field-definitions:
+  irc_nick:
+    name: 'IRC Nick'
+    type: text
+    search: true
+
+# make optional the 'real name' user profile field
+user.require-real-name: false
+
+# Allow the "view" policy setting of public to be available
+policy.allow-public: true
+
+# Adminstrators do not need to approve all accounts
+auth.require-approval: false
+
+# Require an email verification for all users
+auth.require-email-verification: true
+
+# Lock edits to auth config, see https://phabricator.wikimedia.org/T220670
+auth.lock-config: true
+
+metamta.user-address-format: 'short'
+
+# Modifies behavior of metamta.maniphest.reply-handler-domain
+# Don't generate a unique reply hash per user, only per task
+metamta.public-replies: true
+
+# https://secure.phabricator.com/book/phabricator/article/configuring_file_storage/
+# Needs to match php.ini upload_max_filesize
+# Needs to match php.ini post_max_size for conduit
+storage.mysql-engine.max-size: 10000000
+
+phabricator.serious-business: true
+
+# Replaces show-beta applications
+phabricator.show-prototypes: true
+
+# Do not try to call out for external resouces such as avatars
+security.outbound-blacklist: ['0.0.0.0/0']
+
+translation.override:
+  'Execute Query': 'Search'
+  'Maniphest Task': 'Task'
+  'Pholio Mock': 'Mockup'
+  'Real Name': 'Also Known As'
+  # T152, 257
+  'Export to Excel': 'Export (disabled)'
+  'Export Tasks to Excel': 'Export Tasks'
+  'Do you want to export the query results to Excel?': 'Do you want to export the query results?'
+  # T865
+  'You can also create tasks by sending an email to: %s': 'You can also create tasks by sending an email to: %s (<a href="https://www.mediawiki.org/wiki/Special:MyLanguage/Phabricator/Help#Using_e-mail" tabindex="-1" target="_blank">learn more</a>)'
+  # T173208
+  'Dat Boi': 'Insectivore'
+  # T179126
+  'Usernames must contain only numbers, letters, period, underscore, and hyphen, and can not end with a period. They must have no more than %d characters.': 'Usernames must contain only numbers, Latin letters, period, underscore and hyphen, and can not end with a period. They must have no more than %d characters. Spaces should be replaced with an underscore (_).'
+
+# We don't host local docs or use the wiki :)
+phabricator.uninstalled-applications:
+  PhabricatorPhrictionApplication: true
+  PhabricatorDivinerApplication: true
+
+phd.log-directory: "/var/log/phd"
+phd.user: 'phd'
+
+diffusion.ssh-user: 'vcs'
+pygments.enabled: true
+
+# 30 days T114014
+phd.garbage-collection:
+  'user.logs': 2592000
+
+# Add Lua to Syntax Highlighting dropdown in Paste (as Lua is not enabled by default)
+# https://phabricator.wikimedia.org/T100900
+pygments.dropdown-choices:
+  'apacheconf': 'Apache Configuration'
+  'bash': 'Bash Scripting'
+  'brainfuck': 'Brainf*ck'
+  'c': 'C'
+  'coffee-script': 'CoffeeScript'
+  'cpp': 'C++'
+  'csharp': 'C#'
+  'css': 'CSS'
+  'cucumber': 'Cucumber'
+  'd': 'D'
+  'control': 'Debian control'
+  'diff': 'Diff'
+  'django': 'Django Templating'
+  'docker': 'Docker'
+  'emacs': 'ELisp'
+  'erb': 'Embedded Ruby/ERB'
+  'erlang': 'Erlang'
+  'go': 'Golang'
+  'groovy': 'Groovy'
+  'haskell': 'Haskell'
+  'html': 'HTML'
+  'http': 'HTTP'
+  'ini': 'INI Configuration'
+  'invisible': 'Invisible'
+  'irc': 'IRC Logs'
+  'java': 'Java'
+  'js': 'Javascript'
+  'json': 'JSON'
+  'less': 'Less'
+  'lisp': 'Common Lisp'
+  'lua': 'Lua'
+  'make': 'Makefile'
+  'mysql': 'MySQL'
+  'nginx': 'Nginx Configuration'
+  'objc': 'Objective-C'
+  'perl': 'Perl'
+  'php': 'PHP'
+  'postgresql': 'PostgreSQL'
+  'pot': 'Gettext Catalog'
+  'puppet': 'Puppet'
+  'python': 'Python'
+  'rainbow': 'Rainbow'
+  'remarkup': 'Remarkup'
+  'robotframework': 'RobotFramework'
+  'rst': 'reStructuredText'
+  'ruby': 'Ruby'
+  'rust': 'Rust'
+  'scheme': 'Scheme'
+  'shell': 'Shell'
+  'sql': 'SQL'
+  'swift': 'Swift'
+  'tex': 'LaTeX'
+  'text': 'Plain Text'
+  'twig': 'Twig'
+  'vim': 'Vim Script'
+  'xml': 'XML'
+  'yaml': 'YAML'
+
+syntax.filemap:
+  '@\\.arcconfig$@': 'js'
+  '@\\.arclint$@': 'js'
+  '@\\.divinerconfig$@': 'js'
+  '@\\.rs$@': 'rust'
+
+log.ssh.path: '/var/log/phd/ssh.log'

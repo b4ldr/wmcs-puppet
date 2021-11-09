@@ -1,0 +1,250 @@
+upstream registry {
+  server 127.0.0.1:5000;
+}
+
+map $http_upgrade $connection_upgrade {
+    default upgrade;
+    '' close;
+}
+
+<%- if @nginx_cache %>
+# Define a cache for immutable blobs and manifests
+# inactive time here probably needs to match what is
+# set in proxy_cache_valid below.
+proxy_cache_path <%= @nginx_cache_dir %>
+                  levels=1:2
+                  max_size=10g
+                  inactive=7d
+                  keys_zone=cache:10m
+                  use_temp_path=off;
+<%- end -%>
+
+server {
+    listen 443 default_server ssl;
+    listen [::]:443 ssl default_server ipv6only=on;
+<%- if @use_puppet_certs %>
+    ssl_certificate     /etc/nginx/ssl/cert.pem;
+    ssl_certificate_key /etc/nginx/ssl/server.key;
+<%- else -%>
+    ssl_certificate /etc/ssl/localcerts/<%= @ssl_certificate_name %>.chained.crt;
+    ssl_certificate_key /etc/ssl/private/<%= @ssl_certificate_name %>.key;
+<%- end -%>
+
+    # Copied from modules/tlsproxy/templates/nginx.conf.erb. Eugh
+    # Enable a shared cache, since it is defined at this level
+    # it will be used for all virtual hosts. 1m = 4000 active sessions,
+    # so we are allowing 200,000 active sessions.
+    ssl_session_cache shared:SSL:50m;
+    ssl_session_timeout 5m;
+
+    <%= @ssl_settings.join("\n    ") %>
+
+    # Images can be pretty large!
+    client_max_body_size 0;
+
+    # Avoids 411 errors!
+    chunked_transfer_encoding on;
+
+    # And we vary response based on what you send in Accept
+    # See:
+    #  https://docs.docker.com/registry/spec/manifest-v2-1/
+    #  https://docs.docker.com/registry/spec/manifest-v2-2/
+    add_header 'Vary' 'Accept' always;
+
+    location / {
+      root <%= @homepage %>;
+    }
+
+    # Let me prefix by saying that the Docker v2 registry protocol apparently
+    # is much better than the v1 protocol. I have not read enough about both
+    # to make a comparative analysis, but I can tell that the auth design for
+    # v2 is just terribly done!
+    #
+    # So for a v2 to client to decide if it needs to authenticate or not, it
+    # first makes a GET request to /v2/, and based on wether it gets back a 2xx
+    # or a 401, decides to authenticate for all other requests in that session.
+    # This practically means it is really hard to do something like restrict
+    # write access to only a certain group while allowing read access to other
+    # groups - since it categorizes the whole registry based on the response
+    # code of one endpoint....
+    #
+    # I have hacked around this in the following manner:
+    #  - Tell nginx that you can be allowed by IP or by specifying a password
+    #  - Allow the whole world!
+    #  - Deny the IPs that need to specify password (for push and restricted pull)
+    #
+    # This causes nginx to return a 401 only to the IPs that have credentials, and
+    # since these IPs will have the password they'll be able to authenticate. The
+    # rest of the world will just be allowed via IP, and hence not be asked for
+    # passwords.
+    #
+    # This special case handling is only for the root endpoint - all other endpoints
+    # are handled in the location stanza below this, and require authentication for
+    # POST/PUT/DELETE etc. We're only doing this special hack to convince the
+    # docker client to send/not send basic auth credentials depending on what we
+    # want them to do.
+    #
+    # Fuck you docker.
+    location = /v2/ {
+      satisfy any;
+
+      # IPs that push new images
+      <%- @allow_push_from.each do |ip| -%>
+      deny <%= ip %>;
+      <%- end -%>
+      # IPs that pull restricted/ images
+      <%- @k8s_authenticated_nodes.sort.each do |node| -%>
+      deny <%= node[1]['ipaddress'] %>; # <%= node[1]['fqdn'] %>
+      <%- end -%>
+      # deployment hosts need to query /restricted/ to get image tags
+      <%- @deployment_hosts.each do |ip| -%>
+      deny <%= ip %>;
+      <%- end -%>
+      allow all;
+
+      auth_basic "docker-registry (push)";
+      auth_basic_user_file <%= @regular_push_file %>;
+
+      proxy_pass http://registry;
+      proxy_redirect off;
+      proxy_buffering off;
+      proxy_http_version 1.1;
+      proxy_set_header Host $host;
+
+      # Some responses are very slow (e.g. T179696#6772661)
+      proxy_connect_timeout       120;
+      proxy_send_timeout          120;
+      proxy_read_timeout          120;
+      send_timeout                120;
+    }
+
+    location /v2/restricted/ {
+      # Send all but GET/HEAD requests to @restricted_write location block below
+      # See <https://www.nginx.com/resources/wiki/start/topics/depth/ifisevil/>
+      # which explains and recommends this
+      error_page 418 = @restricted_write;
+      recursive_error_pages on;
+      if ($request_method !~ ^(GET|HEAD)$) {
+        return 418;
+      }
+
+      # This covers GET/HEAD requests to /v2/restricted/
+      # Only restricted-read users can read images
+      auth_basic "docker-registry restricted (restricted-read)";
+      auth_basic_user_file <%= @restricted_read_file %>;
+
+      proxy_pass http://registry;
+      proxy_redirect off;
+      proxy_buffering off;
+      proxy_http_version 1.1;
+      proxy_set_header Upgrade $http_upgrade;
+      proxy_set_header Connection $connection_upgrade;
+      proxy_set_header Proxy-Connection "Keep-Alive";
+      proxy_set_header X-Real-IP $remote_addr;
+      proxy_set_header X-Forwarded-Proto $scheme;
+      proxy_set_header Host $host;
+
+      # Some responses are very slow (e.g. T179696#6772661)
+      proxy_connect_timeout       120;
+      proxy_send_timeout          120;
+      proxy_read_timeout          120;
+      send_timeout                120;
+
+      <%- if @nginx_cache %>
+      # Blobs and manifests by digest are immutable, so we can cache them
+      location ~ ^/v2/restricted/(.*)/(blobs|manifests)/sha256:(.*) {
+        proxy_pass http://registry;
+        include /etc/nginx/registry-nginx-cache.conf;
+      }
+      <%- end -%>
+    }
+
+    # This block applies to POST/PUT/DELETE/etc. methods to /v2/restricted/
+    location @restricted_write {
+      <%- if @read_only_mode %>
+      # this docker registry is in read only mode
+      # and it will not accept pushing new images.
+      deny all;
+      <%- else -%>
+      # Only restricted-push users can push images
+      auth_basic "docker-registry restricted (restricted-push)";
+      auth_basic_user_file <%= @restricted_push_file %>;
+      <%- end -%>
+
+      proxy_pass http://registry;
+      proxy_redirect off;
+      proxy_buffering off;
+      proxy_http_version 1.1;
+      proxy_set_header Upgrade $http_upgrade;
+      proxy_set_header Connection $connection_upgrade;
+      proxy_set_header Proxy-Connection "Keep-Alive";
+      proxy_set_header X-Real-IP $remote_addr;
+      proxy_set_header X-Forwarded-Proto $scheme;
+      proxy_set_header Host $host;
+
+      # Some responses are very slow (e.g. T179696#6772661)
+      proxy_connect_timeout       120;
+      proxy_send_timeout          120;
+      proxy_read_timeout          120;
+      send_timeout                120;
+    }
+
+    location /v2 {
+      # Don't pollute edge caches with docker images.
+      # Note an approach for CC: max-age=60 or 600 would gives us a small amount
+      # of caching and protects us in big stormy scenarios. However we have CI
+      # requiring really small reaction times for now, so avoid all caching.
+      # Bug: T211719
+      add_header 'Cache-Control' 'no-cache,must-revalidate' always;
+      # Re-add Vary header as add_header directives are inherited from the
+      # previous configuration level if and only if there are no add_header
+      # directives defined on the current level.
+      # http://nginx.org/en/docs/http/ngx_http_headers_module.html
+      add_header 'Vary' 'Accept' always;
+
+      # Require auth for POST, PUT, DELETE, ... requests
+      limit_except GET HEAD OPTIONS {
+      <%- if @read_only_mode %>
+        # this docker registry is in read only mode
+        # and it will not accept pushing new images.
+        deny all;
+      <%- else -%>
+        auth_basic "docker-registry (regular-push)";
+        auth_basic_user_file <%= @regular_push_file %>;
+      <%- end -%>
+      }
+
+      proxy_pass http://registry;
+      proxy_redirect off;
+      proxy_buffering off;
+      proxy_http_version 1.1;
+      proxy_set_header Upgrade $http_upgrade;
+      proxy_set_header Connection $connection_upgrade;
+      proxy_set_header Proxy-Connection "Keep-Alive";
+      proxy_set_header X-Real-IP $remote_addr;
+      proxy_set_header X-Forwarded-Proto $scheme;
+      proxy_set_header Host $host;
+
+      # Some responses are very slow (e.g. T179696#6772661)
+      proxy_connect_timeout       120;
+      proxy_send_timeout          120;
+      proxy_read_timeout          120;
+      send_timeout                120;
+
+      # But cache the _catalog endpoint for a few mins as it's pretty expensive
+      location = /v2/_catalog {
+        add_header 'Cache-Control' 'public,s-maxage=600,max-age=600' always;
+        add_header 'Vary' 'Accept' always;
+        proxy_pass http://registry;
+
+      }
+
+      <%- if @nginx_cache %>
+      # Blobs and manifests by digest are immutable, so we can cache them
+      location ~ ^/v2/(.*)/(blobs|manifests)/sha256:(.*) {
+        proxy_pass http://registry;
+        include /etc/nginx/registry-nginx-cache.conf;
+      }
+      <%- end -%>
+    }
+}

@@ -1,0 +1,15 @@
+<% @wmde_secrets.keys.sort.each do |k| -%>
+<%= k %> <%= @wmde_secrets[k] %>
+<% end -%>
+api_log_dir <%= scope['statistics::wmde::statistics_working_path'] %>/log/mw-log/archive/api
+dump_log_dir <%= scope['statistics::wmde::statistics_working_path'] %>/log/webrequest/archive/dumps.wikimedia.org
+dump-dir <%= @dir %>/data
+statsd_host <%= @statsd_host %>
+graphite_host <%= @graphite_host %>
+web_proxy webproxy.eqiad.wmnet:8080
+db_host analytics-store.eqiad.wmnet
+db_hosts_suffix -analytics-replica.eqiad.wmnet
+db_staging_host staging-db-analytics.eqiad.wmnet
+db_staging_port 3350
+db_file /etc/mysql/conf.d/research-wmde-client.cnf
+wdqs_host http://wdqs.svc.eqiad.wmnet:8888

@@ -1,0 +1,53 @@
+{
+    "ALLOWED_HOSTS": ["<%= @public_server_name -%>", "<%= @internal_server_name -%>"],
+    "PROXY_HOSTS": <%= @proxy_hosts %>,
+    "PROXY_IMAGES": <%= @proxy_images %>,
+    "SECRET_KEY": "<%= @django_secret_key %>",
+    "STATIC_ROOT": "<%= @static_path %>",
+    "MYSQL": {
+        "DB_NAME": "debmonitor",
+        "DB_USER": "debmonitor",
+        "DB_PASSWORD": "<%= @django_mysql_db_password %>",
+        "DB_HOST": "<%= @django_mysql_db_host %>",
+        "DB_PORT": 3306,
+        "OPTIONS": {
+            "sql_mode": "TRADITIONAL"
+        }
+    },
+    "LOG_DB_QUERIES": <%= @django_log_db_queries %>,
+    "REQUIRE_LOGIN": <%= @django_require_login %>,
+    "HOST_EXTERNAL_LINKS": {
+        "Icinga": "https://icinga.wikimedia.org/cgi-bin/icinga/status.cgi?search_string={hostname}",
+        "Puppetboard": "https://puppetboard.wikimedia.org/node/{fqdn}",
+        "RackTables": "https://racktables.wikimedia.org/index.php?page=search&q={hostname}",
+        "Netbox": "https://netbox.wikimedia.org/dcim/devices/?obj_type=device&q={hostname}"
+    },
+    "IMAGE_EXTERNAL_LINKS": {
+    },
+    "LDAP": {
+        "SERVER_URI": "ldaps://<%= @ldap_server_primary %> ldaps://<%= @ldap_server_fallback %>",
+        "BIND_DN": "cn=proxyagent,ou=profile,dc=wikimedia,dc=org",
+        "BIND_PASSWORD": "<%= @ldap_password %>",
+        "USER_SEARCH": {
+            "USER_FIELD": "cn",
+            "SEARCH": "ou=people,dc=wikimedia,dc=org"
+        },
+        "GROUP_SEARCH": "dc=wikimedia,dc=org",
+        "REQUIRE_GROUP": ["cn=wmf,ou=groups,dc=wikimedia,dc=org", "cn=nda,ou=groups,dc=wikimedia,dc=org"],
+        "CACHE_GROUPS": true,
+        "CACHE_TIMEOUT": 900,
+        "FIND_GROUP_PERMS": true,
+        "USER_ATTR_MAP": {
+            "username": "cn",
+            "email": "mail"
+        },
+        "USER_FLAGS_BY_GROUP": {
+            "is_active": ["cn=wmf,ou=groups,dc=wikimedia,dc=org", "cn=nda,ou=groups,dc=wikimedia,dc=org"],
+            "is_staff": "cn=ops,ou=groups,dc=wikimedia,dc=org",
+            "is_superuser": "cn=ops,ou=groups,dc=wikimedia,dc=org"
+        },
+        "GLOBAL_OPTIONS": {
+            "OPT_X_TLS_CIPHER_SUITE": "NONE:+PFS:+VERS-TLS1.2:+CURVE-SECP256R1:+COMP-NULL"
+        }
+    }
+}

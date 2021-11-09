@@ -1,0 +1,16 @@
+fixtures:
+    symlinks:
+        query_service: "#{source_dir}"
+        base: "../../../../base"
+        ferm: "../../../../ferm"
+        java: "../../../../java"
+        monitoring: "../../../../monitoring"
+        ssh: "../../../../ssh"
+        sudo: "../../../../sudo"
+        git: "../../../../git"
+        icinga: "../../../../icinga"
+        systemd: "../../../../systemd"
+        service: "../../../../service"
+        scap: "../../../../scap"
+        stdlib: "../../../../stdlib"
+        wmflib: "../../../../wmflib"

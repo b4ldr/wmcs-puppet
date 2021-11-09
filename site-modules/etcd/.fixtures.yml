@@ -1,0 +1,8 @@
+fixtures:
+    symlinks:
+        etcd: "#{source_dir}"
+        logrotate: "../../../../logrotate"
+        rsyslog: "../../../../rsyslog"
+        stdlib: "../../../../stdlib"
+        wmflib: "../../../../wmflib"
+        base: "../../../../base"

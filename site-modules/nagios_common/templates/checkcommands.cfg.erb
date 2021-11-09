@@ -1,0 +1,575 @@
+################################################################################
+# vim: set tabstop=4 shiftwidth=4 softtabstop=4 expandtab textwidth=80 smarttab:
+# Sample object config file for Nagios
+#
+# Read the documentation for more information on this configuration file.  I've
+# provided some comments here, but things may not be so clear without further
+# explanation, so make sure to read the HTML documentation!
+#
+# Last Modified: 12-15-2005
+#
+################################################################################
+
+
+################################################################################
+# COMMAND DEFINITIONS
+#
+# SYNTAX:
+#
+#   define command {
+#           template      <templatename>
+#           name          <objectname>
+#           command_name  <commandname>
+#           command_line  <commandline>
+#           }
+#
+# WHERE:
+#
+# <templatename> = object name of another command definition that should be
+#                  used as a template for this definition (optional)
+# <objectname>   = object name of command definition, referenced by other
+#                  command definitions that use it as a template (optional)
+# <commandname>  = name of the command, as recognized/used by Nagios
+# <commandline>  = command line
+#
+################################################################################
+
+
+
+
+################################################################################
+#
+# SAMPLE SERVICE CHECK COMMANDS
+#
+# These are some example service check commands.  They may or may not work on
+# your system, as they must be modified for your plugins.  See the HTML
+# documentation on the plugins for examples of how to configure command definitions.
+#
+################################################################################
+
+
+# 'check_dns' command definition
+define command {
+    command_name    check_dns
+    command_line    $USER1$/check_dns -H $ARG1$ -s $HOSTADDRESS$
+    }
+
+# 'check_auth_dns' command definition
+define command {
+    command_name    check_auth_dns
+    command_line    $USER1$/check_dns -H $ARG1$ -A -s $HOSTADDRESS$
+    }
+
+define command {
+    command_name   check_fqdn
+    command_line   $USER1$/check_dns -H $ARG1$ -a $HOSTADDRESS$
+}
+
+# 'check_ftp' command definition
+define command {
+    command_name    check_ftp
+    command_line    $USER1$/check_ftp -H $HOSTADDRESS$
+    }
+
+
+# 'check_hpjd' command definition
+define command {
+    command_name    check_hpjd
+    command_line    $USER1$/check_hpjd -H $HOSTADDRESS$ -C public
+    }
+
+
+# 'check_http' command definition
+define command {
+    command_name    check_http
+    command_line    $USER1$/check_http -H $HOSTADDRESS$
+    }
+
+# 'check_http' command definition (plus a timeout option for slow connections)
+define command {
+    command_name    check_http_slow
+    command_line    $USER1$/check_http -H $HOSTADDRESS$ -t $ARG1$
+    }
+
+# 'check_http' command definition
+define command {
+    command_name    check_http_on_port
+    command_line    $USER1$/check_http -H $HOSTADDRESS$ -p $ARG1$
+    }
+
+define command {
+    command_name    check_https_on_port
+    command_line    $USER1$/check_http --ssl --sni -C10,7 -H $HOSTADDRESS$ -p $ARG1$
+    }
+
+define command {
+    command_name    check_https_port_status
+    command_line    $USER1$/check_http --ssl --sni -C10,7 -H $HOSTADDRESS$ -p $ARG1$ -e $ARG2$ -u $ARG3$
+    }
+
+define command {
+    command_name    check_http_unauthorized
+    command_line    $USER1$/check_http -I $HOSTADDRESS$ -H $ARG1$ -u $ARG2$ -e "HTTP/1.1 401 "
+    }
+
+define command {
+    command_name    check_https_unauthorized
+    command_line    $USER1$/check_http --ssl --sni -C10,7 -I $HOSTADDRESS$ -H $ARG1$ -u $ARG2$ -e "HTTP/1.1 $ARG3$ "
+    }
+
+define command {
+    command_name    check_https_client_auth_puppet
+        command_line    $USER1$/check_http --ssl --sni -C10,7 -I $HOSTADDRESS$ -H $ARG1$ -u $ARG2$ -e "HTTP/1.1 $ARG3$ " -J <%= @config_dir %>/ssl/cert.pem -K <%= @config_dir %>/ssl/server.key -j $ARG4$
+    }
+
+define command {
+    command_name    check_https_client_auth_puppet_post
+        command_line    $USER1$/check_http --ssl --sni -C10,7 -I $HOSTADDRESS$ -H $ARG1$ --url $ARG2$ --post $ARG3$ --string $ARG4$ --client-cert <%= @config_dir %>/ssl/cert.pem --private-key <%= @config_dir %>/ssl/server.key
+    }
+
+## It seems some sites respond with location: and others with Location
+define command {
+    command_name    check_http_redirect
+    command_line    $USER1$/check_http -I $HOSTADDRESS$ -H $ARG1$ -u $ARG2$ -e "HTTP/1.1 $ARG3$ " -d "ocation: $ARG4$"
+    }
+
+## It seems some sites respond with location: and others with Location
+define command {
+    command_name    check_https_redirect
+    command_line    $USER1$/check_http --ssl --sni -C10,7 -I $HOSTADDRESS$ -p $ARG1$ -H $ARG2$ -u $ARG3$ -e "HTTP/1.1 $ARG4$ " -d "ocation: $ARG5$"
+    }
+
+## It seems some sites respond with location: and others with Location
+define command {
+    command_name    check_https_sso_redirect
+    command_line    $USER1$/check_http --ssl --sni -C10,7 -I $HOSTADDRESS$ -H $ARG1$ -u $ARG2$ -e "HTTP/1.1 302" -d "ocation: https://idp.wikimedia.org/"
+    }
+
+define command {
+    command_name    check_http_port_status
+    command_line    $USER1$/check_http -I $HOSTADDRESS$ -p $ARG1$ -e "HTTP/1.1 $ARG2$ "
+    }
+
+# 'check_local_disk' command definition
+define command {
+    command_name    check_local_disk
+    command_line    $USER1$/check_disk -w $ARG1$ -c $ARG2$ -p $ARG3$
+    }
+
+
+# 'check_local_load' command definition
+define command {
+    command_name    check_local_load
+    command_line    $USER1$/check_load -w $ARG1$ -c $ARG2$
+    }
+
+
+# 'check_local_procs' command definition
+define command {
+    command_name    check_local_procs
+    command_line    $USER1$/check_procs -w $ARG1$ -c $ARG2$ -s $ARG3$
+    }
+
+
+# 'check_local_users' command definition
+define command {
+    command_name    check_local_users
+    command_line    $USER1$/check_users -w $ARG1$ -c $ARG2$
+    }
+
+
+# 'check_nntp' command definition
+define command {
+    command_name    check_nntp
+    command_line    $USER1$/check_nntp -H $HOSTADDRESS$
+    }
+
+
+# 'check_ping' command definition
+define command {
+    command_name    check_ping
+    command_line    $USER1$/check_ping -H $HOSTADDRESS$ -w $ARG1$ -c $ARG2$ -p 2
+    }
+
+
+# 'check_pop' command definition
+define command {
+    command_name    check_pop
+    command_line    $USER1$/check_pop -H $HOSTADDRESS$
+    }
+
+
+# 'check_tcp' command definition
+define command {
+    command_name    check_tcp
+    command_line    $USER1$/check_tcp -H $HOSTADDRESS$ -p $ARG1$
+    }
+
+# just like check_tcp but allow passing IP address as ARG
+define command {
+    command_name    check_tcp_ip
+    command_line    $USER1$/check_tcp -H $ARG1$ -p $ARG2$
+    }
+
+# just like check_tcp but with SSL and custom -w and -c
+define command {
+    command_name    check_tcp_ssl
+    command_line    $USER1$/check_tcp -S -H $ARG1$ -p $ARG2$
+    }
+
+# 'check_telnet' command definition
+define command {
+    command_name    check_telnet
+    command_line    $USER1$/check_tcp -H $HOSTADDRESS$ -p 23
+    }
+
+
+# 'check_udp' command definition
+define command {
+    command_name    check_udp
+    command_line    $USER1$/check_udp -H $HOSTADDRESS$ -p $ARG1$
+    }
+
+define command {
+    command_name    check_bgpstate
+    command_line    $USER1$/check_bgpstate -C $ARG1$ $HOSTADDRESS$
+    }
+
+################################################################################
+#
+# SAMPLE HOST CHECK COMMANDS
+#
+################################################################################
+
+
+# This command checks to see if a host is "alive" by pinging it
+# The check must result in a 100% packet loss or 5 second (5000ms) round trip
+# average time to produce a critical error.
+# Note: Only one ICMP echo packet is sent (determined by the '-p 1' argument)
+
+# 'check-host-alive' command definition
+define command {
+    command_name    check-host-alive
+    command_line    $USER1$/check_ping -H $HOSTADDRESS$ -w 3000.0,80% -c 5000.0,100% -p 1
+    }
+
+# 'check_http_wikipedia' command definition, querying a different URL
+define command {
+    command_name    check_http_wikipedia
+    command_line    $USER1$/check_http -H en.wikipedia.org -I $HOSTADDRESS$ -u /
+    }
+
+# 'check_http_wikipedia_main' command definition, querying the main page
+define command {
+    command_name    check_http_wikipedia_main
+    command_line    $USER1$/check_http -H en.wikipedia.org -I $HOSTADDRESS$ -u /wiki/Main_Page
+    }
+
+# 'check_http_wikipedia_main_php7' command definition, querying the main page via php7
+define command {
+    command_name    check_http_wikipedia_main_php7
+    command_line    $USER1$/check_http -H en.wikipedia.org -I $HOSTADDRESS$ -u /wiki/Main_Page -k 'Cookie: PHP_ENGINE=php7' -d 'X-Powered-By: PHP/7.'
+    }
+
+# 'check_http_jobrunner' command definition, querying the health-check endpoint
+define command {
+    command_name    check_http_jobrunner
+    command_line    $USER1$/check_http -I $HOSTADDRESS$ -p 9005 -u /w/health-check.php
+    }
+
+# 'check_http_jobrunner' command definition, querying the health-check endpoint via php7
+define command {
+    command_name    check_http_jobrunner_php7
+    command_line    $USER1$/check_http -I $HOSTADDRESS$ -p 9005 -u /w/health-check.php -k 'Cookie: PHP_ENGINE=php7' -d 'X-Powered-By: PHP/7.'
+    }
+
+
+# 'check_http_upload' command definition, querying a different URL
+define command {
+    command_name    check_http_upload
+    command_line    $USER1$/check_http -H upload.wikimedia.org -I $HOSTADDRESS$ -u /monitoring/backend
+    }
+
+# 'check_https_upload' command definition, querying a different URL
+define command {
+    command_name    check_https_upload
+    command_line    $USER1$/check_http -H upload.wikimedia.org --ssl -C7,10 --sni -I $HOSTADDRESS$ -u /monitoring/backend
+    }
+
+# 'check_http_varnish' command definition
+define command {
+    command_name    check_http_varnish
+    command_line    $USER1$/check_http -H $ARG1$ -p $ARG2$ -I $HOSTADDRESS$ -u /varnish-fe
+    }
+
+define command {
+    command_name    check_http_url_at_address_for_string_with_timeout
+    command_line    $USER1$/check_http -t $ARG1$ -H $ARG2$ -I $ARG2$ -u $ARG3$ -s $ARG4$
+    }
+
+define command {
+    command_name    check_http_url_at_address_for_string
+    command_line    $USER1$/check_http -H $ARG1$ -I $ARG1$ -u $ARG2$ -s $ARG3$
+    }
+
+define command {
+    command_name    check_https_url_at_address_for_string
+    command_line    $USER1$/check_http -H $ARG1$ -I $ARG1$ -C10,7 --ssl --sni -u $ARG2$ -s $ARG3$
+    }
+
+define command {
+    command_name    check_https_url_at_address_for_minsize
+    command_line    $USER1$/check_http -H $ARG1$ -I $ARG1$ -C10,7 --ssl --sni -u $ARG2$ -m $ARG3$
+    }
+
+define command {
+    command_name    check_http_url_for_string
+    command_line    $USER1$/check_http -H $ARG1$ -I $HOSTADDRESS$ -u $ARG2$ -s $ARG3$
+    }
+
+define command {
+    command_name    check_https_url_for_string
+    command_line    $USER1$/check_http -H $ARG1$ -I $HOSTADDRESS$ -C10,7 --ssl --sni -u $ARG2$ -s $ARG3$
+    }
+
+define command {
+    command_name    check_http_url_for_regexp_on_port
+    command_line    $USER1$/check_http -H $ARG1$ -I $HOSTADDRESS$ -p $ARG2$ -u $ARG3$ --linespan --ereg $ARG4$
+    }
+
+define command {
+    command_name    check_http_url
+    command_line    $USER1$/check_http -H $ARG1$ -I $HOSTADDRESS$ -u $ARG2$
+    }
+
+define command {
+    command_name    check_http_port_url
+    command_line    $USER1$/check_http -I $HOSTADDRESS$ -p $ARG1$ -u "$ARG2$"
+    }
+
+define command {
+    command_name    check_http_hostheader_port_url
+    command_line    $USER1$/check_http -I $HOSTADDRESS$ -H $ARG1$ -p $ARG2$ -u "$ARG3$"
+    }
+
+define command {
+    command_name    check_https_hostheader_port_url
+    command_line    $USER1$/check_http -C10,7 --ssl --sni -I $HOSTADDRESS$ -H $ARG1$ -p $ARG2$ -u "$ARG3$"
+    }
+
+define command {
+    command_name    check_https_url
+    command_line    $USER1$/check_http -H $ARG1$ -C10,7 --ssl --sni -I $HOSTADDRESS$ -u $ARG2$
+    }
+
+define command {
+    command_name    check_https_url_custom_ip
+    command_line    $USER1$/check_http -H $ARG1$ -C10,7 --ssl --sni -I $ARG2$ -u $ARG3$
+    }
+
+define command {
+    command_name    check_http_lvs
+    command_line    $USER1$/check_http -H $ARG1$ -I $HOSTADDRESS$ -u "$ARG2$"
+    }
+
+define command {
+    command_name    check_http_lvs_on_port
+    command_line    $USER1$/check_http -H $ARG1$ -p $ARG2$ -I $HOSTADDRESS$ -u "$ARG3$"
+    }
+
+define command {
+    command_name    check_https_lvs_on_port
+    command_line    $USER1$/check_http --ssl -C7,10 --sni -H $ARG1$ -p $ARG2$ -I $HOSTADDRESS$ -u "$ARG3$"
+    }
+
+define command {
+    command_name    check_http_lvs_on_port_timeout
+    command_line    $USER1$/check_http -H $ARG1$ -p $ARG2$ -I $HOSTADDRESS$ -u "$ARG3$" -t "$ARG4$"
+    }
+
+define command {
+    command_name    check_ssh
+    command_line    $USER1$/check_ssh $HOSTADDRESS$
+    }
+
+define command {
+    command_name    check_ircd
+    command_line    $USER1$/check_ircd -H $HOSTADDRESS$ -w 800 -c 1000
+}
+define command {
+    command_name    nrpe_check_dpkg
+    command_line    $USER1$/check_nrpe -2 -u -H $HOSTADDRESS$ -c check_dpkg
+}
+define command {
+    command_name    nrpe_check_udp2log_log_age
+    command_line    $USER1$/check_nrpe -2 -u -H $HOSTADDRESS$ -c check_udp2log_log
+}
+define command {
+    command_name    nrpe_check_udp2log_procs
+    command_line    $USER1$/check_nrpe -2 -u -H $HOSTADDRESS$ -c check_udp2log_procs
+}
+define command {
+    command_name    check_eventlogging_jobs
+    command_line    $USER1$/check_eventlogging_jobs
+}
+
+#Generic NRPE check
+# ARG1: command to execute on remote host
+# ARG2: timeout in seconds
+define command {
+    command_name    nrpe_check
+    command_line    $USER1$/check_nrpe -2 -u -H $HOSTADDRESS$ -c $ARG1$ -t $ARG2$
+}
+
+define command {
+    command_name    check_ntp_time
+    command_line    $USER1$/check_ntp_time -H $HOSTADDRESS$ -w $ARG1$ -c $ARG2$
+}
+
+define command {
+    command_name    check_ntp_peer
+    command_line    $USER1$/check_ntp_peer -H $HOSTADDRESS$ -w $ARG1$ -c $ARG2$
+}
+
+define command {
+    command_name    check_ifstatus
+    command_line    $USER1$/check_ifstatus -H $HOSTADDRESS$ -v 2 -I -C $ARG1$
+}
+
+define command {
+    command_name    ssl-cert-check
+    command_line    $USER1$/ssl-cert-check -s $HOSTADDRESS$ -p
+}
+
+define command {
+    command_name    puppet-FAIL
+    command_line    date --date @$LASTSERVICEOK$ +"Last successful Puppet run was %a %d %b %Y %T %Z" && exit 2
+}
+
+define command {
+    command_name    nsca-fail
+    command_line    $USER1$/check_dummy $ARG1$ $ARG2$
+}
+
+define command {
+    command_name    check_snmp_generic
+    command_line    $USER1$/check_snmp -H $HOSTADDRESS$ -C $ARG1$ -o $ARG2$ -l '$ARG3$' -w $ARG4$ -c $ARG5$
+}
+
+# generic "check number of procs"
+# -a, --argument-array=STRING
+# Only scan for processes with args that contain STRING.
+
+define command {
+    command_name    check_procs_generic
+    command_line    $USER1$/check_procs -w $ARG1$:$ARG2$ -c $ARG3$:$ARG4$ -a $ARG5$
+}
+
+# generic "check number of procs"-2
+# -C, --command=COMMAND
+# Only scan for exact matches of COMMAND (without path).
+
+define command {
+    command_name    check_procs_generic_c
+    command_line    $USER1$/check_procs -w $ARG1$:$ARG2$ -c $ARG3$:$ARG4$ -C $ARG5$
+}
+
+# percona mysql checks
+define command {
+    command_name    nrpe_check_lvs
+    command_line    $USER1$/check_nrpe -2 -u -H $HOSTADDRESS$ -c check_lvs
+}
+
+define command {
+    command_name    nrpe_check_mysql_idle_transactions
+    command_line    $USER1$/check_nrpe -2 -u -H $HOSTADDRESS$ -c check_mysql_idle_transactions
+}
+
+define command {
+    command_name    nrpe_check_mysql_recent_restart
+    command_line    $USER1$/check_nrpe -2 -u -H $HOSTADDRESS$ -c check_mysql_recent_restart
+}
+
+define command {
+    command_name    nrpe_check_mysql_slave_running
+    command_line    $USER1$/check_nrpe -2 -u -H $HOSTADDRESS$ -c check_mysql_slave_running
+}
+
+define command {
+    command_name    nrpe_check_mysql_slave_delay
+    command_line    $USER1$/check_nrpe -2 -u -H $HOSTADDRESS$ -c check_mysql_slave_delay
+}
+
+define command {
+    command_name    nrpe_check_mysql_slave_heartbeat
+    command_line    $USER1$/check_nrpe -2 -u -H $HOSTADDRESS$ -c check_mysql_slave_heartbeat
+}
+
+define command {
+    command_name    nrpe_pmp_check_mysql_processlist
+    command_line    $USER1$/check_nrpe -2 -u -H $HOSTADDRESS$ -c pmp_check_mysql_processlist
+}
+
+define command {
+    command_name    nrpe_pmp_check_mysql_innodb
+    command_line    $USER1$/check_nrpe -2 -u -H $HOSTADDRESS$ -c pmp_check_mysql_innodb
+}
+
+# end percona mysql checks
+# Elasticsearch Checks
+define command {
+    command_name    check_elasticsearch
+    command_line    $USER1$/check_elasticsearch -H $HOSTADDRESS$ -P $ARG1$
+}
+
+define command {
+    command_name    check_cirrus_frozen_writes
+    command_line    $USER1$/check_cirrus_frozen_writes.py --url $ARG1$://$HOSTNAME$:$ARG2$ --timeout $ARG3$
+}
+
+define command {
+    command_name    check_elasticsearch_shards_threshold
+    command_line    $USER1$/check_elasticsearch.py --ignore-status --url $ARG1$://$HOSTNAME$:$ARG2$ --shards-inactive "$ARG3$" --timeout $ARG4$
+}
+
+define command {
+    command_name    check_elasticsearch_shard_size
+    command_line    $USER1$/check_elasticsearch_shard_size.py --url $ARG1$://$HOSTNAME$:$ARG2$ --shard-size-warning $ARG3$ --shard-size-critical $ARG4$ --timeout $ARG5$
+}
+
+define command {
+    command_name    check_elasticsearch_unassigned_shards
+    command_line    $USER1$/check_elasticsearch_unassigned_shards.py --url $ARG1$://$HOSTNAME$:$ARG2$ --timeout $ARG3$
+}
+
+define command {
+    command_name    check_masters_eligible
+    command_line    $USER1$/check_masters_eligible.py --url $ARG1$://$HOSTNAME$:$ARG2$ --timeout $ARG3$
+}
+
+# Analytics Cluster Checks
+
+define command {
+    command_name    analytics_cluster_data_import-FAIL
+    command_line    date --date @$LASTSERVICEOK$ +"Last successful $ARG1$ import was at %a %d %b %Y %T %Z" && exit $ARG2$
+}
+
+# We pass -H here in order to make sure we end up in phabricator and not some
+# other project
+define command {
+    command_name    check_https_phabricator
+    command_line    $USER1$/check_http --ssl -C7,10 --sni -H phabricator.wikimedia.org phabricator.wikimedia.org
+}
+
+# check the Apple dictionary bridge on search.wm.org
+define command {
+    command_name    check_https_dictbridge
+    command_line    $USER1$/check_http --ssl -C7,10 --sni -H 'search.wikimedia.org' -u 'https://search.wikimedia.org/?lang=en&site=wikipedia&search=Wikimedia_Foundation&limit=1' -s 'Wikimedia_Foundation'
+}
+
+# These are so specific that a special command had to be created
+define command {
+    command_name    check_https_zotero_lvs_on_port
+    command_line    $USER1$/check_http --ssl --sni -C7,10 -I $HOSTADDRESS$ -H $ARG1$ -p $ARG2$ -P '[{"itemType":"journalArticle"}]' -T 'application/json' -u "$ARG3$"
+}
+

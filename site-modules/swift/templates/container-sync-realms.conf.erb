@@ -1,0 +1,10 @@
+<% @accounts.sort.map do |name, data| -%>
+<%= "[#{name}]" %>
+<% data.sort.map do |k, v| -%>
+<%= "#{k} = #{v}" %>
+<% end -%>
+<% @keys[name].sort.map do |k, v| -%>
+<%= "#{k} = #{v}" %>
+<% end -%>
+
+<% end -%>

@@ -1,0 +1,56 @@
+# Syslog decorator
+def syslog {/(?P<date>(?P<legacy_date>\w+\s+\d+\s+\d+:\d+:\d+)|(?P<rfc3339_date>\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d+[+-]\d{2}:\d{2}))/ +
+    /\s+(?:\w+@)?(?P<hostname>[\w\.-]+)\s+(?P<application>[\w\.-]+)(?:\[(?P<pid>\d+)\])?:\s+(?P<message>.*)/ {
+        len($legacy_date) > 0 {
+            strptime($2, "Jan _2 15:04:05")
+        }
+        len($rfc3339_date) > 0 {
+            strptime($rfc3339_date, "2006-01-02T03:04:05-0700")
+        }
+        next
+    }
+}
+
+@syslog {
+counter mce_events by hostname
+counter cpu_throttled by hostname
+counter edac_events by hostname
+
+counter upstart_respawn by service, hostname
+counter oom_kill by binary, hostname
+counter segfault by binary, hostname
+counter traps by binary,hostname
+
+# TODO: when we are using mtail 3.0.0rc14 or better (likely with the
+# Buster upgrade), this duplicate parsing of hostname can be removed.
+# https://github.com/google/mtail/issues/89
+
+/(?P<hostname>[\w\.-]+)\s+kernel: \[[\d.]+\] mce: .*Machine check events logged/ {
+  mce_events[$hostname]++
+}
+
+/(?P<hostname>[\w\.-]+)\s+kernel: \[[\d.]+\] .* above threshold, cpu clock throttled/ {
+  cpu_throttled[$hostname]++
+}
+
+/(?P<hostname>[\w\.-]+)\s+kernel: \[[\d.]+\] EDAC / {
+  edac_events[$hostname]++
+}
+
+/(?P<hostname>[\w\.-]+)\s+kernel: \[[\d.]+\] init: (?P<service>[\S]+) .*process ended, respawning/ {
+  upstart_respawn[$service][$hostname]++
+}
+
+/(?P<hostname>[\w\.-]+)\s+kernel: \[[\d.]+\] (?P<binary>[\S]+) invoked oom-killer:.*/ {
+  oom_kill[$binary][$hostname]++
+}
+
+/(?P<hostname>[\w\.-]+)\s+kernel: \[[\d.]+\] (?P<binary>[^\[]+)\[\d+\]: segfault at.*/ {
+  segfault[$binary][$hostname]++
+}
+
+/(?P<hostname>[\w\.-]+)\s+kernel: \[[\d.]+\] traps: (?P<binary>[^\[]+)\[\d+\] .*/ {
+  traps[$binary][$hostname]++
+}
+
+}

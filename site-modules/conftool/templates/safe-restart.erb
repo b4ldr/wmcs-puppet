@@ -1,0 +1,13 @@
+#!/bin/bash
+<%-
+realm = scope.lookupvar('::realm')
+if realm != 'production' || @lvs_pools == nil -%>
+echo "Safe-restart is not needed here."
+systemctl restart <%= @title %>
+<%- else -%>
+  <%- if @max_concurrency != 0 -%>
+/usr/local/bin/safe-service-restart <%= @base_cli_args %> --services <%= @title %> --retries 10 --wait 5 --max-concurrency <%= @max_concurrency %> $@
+  <%- else -%>
+/usr/local/bin/safe-service-restart <%= @base_cli_args %> --services <%= @title %> --retries 10 --wait 5 $@
+  <%- end -%>
+<%- end -%>

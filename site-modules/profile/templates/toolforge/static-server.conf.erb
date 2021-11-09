@@ -1,0 +1,157 @@
+#Copyright 2013 Yuvi Panda <yuvipanda@gmail.com>
+#
+#Licensed under the Apache License, Version 2.0 (the "License");
+#you may not use this file except in compliance with the License.
+#You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+#Unless required by applicable law or agreed to in writing, software
+#distributed under the License is distributed on an "AS IS" BASIS,
+#WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#See the License for the specific language governing permissions and
+#limitations under the License.
+
+map $upstream_http_location $redirect_uri {
+    "~https?://[^/]+/(?<location_uri>.*)$" "$location_uri";
+}
+
+server {
+    resolver <%= @resolver %> ipv6=off;
+
+    add_header X-Clacks-Overhead "GNU Terry Pratchett";
+
+    listen 80;
+
+    # Force https
+    if ($http_x_forwarded_proto != 'https') {
+        return 301 https://$host$request_uri;
+    }
+    # Tell browsers to use https for 24 hours even if they find an http link
+    add_header Strict-Transport-Security "max-age=86400";
+
+    # Block requests with no UA string
+    if ($http_user_agent = "") {
+        return 403 "Requests must have a user agent";
+    }
+
+    # We primarily serve from NFS, so let's turn off sendfile
+    sendfile off;
+
+    # GZIP ALL THE THINGS!
+    gzip on;
+    gzip_proxied any;
+    gzip_types text/plain text/css text/xml application/json application/javascript application/x-javascript text/javascript;
+
+    # Default to utf-8 charset
+    charset utf-8;
+
+    location = / {
+        return 302 "https://<%= @web_domain %>";
+    }
+
+    # Special handling for /cdnjs, our reverse proxy for cdnjs.com
+    location = /cdnjs {
+        return 302 "https://<%= @web_domain %>/cdnjs/";
+    }
+
+    location = /cdnjs/ {
+        return 302 "https://<%= @web_domain %>/cdnjs/";
+    }
+
+    location ^~ /cdnjs/ {
+        proxy_hide_header       Set-Cookie;
+        proxy_set_header        Cookie "";
+
+        # And hide the referrer for privacy reasons
+        proxy_set_header        Referer "https://<%= @web_domain %>/cdnjs/";
+
+        # This will get a 403 without this T249558
+        proxy_ssl_server_name   on;
+
+        # Proxy to cdnjs.cloudflare.com
+        rewrite ^/cdnjs(.*)$ $1 break;
+        proxy_pass https://cdnjs.cloudflare.com;
+        # Get rid of CloudFlare headers that not helpful here.
+        proxy_hide_header        CF-Cache-Status;
+        proxy_hide_header        CF-RAY;
+        proxy_hide_header        Expect-CT;
+        proxy_hide_header        Strict-Transport-Security;
+        proxy_hide_header        cf-request-id;
+        proxy_intercept_errors on;
+        error_page 301 302 307 308 = @handle_redirects;
+    }
+
+    # In some cases, cdnjs redirects to ajax.cdnjs.com when sending requests to
+    # the main CDN.   This handles those at the proxy level and sends the request
+    # appropriately.
+    location @handle_redirects {
+      proxy_hide_header       Set-Cookie;
+      proxy_set_header        Cookie "";
+
+      # And hide the referrer for privacy reasons
+      proxy_set_header        Referer "https://<%= @web_domain %>/cdnjs/";
+
+      # Just in case T249558
+      proxy_ssl_server_name   on;
+
+      rewrite ^/$redirect_uri break;
+      proxy_pass https://ajax.cdnjs.com;
+      proxy_hide_header        CF-Cache-Status;
+      proxy_hide_header        CF-RAY;
+      proxy_hide_header        Expect-CT;
+      proxy_hide_header Strict-Transport-Security;
+    }
+
+    # Special handling for /fontcdn, reverse proxy to google's fonts service
+    location = /fontcdn {
+        return 302 "https://fontcdn.<%= @web_domain %>/";
+    }
+
+    location = /fontcdn/ {
+        return 302 "https://fontcdn.<%= @web_domain %>/";
+    }
+
+    location ^~ /fontcdn/ {
+        # Don't mess with the cookie in any case
+        proxy_hide_header       Set-Cookie;
+        proxy_set_header        Cookie "";
+
+        # And hide the referrer for privacy reasons
+        proxy_set_header        Referer "https://fontcdn.<%= @web_domain %>/";
+
+        # Proxy /fontcdn/css to fonts.googleapis.com
+        location ^~ /fontcdn/css {
+            rewrite ^/fontcdn(/.*)$ $1 break;
+            proxy_ssl_server_name   on;
+            proxy_pass https://fonts.googleapis.com;
+
+            # subs_filter works only on uncompressed data
+            # also, proxy_set_header doesn't inherit if set at a sublevel at all
+            proxy_set_header Accept-Encoding "";
+            proxy_set_header Referer "https://fontcdn.<%= @web_domain %>/";
+            proxy_set_header Cookie "";
+
+            proxy_hide_header Link;
+            proxy_hide_header Strict-Transport-Security;
+
+            # Rewrite references to the upstream to point to our proxy
+            subs_filter_types text/css;
+            subs_filter '//fonts.gstatic.com/' '//$host/fontcdn/';
+        }
+
+        # Proxy anything else to fonts.gstatic.com
+        location ^~ /fontcdn/ {
+            rewrite ^/fontcdn(/.*)$ $1 break;
+            proxy_ssl_server_name   on;
+            proxy_pass https://fonts.gstatic.com;
+            proxy_hide_header Strict-Transport-Security;
+        }
+    }
+
+    location ~ ^/([^/]+)(/.*)?$ {
+        autoindex on;
+        add_header Access-Control-Allow-Origin '*';
+        alias /data/project/$1/www/static$2;
+    }
+}

@@ -1,0 +1,24 @@
+<?php
+
+# This file is managed by Puppet, do not modify manually.
+# These keys derive from puppet, so are inserted into this dir
+#  via puppet to keep things in sync.
+
+$wgLDAPProxyAgent         =  array( 'labs' => 'cn=proxyagent,ou=profile,dc=wikimedia,dc=org' );
+$wgLDAPProxyAgentPassword =  array( 'labs' => "<%= @wikitech_nova_ldap_proxyagent_pass %>" );
+
+$wgLDAPWriterDN       = array( 'labs' => 'uid=novaadmin,ou=people,dc=wikimedia,dc=org' );
+$wgLDAPWriterPassword = array( 'labs' => "<%= @wikitech_nova_ldap_user_pass %>" );
+
+$wgOpenStackManagerLDAPUser         = 'uid=novaadmin,ou=people,dc=wikimedia,dc=org';
+$wgOpenStackManagerLDAPUsername     = 'novaadmin';
+$wgOpenStackManagerLDAPUserPassword = "<%= @wikitech_nova_ldap_user_pass %>";
+
+# Used in BlockIpComplete hooks which enable PhabBanBot to disable Phabricator
+# accounts linked to users blocked on Wikitech.
+$wmfPhabricatorApiToken = "<%= @phabricator_api_token %>";
+
+# Used in BlockIpComplete hooks which disable Gerrit accounts linked to users
+# blocked on Wikitech.
+$wmfGerritApiUser = "<%= @gerrit_api_user %>";
+$wmfGerritApiPassword = "<%= @gerrit_api_password %>";

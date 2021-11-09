@@ -1,0 +1,120 @@
+#!/bin/bash
+set -e
+
+EMAILS="lsobanski@wikimedia.org marostegui@wikimedia.org jcrespo@wikimedia.org sbmhaol@wikimedia.org root@wikimedia.org"
+PRIVATE_DATA="/usr/local/sbin/check_private_data.py"
+REPORT_PATH="/var/log/private_data_report_${HOSTNAME}.log"
+SOCKET="/run/mysqld/mysqld"
+
+if [ ! -f "$PRIVATE_DATA" ]
+then
+    echo "$PRIVATE_DATA is not present"
+    exit 1
+fi
+
+# run the script
+
+# db2094 and db1154 replicate s1 s3 s5 and s8 in a multi-instance setup
+
+if [ "$HOSTNAME" == "db2094" ] || [ "$HOSTNAME" == "db1154" ]
+then
+	for SECTION in s1 s3 s5 s8
+	do
+		echo "Start time: $(date)" > "${REPORT_PATH}_${SECTION}"
+		$PRIVATE_DATA -S ${SOCKET}.${SECTION}.sock >> "${REPORT_PATH}_${SECTION}" 2>&1
+		DATA=$(/bin/egrep -v "^-- Non|^Start time|wmf_checksums|^-- Unfiltered" -c "${REPORT_PATH}_${SECTION}" | xargs)
+		if [ "$DATA" -gt "0" ]
+		then
+		echo "Private data detected at $HOSTNAME for $SECTION check: ${REPORT_PATH}_${SECTION}" | /usr/bin/mail -s "Private data found at $HOSTNAME" $EMAILS
+		fi
+	done
+fi
+
+# db1155 and db2095 replicate s2 s4 s6 and s7 in a multi-instance setup
+
+if [ "$HOSTNAME" == "db2095" ]  || [ "$HOSTNAME" == "db1155" ]
+then
+	for SECTION in s2 s4 s6 s7
+	do
+		echo "Start time: $(date)" > "${REPORT_PATH}_${SECTION}"
+		$PRIVATE_DATA -S ${SOCKET}.${SECTION}.sock >> "${REPORT_PATH}_${SECTION}" 2>&1
+		DATA=$(/bin/egrep -v "^-- Non|^Start time|wmf_checksums|^-- Unfiltered" -c "${REPORT_PATH}_${SECTION}" | xargs)
+		if [ "$DATA" -gt "0" ]
+		then
+		echo "Private data detected at $HOSTNAME for $SECTION check: ${REPORT_PATH}_${SECTION}" | /usr/bin/mail -s "Private data found at $HOSTNAME" $EMAILS
+		fi
+	done
+fi
+
+# This needs further refactoring, but for now it will work with the new hosts
+# Clouddb hosts run multi-instance
+if [ "$HOSTNAME" == "clouddb1013" ] || [ "$HOSTNAME" == "clouddb1017" ]
+then
+	for SECTION in s1 s3
+	do
+		echo "Start time: $(date)" > "${REPORT_PATH}_${SECTION}"
+		$PRIVATE_DATA -S ${SOCKET}.${SECTION}.sock >> "${REPORT_PATH}_${SECTION}" 2>&1
+		DATA=$(/bin/egrep -v "^-- Non|^Start time|wmf_checksums|^-- Unfiltered" -c "${REPORT_PATH}_${SECTION}" | xargs)
+		if [ "$DATA" -gt "0" ]
+		then
+		echo "Private data detected at $HOSTNAME for $SECTION check: ${REPORT_PATH}_${SECTION}" | /usr/bin/mail -s "Private data found at $HOSTNAME" $EMAILS
+		fi
+	done
+fi
+
+if [ "$HOSTNAME" == "clouddb1015" ] || [ "$HOSTNAME" == "clouddb1019" ]
+then
+	for SECTION in s4 s6
+	do
+		echo "Start time: $(date)" > "${REPORT_PATH}_${SECTION}"
+		$PRIVATE_DATA -S ${SOCKET}.${SECTION}.sock >> "${REPORT_PATH}_${SECTION}" 2>&1
+		DATA=$(/bin/egrep -v "^-- Non|^Start time|wmf_checksums|^-- Unfiltered" -c "${REPORT_PATH}_${SECTION}" | xargs)
+		if [ "$DATA" -gt "0" ]
+		then
+		echo "Private data detected at $HOSTNAME for $SECTION check: ${REPORT_PATH}_${SECTION}" | /usr/bin/mail -s "Private data found at $HOSTNAME" $EMAILS
+		fi
+	done
+fi
+
+if [ "$HOSTNAME" == "clouddb1014" ] || [ "$HOSTNAME" == "clouddb1018" ]
+then
+	for SECTION in s2 s7
+	do
+		echo "Start time: $(date)" > "${REPORT_PATH}_${SECTION}"
+		$PRIVATE_DATA -S ${SOCKET}.${SECTION}.sock >> "${REPORT_PATH}_${SECTION}" 2>&1
+		DATA=$(/bin/egrep -v "^-- Non|^Start time|wmf_checksums|^-- Unfiltered" -c "${REPORT_PATH}_${SECTION}" | xargs)
+		if [ "$DATA" -gt "0" ]
+		then
+		echo "Private data detected at $HOSTNAME for $SECTION check: ${REPORT_PATH}_${SECTION}" | /usr/bin/mail -s "Private data found at $HOSTNAME" $EMAILS
+		fi
+	done
+fi
+
+if [ "$HOSTNAME" == "clouddb1016" ] || [ "$HOSTNAME" == "clouddb1020" ]
+then
+	for SECTION in s5 s8
+	do
+		echo "Start time: $(date)" > "${REPORT_PATH}_${SECTION}"
+		$PRIVATE_DATA -S ${SOCKET}.${SECTION}.sock >> "${REPORT_PATH}_${SECTION}" 2>&1
+		DATA=$(/bin/egrep -v "^-- Non|^Start time|wmf_checksums|^-- Unfiltered" -c "${REPORT_PATH}_${SECTION}" | xargs)
+		if [ "$DATA" -gt "0" ]
+		then
+		echo "Private data detected at $HOSTNAME for $SECTION check: ${REPORT_PATH}_${SECTION}" | /usr/bin/mail -s "Private data found at $HOSTNAME" $EMAILS
+		fi
+	done
+fi
+
+# clouddb1021 replicates all sections in a multi-instance setup, for analytics
+if [ "$HOSTNAME" == "clouddb1021" ]
+then
+	for SECTION in s1 s2 s3 s4 s5 s6 s7 s8
+	do
+		echo "Start time: $(date)" > "${REPORT_PATH}_${SECTION}"
+		$PRIVATE_DATA -S ${SOCKET}.${SECTION}.sock >> "${REPORT_PATH}_${SECTION}" 2>&1
+		DATA=$(/bin/egrep -v "^-- Non|^Start time|wmf_checksums|^-- Unfiltered" -c "${REPORT_PATH}_${SECTION}" | xargs)
+		if [ "$DATA" -gt "0" ]
+		then
+		echo "Private data detected at $HOSTNAME for $SECTION check: ${REPORT_PATH}_${SECTION}" | /usr/bin/mail -s "Private data found at $HOSTNAME" $EMAILS
+		fi
+	done
+fi

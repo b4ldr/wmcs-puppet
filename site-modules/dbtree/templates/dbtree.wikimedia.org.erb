@@ -1,0 +1,53 @@
+#####################################################################
+### THIS FILE IS MANAGED BY PUPPET
+### puppet:///noc/dbtree.wikimedia.org.erb
+#####################################################################
+# vim: filetype=apache
+
+<VirtualHost *:443>
+    ServerName dbtree.wikimedia.org
+    # https://httpoxy.org/
+    RequestHeader unset Proxy early
+    SSLEngine On
+    SSLCertificateFile <%= @ssl_certs['cert'] %>
+    SSLCertificateChainFile <%= @ssl_certs['chain'] %>
+    SSLCertificateKeyFile <%= @ssl_certs['key'] %>
+    <%= @ssl_settings.join("\n    ") %>
+    DocumentRoot /srv/dbtree
+    php_admin_flag short_open_tag on
+
+    <Directory />
+        AllowOverride None
+        Require all granted
+    </Directory>
+
+    <Directory /srv/dbtree/inc>
+        Require all denied
+    </Directory>
+</VirtualHost>
+
+<VirtualHost *:80>
+    ServerAdmin noc@wikimedia.org
+
+    ServerName dbtree.wikimedia.org
+
+    DocumentRoot /srv/dbtree
+
+    ErrorLog /var/log/apache2/error.log
+
+    # Possible values include: debug, info, notice, warn, error, crit,
+    # alert, emerg.
+    LogLevel warn
+
+    CustomLog /var/log/apache2/access.log wmf
+
+    <Directory />
+        AllowOverride None
+        Require all granted
+    </Directory>
+
+    <Directory /srv/dbtree/inc>
+        Require all denied
+    </Directory>
+
+</VirtualHost>

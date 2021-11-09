@@ -1,0 +1,18 @@
+[user]
+	name = Kunal Mehta
+	email = legoktm@wikimedia.org
+[submodule]
+	fetchJobs = 3
+[help]
+	autocorrect = 20
+[advice]
+	detachedHead = false
+[alias]
+	authors = "!git shortlog -s | sort -nr"
+[pull]
+	ff = only
+[merge "dpkg-mergechangelogs"]
+	name = debian/changelog merge driver
+	driver = dpkg-mergechangelogs -m %O %A %B %A
+[core]
+	attributesfile = /home/legoktm/.gitattributes_global

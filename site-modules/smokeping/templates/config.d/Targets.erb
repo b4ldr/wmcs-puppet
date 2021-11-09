@@ -1,0 +1,360 @@
+#####################################################################
+### THIS FILE IS MANAGED BY PUPPET
+### puppet:///modules/smokeping/config.d/Targets
+#####################################################################
+
+*** Targets ***
+
+probe = FPing
+
+menu = Top
+title = Network Latency Grapher
+remark = Smokeping installation for Wikimedia Foundation
+
+
++ eqiad
+
+menu = eqiad
+title = Wikimedia Ashburn, VA network
+<% if @alerts -%>
+alerts = bigloss,someloss,startloss
+<% end -%>
+
+++ Core
+menu = Core
+title = Core Network Infrastructure
+
++++ cr1-eqiad
+menu = cr1-eqiad
+title = cr1-eqiad.wikimedia.org
+host = cr1-eqiad.wikimedia.org
+
++++ cr2-eqiad
+menu = cr2-eqiad
+title = cr2-eqiad.wikimedia.org
+host = cr2-eqiad.wikimedia.org
+
++++ asw2-d-eqiad
+menu = asw2-d-eqiad
+title = asw2-d-eqiad.mgmt.eqiad.wmnet
+host = asw2-d-eqiad.mgmt.eqiad.wmnet
+
++++ mr1-eqiad
+menu = mr1-eqiad
+title = mr1-eqiad.wikimedia.org
+host = mr1-eqiad.wikimedia.org
+
++++ msw1-eqiad
+menu = msw1-eqiad
+title = msw1-eqiad.mgmt.eqiad.wmnet
+host = msw1-eqiad.mgmt.eqiad.wmnet
+
+# One server per row, with either public or private IP
+++ Hosts
+menu = Hosts
+title = Sampled Hosts
+
++++ alert1001
+menu = alert1001
+title = alert1001.wikimedia.org [C6]
+host = alert1001.wikimedia.org
+
++++ dns1001
+menu = dns1001
+title = dns1001.wikimedia.org [A1]
+host = dns1001.wikimedia.org
+
++++ dns1002
+menu = dns1002
+title = dns1002.wikimedia.org [D1]
+host = dns1002.wikimedia.org
+
++++ gerrit
+menu = gerrit1001
+title = gerrit1001.wikimedia.org [B8]
+host = gerrit1001.wikimedia.org
+
++++ authdns1001
+menu = authdns1001
+title = authdns1001.wikimedia.org [B1]
+host = authdns1001.wikimedia.org
+
+++ frack
+menu = frack
+title = Fundraising Infrastructure
+
++++ pfw3-eqiad
+menu = pfw3-eqiad
+title = pfw3-eqiad.wikimedia.org
+host = pfw3-eqiad.wikimedia.org
+
++++ frbast-eqiad
+menu = frbast-eqiad
+title = frbast-eqiad.wikimedia.org
+host = frbast-eqiad.wikimedia.org
+
++++ frpig1001
+menu = frpig1001
+title = frpig1001.frack.eqiad.wmnet
+host = frpig1001.frack.eqiad.wmnet
+
++ eqord
+
+menu = eqord
+title = Wikimedia Chicago, IL network
+<% if @alerts -%>
+alerts = bigloss,someloss,startloss
+<% end -%>
+
+++ Core
+menu = Core
+title = Core Network Infrastructure
+
++++ cr2-eqord
+menu = cr2-eqord
+title = cr2-eqord.wikimedia.org
+host = cr2-eqord.wikimedia.org
+
++ codfw
+
+menu = codfw
+title = Wikimedia Dallas, TX network
+<% if @alerts -%>
+alerts = bigloss,someloss,startloss
+<% end -%>
+
+++ Core
+menu = Core
+title = Core Network Infrastructure
+
++++ cr1-codfw
+menu = cr1-codfw
+title = cr1-codfw.wikimedia.org
+host = cr1-codfw.wikimedia.org
+
++++ cr2-codfw
+menu = cr2-codfw
+title = cr2-codfw.wikimedia.org
+host = cr2-codfw.wikimedia.org
+
++++ cr2-eqdfw
+menu = cr2-eqdfw
+title = cr2-eqdfw.wikimedia.org
+host = cr2-eqdfw.wikimedia.org
+
++++ asw-a-codfw
+menu = asw-a-codfw
+title = asw-a-codfw.mgmt.codfw.wmnet
+host = asw-a-codfw.mgmt.codfw.wmnet
+
++++ asw-b-codfw
+menu = asw-b-codfw
+title = asw-b-codfw.mgmt.codfw.wmnet
+host = asw-b-codfw.mgmt.codfw.wmnet
+
++++ asw-c-codfw
+menu = asw-c-codfw
+title = asw-c-codfw.mgmt.codfw.wmnet
+host = asw-c-codfw.mgmt.codfw.wmnet
+
++++ asw-d-codfw
+menu = asw-d-codfw
+title = asw-d-codfw.mgmt.codfw.wmnet
+host = asw-d-codfw.mgmt.codfw.wmnet
+
++++ mr1-codfw
+menu = mr1-codfw
+title = mr1-codfw.wikimedia.org
+host = mr1-codfw.wikimedia.org
+
++++ msw1-codfw
+menu = msw1-codfw
+title = msw1-codfw.mgmt.codfw.wmnet
+host = msw1-codfw.mgmt.codfw.wmnet
+
+++ Hosts
+menu = Hosts
+title = Sampled Hosts
+
++++ authdns2001
+menu = authdns2001
+title = authdns2001.wikimedia.org [A2]
+host = authdns2001.wikimedia.org
+
++++ bast2002
+menu = bast2002
+title = bast2002.wikimedia.org [B5]
+host = bast2002.wikimedia.org
+
++++ dns2001
+menu = dns2001
+title = dns2001.wikimedia.org [C5]
+host = dns2001.wikimedia.org
+
++++ dns2002
+menu = dns2002
+title = dns2002.wikimedia.org [D5]
+host = dns2002.wikimedia.org
+
++++ alert2001
+menu = alert2001
+title = alert2001.wikimedia.org [C5]
+host = alert2001.wikimedia.org
+
++++ puppetmaster2002
+menu = puppetmaster2002
+title = puppetmaster2002.codfw.wmnet [D5]
+host = puppetmaster2002.codfw.wmnet
+
+++ frack
+menu = frack
+title = Fundraising Infrastructure
+
++++ pfw3-codfw
+menu = pfw3-codfw
+title = pfw3-codfw.wikimedia.org
+host = pfw3-codfw.wikimedia.org
+
++++ fasw-c-codfw
+menu = fasw-c-codfw
+title = fasw-c-codfw.mgmt.codfw.wmnet
+host = fasw-c-codfw.mgmt.codfw.wmnet
+
++++ frbast-codfw
+menu = frbast-codfw
+title = frbast-codfw.wikimedia.org
+host = frbast-codfw.wikimedia.org
+
++++ frpig2001
+menu = frpig2001
+title = frpig2001.frack.codfw.wmnet
+host = frpig2001.frack.codfw.wmnet
+
+
++ esams
+
+menu = esams
+title = Wikimedia Amsterdam, The Netherlands network
+<% if @alerts -%>
+alerts = bigloss,someloss,startloss
+<% end -%>
+
+++ Core
+menu = Core
+title = Core Network Infrastructure
+
++++ cr3-esams
+menu = cr3-esams
+title = cr3-esams.wikimedia.org
+host = cr3-esams.wikimedia.org
+
++++ cr2-esams
+menu = cr2-esams
+title = cr2-esams.wikimedia.org
+host = cr2-esams.wikimedia.org
+
++++ cr3-knams
+menu = cr3-knams
+title = cr3-knams.wikimedia.org
+host = cr3-knams.wikimedia.org
+
++++ asw2-esams
+menu = asw2-esams
+title = asw2-esams.mgmt.esams.wmnet
+host = asw2-esams.mgmt.esams.wmnet
+
+++ Hosts
+menu = Hosts
+title = Sampled Hosts
+
++++ bast3005
+menu = bast3005
+title = bast3005.wikimedia.org
+host = bast3005.wikimedia.org
+
++ ulsfo
+
+menu = ulsfo
+title = Wikimedia San Francisco, CA network
+<% if @alerts -%>
+alerts = bigloss,someloss,startloss
+<% end -%>
+
+++ Core
+menu = Core
+title = Core Network Infrastructure
+
++++ cr3-ulsfo
+menu = cr3-ulsfo
+title = cr3-ulsfo.wikimedia.org
+host = cr3-ulsfo.wikimedia.org
+
++++ cr4-ulsfo
+menu = cr4-ulsfo
+title = cr4-ulsfo.wikimedia.org
+host = cr4-ulsfo.wikimedia.org
+
++++ asw2-ulsfo
+menu = asw2-ulsfo
+title = asw2-ulsfo.mgmt.ulsfo.wmnet
+host = asw2-ulsfo.mgmt.ulsfo.wmnet
+
+++ Hosts
+menu = Hosts
+title = Sampled Hosts
+
++++ bast4003
+menu = bast4003
+title = bast4003.wikimedia.org
+host = bast4003.wikimedia.org
+
++ eqsin
+
+menu = eqsin
+title = Wikimedia Singapore network
+<% if @alerts -%>
+alerts = bigloss,someloss,startloss
+<% end -%>
+
+++ Core
+menu = Core
+title = Core Network Infrastructure
+
++++ cr3-eqsin
+menu = cr3-eqsin
+title = cr3-eqsin.wikimedia.org
+host = cr3-eqsin.wikimedia.org
+
++++ cr2-eqsin
+menu = cr2-eqsin
+title = cr2-eqsin.wikimedia.org
+host = cr2-eqsin.wikimedia.org
+
+# Commented out until T186650 is solved
+#+++ asw1-eqsin
+#menu = asw1-eqsin
+#title = asw1-eqsin.mgmt.eqsin.wmnet
+#host = asw1-eqsin.mgmt.eqsin.wmnet
+
+++ Hosts
+menu = Hosts
+title = Sampled Hosts
+
++++ bast5002
+menu = bast5002
+title = bast5002.wikimedia.org
+host = bast5002.wikimedia.org
+
++ DNS
+probe = DNS
+menu = DNS latency
+title = Service latency (DNS)
+
+++ ns0
+host = ns0.wikimedia.org
+
+++ ns1
+host = ns1.wikimedia.org
+
+++ ns2
+host = ns2.wikimedia.org

@@ -1,0 +1,15 @@
+# This file is managed by puppet!
+[Unit]
+Description = uwsgi-<%= @title %> uwsgi app
+
+[Service]
+ExecStart = /usr/bin/uwsgi <%= @service_settings %> --ini <%= @inipath %>
+ExecReload = /bin/kill -HUP $MAINPID
+User = www-data
+Group = www-data
+SyslogIdentifier = uwsgi-<%= @basename %>
+
+LimitCORE=<%= @core_limit %>
+
+[Install]
+WantedBy = multi-user.target

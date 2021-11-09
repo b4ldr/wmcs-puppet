@@ -1,0 +1,17 @@
+fixtures:
+    symlinks:
+        service: "#{source_dir}"
+        base: "../../../../base"
+        ferm: "../../../../ferm"
+        logrotate: "../../../../logrotate"
+        monitoring: "../../../../monitoring"
+        rsyslog: "../../../../rsyslog"
+        scap: "../../../../scap"
+        stdlib: "../../../../stdlib"
+        systemd: "../../../../systemd"
+        wmflib: "../../../../wmflib"
+        conftool: "../../../../conftool"
+        ssh: "../../../../ssh"
+        sudo: "../../../../sudo"
+        etcd: "../../../../etcd"
+        git: "../../../../git"

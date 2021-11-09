@@ -1,0 +1,56 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "definitions": {
+        "group": {
+            "type": "object",
+            "properties": {
+                "weight": {"type": "integer"},
+                "pooled": {"type": "boolean"}
+            },
+            "required": ["pooled", "weight"],
+            "additionalProperties": false
+        },
+        "section": {
+            "type": "object",
+            "properties": {
+                "pooled": {"type": "boolean"},
+                "weight": {"type": "integer"},
+                "percentage": {"type": "integer"},
+                "groups": {
+                    "type": "object",
+                    "patternProperties": {
+                        "^(vslow|dump|recentchanges.*)$": {"$ref": "#/definitions/group"},
+                        "^(api|contributions|logpager|watchlist)$": {"$ref": "#/definitions/group"}
+                    },
+                    "additionalProperties": false
+                },
+                "comment": {"type": "string"},
+                "candidate_master": {"type": "boolean"}
+            },
+            "required": ["pooled", "weight", "percentage"],
+            "additionalProperties": false
+        }
+    },
+    "description": "Represents a database instance specific to a section\n",
+    "type": "object",
+    "properties": {
+        "host_ip": {
+            "type": "string",
+            "anyOf": [
+                {"format": "ipv4"},
+                {"format": "ipv6"}
+            ]
+        },
+        "port": {"type": "integer"},
+        "sections": {
+            "type": "object",
+            "patternProperties": {
+                "^(s[1-8]|s1[01]|es[12345]|x[12])$": {"$ref": "#/definitions/section"}
+            },
+            "additionalProperties": false
+        },
+        "note": {"type": "string"}
+    },
+    "required": ["host_ip", "port", "sections"],
+    "additionalProperties": false
+}

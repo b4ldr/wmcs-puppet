@@ -1,0 +1,288 @@
+# Sample configuration.
+# See https://prometheus.io/docs/alerting/configuration/ for documentation.
+
+global:
+  smtp_smarthost: 'localhost:25'
+  smtp_from: 'sre-observability@<%= scope.lookupvar('::domain') %>'
+  smtp_require_tls: false
+
+  # Give alerts with no 'endsAt' field (e.g. librenms) a little more slack
+  # See also https://phabricator.wikimedia.org/T285205
+  resolve_timeout: '20m'
+
+<% if @victorops_api_key %>
+  victorops_api_key: '<%= @victorops_api_key %>'
+<% end %>
+
+# The directory from which notification templates are read.
+templates:
+  - '/etc/prometheus/alertmanager_templates/*.tmpl'
+
+route:
+  receiver: default
+  group_by: ['alertname', 'cluster', 'scope']
+  routes:
+    # Log all notifications
+    - receiver: 'logger'
+      continue: true
+
+    # Compat Icinga alerts are routed to a 'sink' channel
+    - match_re:
+        alertname: '^Icinga/.*'
+      receiver: 'irc-spam'
+
+    # Team routes
+    - match:
+        team: 'sre'
+      routes:
+        - match:
+            severity: 'page'
+          receiver: 'sre-page'
+        - match:
+            severity: 'critical'
+          receiver: 'sre-irc'
+    - match:
+        team: 'data-engineering'
+      routes:
+        - match:
+            severity: 'page'
+          receiver: 'data-engineering-page'
+        - match:
+            severity: 'critical'
+          receiver: 'data-engineering-ircmail'
+        - match:
+            severity: 'warning'
+          receiver: 'data-engineering-irc'
+        - match:
+            severity: 'task'
+          receiver: 'data-engineering-task'
+    - match:
+        team: 'data-persistence'
+      routes:
+        - match:
+            severity: 'page'
+          receiver: 'sre-page'
+        - match:
+            severity: 'critical'
+          receiver: 'data-persistence-ircmail'
+        - match:
+            severity: 'warning'
+          receiver: 'data-persistence-irc'
+    - match:
+        team: 'dcops'
+      receiver: 'dcops-mail'
+      routes:
+        - match:
+            severity: 'task'
+          receiver: 'dcops-task'
+    - match:
+        team: 'noc'
+      receiver: 'noc-ircmail'
+      routes:
+        - match:
+            severity: 'page'
+          receiver: 'sre-page'
+    - match:
+        team: 'netops'
+      receiver: 'netops-mail'
+    - match:
+        team: 'peering'
+      receiver: 'peering-mail'
+    - match:
+        team: 'perf'
+      receiver: 'perf-ircmail'
+      repeat_interval: '48h'
+    - match:
+        team: 'traffic'
+      receiver: 'traffic-ircmail'
+    - match:
+        team: 'releng'
+      receiver: 'releng-irc'
+    - match:
+        team: 'rweb'
+      receiver: 'rweb-mail'
+    - match:
+        team: 'wikidata'
+      receiver: 'wikidata-mail'
+    - match:
+        team: 'search-platform'
+      receiver: 'search-platform-ircmail'
+
+    # Default routing for page/critical alerts, if no team could be routed
+    - match:
+        severity: 'page'
+      receiver: 'sre-irc'
+    - match:
+        severity: 'critical'
+      receiver: 'sre-irc'
+
+
+
+    # Force 'default' receiver as last and catch-all child route
+    - receiver: 'default'
+
+receivers:
+# alertmanager-webhook-logger endpoint
+- name: 'logger'
+  webhook_configs:
+    - url: 'http://localhost:6725'
+
+- name: 'default'
+
+- name: 'irc-spam'
+  webhook_configs:
+    - url: 'http://<%= @active_host %>:19190/<%= @irc_channel %>'
+
+# Team receivers. Naming convention is '<team>-<method>' where method can be irc/mail/etc, or a
+# combination thereof if desired.
+- name: 'sre-irc'
+  webhook_configs:
+    - url: 'http://<%= @active_host %>:19190/wikimedia-operations'
+
+- name: 'sre-page'
+  victorops_configs:
+    - routing_key: 'sre-batphone'
+  webhook_configs:
+    - url: 'http://<%= @active_host %>:19190/wikimedia-operations'
+
+- name: 'data-engineering-page'
+  victorops_configs:
+    - routing_key: 'analytics'
+  webhook_configs:
+    - url: 'http://<%= @active_host %>:19190/wikimedia-analytics'
+
+- name: 'data-engineering-irc'
+  webhook_configs:
+    - url: 'http://<%= @active_host %>:19190/wikimedia-analytics'
+
+- name: 'data-engineering-ircmail'
+  webhook_configs:
+    - url: 'http://<%= @active_host %>:19190/wikimedia-analytics'
+  email_configs:
+    - to: 'analytics-alerts@<%= scope.lookupvar('::domain') %>'
+
+- name: 'data-persistence-irc'
+  webhook_configs:
+    - url: 'http://<%= @active_host %>:19190/wikimedia-data-persistence'
+
+- name: 'data-persistence-ircmail'
+  webhook_configs:
+    - url: 'http://<%= @active_host %>:19190/wikimedia-data-persistence'
+  email_configs:
+    - to: 'sre-data-persistence@<%= scope.lookupvar('::domain') %>'
+
+- name: 'noc-ircmail'
+  webhook_configs:
+    - url: 'http://<%= @active_host %>:19190/wikimedia-operations'
+  email_configs:
+    - to: 'noc@<%= scope.lookupvar('::domain') %>'
+
+- name: 'netops-mail'
+  email_configs:
+    - to: 'ayounsi@<%= scope.lookupvar('::domain') %>'
+    - to: 'cmooney@<%= scope.lookupvar('::domain') %>'
+
+- name: 'dcops-mail'
+  email_configs:
+    - to: 'datacenter-ops@<%= scope.lookupvar('::domain') %>'
+
+- name: 'peering-mail'
+  email_configs:
+    - to: 'peering@<%= scope.lookupvar('::domain') %>'
+
+- name: 'perf-ircmail'
+  webhook_configs:
+    - url: 'http://<%= @active_host %>:19190/wikimedia-perf-bots'
+  email_configs:
+    - to: 'performance-team@<%= scope.lookupvar('::domain') %>'
+      send_resolved: true
+
+- name: 'rweb-mail'
+  email_configs:
+    - to: 'reading-web-team@lists.wikimedia.org'
+
+- name: 'wikidata-mail'
+  email_configs:
+    - to: 'wikidata-monitoring@wikimedia.de'
+      send_resolved: true
+
+- name: 'releng-irc'
+  webhook_configs:
+    - url: 'http://<%= @active_host %>:19190/wikimedia-releng'
+
+- name: 'releng-mail'
+  email_configs:
+    - to: 'releng@lists.wikimedia.org'
+
+- name: 'traffic-ircmail'
+  webhook_configs:
+    - url: 'http://<%= @active_host %>:19190/wikimedia-traffic'
+  email_configs:
+    - to: 'sre-traffic@<%= scope.lookupvar('::domain') %>'
+
+- name: 'search-platform-ircmail'
+  webhook_configs:
+    - url: 'http://<%= @active_host %>:19190/wikimedia-operations'
+  email_configs:
+    - to: 'discovery-alerts@lists.wikimedia.org'
+
+# Receivers to open Phabricator tasks. Naming convention is '<team-and-subteam>-task'
+- name: 'sre-o11y-task'
+  webhook_configs:
+    # #observability
+    - url: 'http://localhost:8292/alerts?phid=PHID-PROJ-dwtj3e5mikntyhdbnohb'
+      send_resolved: false
+
+- name: 'sre-task'
+  webhook_configs:
+    # #SRE
+    - url: 'http://localhost:8292/alerts?phid=PHID-PROJ-5hj6ygnanfu23mmnlvmd'
+      send_resolved: false
+
+- name: 'netops-task'
+  webhook_configs:
+    # #netops
+    - url: 'http://localhost:8292/alerts?phid=PHID-PROJ-h2zjwfqqi5cxjonrkfa7'
+      send_resolved: false
+
+- name: 'data-engineering-task'
+  webhook_configs:
+    # #data-engineering
+    - url: 'http://localhost:8292/alerts?phid=PHID-PROJ-gsfmtborh6beh6xj5lz6'
+      send_resolved: false
+
+- name: 'dcops-task'
+  webhook_configs:
+    # #dcops
+    - url: 'http://localhost:8292/alerts?phid=PHID-PROJ-guqp46cxa2rgti2tqgv5'
+      send_resolved: false
+
+- name: 'dcops-eqiad-task'
+  webhook_configs:
+    # #ops-eqiad
+    - url: 'http://localhost:8292/alerts?phid=PHID-PROJ-wr7jlgkb5qk5ykssqwn7'
+      send_resolved: false
+
+- name: 'dcops-codfw-task'
+  webhook_configs:
+    # #ops-codfw
+    - url: 'http://localhost:8292/alerts?phid=PHID-PROJ-heihjeaiasruuvneirzh'
+      send_resolved: false
+
+- name: 'dcops-esams-task'
+  webhook_configs:
+    # #ops-esams
+    - url: 'http://localhost:8292/alerts?phid=PHID-PROJ-yyw3x6n3sdjeyzq3xbmo'
+      send_resolved: false
+
+- name: 'dcops-ulsfo-task'
+  webhook_configs:
+    # #ops-ulsfo
+    - url: 'http://localhost:8292/alerts?phid=PHID-PROJ-zisfzcctzc5kqyal5mcq'
+      send_resolved: false
+
+- name: 'dcops-eqsin-task'
+  webhook_configs:
+    # #ops-eqsin
+    - url: 'http://localhost:8292/alerts?phid=PHID-PROJ-7ooh7jsiccviqsicgfzy'
+      send_resolved: false

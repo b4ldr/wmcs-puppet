@@ -1,0 +1,2 @@
+# zarcillo0
+profile::mariadb::mysql_role: 'master'

@@ -1,0 +1,111 @@
+# tendril.wikimedia.org -- write heavy!
+
+# Please use separate .cnf templates for each type of server.
+
+[client]
+port   = <%= @port %>
+socket = <%= @socket %>
+
+[mysqld]
+
+skip-external-locking
+skip-name-resolve
+temp-pool
+
+user               = mysql
+socket             = <%= @socket %>
+port               = <%= @port %>
+basedir            = <%= @basedir %>
+datadir            = <%= @datadir %>
+tmpdir             = <%= @tmpdir %>
+server_id          = <%= @server_id %>
+report_host        = <%= @fqdn %>
+wsrep_cluster_name = <%= @site %> # For orchestrator. T266635
+
+# gtid_domain_id flag is needed for multisource replication and GTID.
+# Strictly it is only needed on masters or servers that can potentially be
+# masters but for consistency it should be set in all of them.
+# https://mariadb.com/kb/en/mariadb/gtid/
+gtid_domain_id  = <%= @gtid_domain_id %>
+
+read_only = 0
+
+# enable socket authentication
+plugin-load = unix_socket=auth_socket.so
+
+secure_file_priv   = /dev/null
+max_connections    = 250
+max_allowed_packet = 32M
+connect_timeout    = 3
+max_connect_errors = 1000000000
+query_cache_size   = 0
+query_cache_type   = 0
+<% if @basedir == '/opt/wmf-mariadb104' %>
+# Disable TokuDB for Mariadb 10.4 and Buster #T249085
+# plugin-load        = ha_tokudb
+# tokudb_cache_size              = 30G
+<% else -%>
+plugin-load        = ha_tokudb
+tokudb_cache_size              = 30G
+<% end %>
+#plugin-load        = connect
+#plugin-load        = federated
+open-files-limit   = 100000
+
+table_open_cache       = 5000
+table_definition_cache = 5000
+default-storage-engine = Aria
+
+transaction-isolation          = READ-COMMITTED
+innodb_file_per_table          = 1
+<% if @innodb_pool_size.nil? -%>
+innodb_buffer_pool_size        = <%= (Float(@memorysize.split[0]) * 0.75).round %>G
+<% else -%>
+innodb_buffer_pool_size        = <%= @innodb_pool_size %>
+<% end -%>
+innodb_log_file_size           = 1G
+innodb_flush_log_at_trx_commit = 0
+innodb_flush_method            = O_DIRECT
+innodb_file_format             = barracuda
+aria_pagecache_buffer_size     = 2G
+<% if @hostname == 'db1115' %>
+event_scheduler = 1
+<% else %>
+event_scheduler = 0
+<% end %>
+
+log-bin
+log-slave_updates
+sync-binlog                    = 0
+binlog-cache-size              = 1M
+max-binlog-size                = 1000M
+binlog-format                  = <%= @binlog_format %>
+binlog_cache_size              = 1M
+expire_logs_days               = 7
+slave_transaction_retries      = 4294967295
+# Do not enable replication of tendril; the large number of writes cause major issues:
+# T184704#4005398
+binlog-do-db                   = zarcillo
+binlog-do-db                   = heartbeat
+
+# dump and load innodb buffer at start and stop
+innodb_buffer_pool_load_at_startup  = 1
+innodb_buffer_pool_dump_at_shutdown = 1
+
+<% if @ssl == 'on' or @ssl == 'puppet-cert' %>
+# ssl
+ssl-ca=/etc/ssl/certs/Puppet_Internal_CA.pem
+ssl-cert=/etc/mysql/ssl/cert.pem
+ssl-key=/etc/mysql/ssl/server.key
+ssl-cipher=TLSv1.2
+<% end %>
+
+optimizer_switch='engine_condition_pushdown=on,optimize_join_buffer_size=on'
+join_cache_level = 8
+
+[mysqldump]
+
+quick
+max_allowed_packet = 32M
+
+#!includedir /etc/mysql/conf.d/

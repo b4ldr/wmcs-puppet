@@ -1,0 +1,162 @@
+<%-
+def get_addresses(hostnames)
+  answers = []
+  hostnames.each do |hostname|
+    Resolv::DNS.open do |dns|
+      [Resolv::DNS::Resource::IN::A, Resolv::DNS::Resource::IN::AAAA].each do |rrtype|
+        answer = dns.getresources(hostname, rrtype)
+        next if answer.empty?
+        answers << answer.map { |ans| ans.address.to_s }
+      end
+    end
+  end
+  raise Puppet::Error, "#{hostnames.join(',')} do not resolve" if answers.empty?
+  answers.flatten.sort
+end
+-%>
+# Without the following line we seem to have 5-15 sec lag for most requests
+spring.autoconfigure.exclude=org.springframework.boot.autoconfigure.web.embedded.EmbeddedWebServerFactoryCustomizerAutoConfiguration
+
+server.ssl.enabled=<%= @server_enable_ssl %>
+<%- if @server_enable_ssl -%>
+server.ssl.key-store-file:<%= @keystore_path %>
+server.ssl.key-store-password=<%= @keystore_password %>
+server.ssl.key-password=<%= @key_password %>
+<%- end -%>
+server.port=<%= @server_port %>
+server.servlet.context-path=<%= @server_prefix %>
+cas.server.name=<%= @server_name %>
+<%#- We strip trailing slashes here as it can causes issues with auto generated urls -%>
+cas.server.prefix=<%= @server_name %><%= @server_prefix.sub(/\/$/, '') %>
+server.tomcat.basedir=<%= @tomcat_basedir %>
+<%- if @tomcat_proxy -%>
+# we proxy from nginx over localhost
+server.tomcat.remoteip.internal-proxies=127\\.0\\.0\\.1
+management.endpoints.web.base-path=/api
+
+cas.server.tomcat.http.enabled=false
+cas.server.tomcat.http-proxy.enabled=true
+cas.server.tomcat.http-proxy.secure=true
+cas.server.tomcat.http-proxy.scheme=https
+cas.server.tomcat.http-proxy.protocol=HTTP/1.1
+<%- end -%>
+
+
+management.endpoints.web.exposure.include=<%= @actuators.join(',') %>
+<% @actuators.each do |actuator| -%>
+management.endpoint.<%= actuator %>.enabled=true
+<% end -%>
+
+<%- if @actuators.include?('prometheus') -%>
+<%- unless @prometheus_nodes.empty? %>
+management.metrics.tags.application=${spring.application.name}
+management.metrics.export.prometheus.enabled=true
+cas.monitor.endpoints.endpoint.prometheus.access[0]=IP_ADDRESS
+cas.monitor.endpoints.endpoint.prometheus.required-ip-addresses[0]=::1,127.0.0.1,<%= get_addresses(@prometheus_nodes).join(',') %>
+<%- end -%>
+<%- end -%>
+
+# This only returns a result for a session of an authenticated
+# users, so the lack of access control doesn't leak anything
+# AUTHENTICATED would be better fit, but it seems broken; it
+# redirects to a non-existing /adminlogin URL instead of the
+# IDP login page
+<%- if @actuators.include?('sso') -%>
+cas.monitor.endpoints.endpoint.sso.access=ANONYMOUS
+<%- end -%>
+
+<%- if @actuators.include?('ssoSessions') -%>
+cas.monitor.endpoints.endpoint.ssoSessions.access[0]=IP_ADDRESS
+cas.monitor.endpoints.endpoint.ssoSessions.required-ip-addresses=::1,127.0.0.1,<%= get_addresses(@idp_nodes).join(',') %>
+<%- end -%>
+
+cas.service-registry.json.location=file:<%= @services_dir %>
+logging.config: file:/etc/cas/config/log4j2.xml
+logging.level.org.apereo=<%= @log_level %>
+
+cas.authn.accept.users=
+
+cas.ticket.tgt.remember-me.enabled=true
+cas.ticket.tgt.remember-me.time-to-kill-in-seconds=<%= @max_rememberme_session_length %>
+cas.ticket.tgt.primary.time-to-kill-in-seconds=<%= @session_inactivity_timeout %>
+cas.ticket.tgt.primary.max-time-to-live-in-seconds=<%= @max_session_length %>
+
+<%- if @enable_ldap -%>
+cas.authn.ldap[0].principal-attribute-list=<%= @ldap_attribute_list.join(',') %>
+cas.authn.ldap[0].type=<%= @ldap_auth %>
+cas.authn.ldap[0].connection-strategy=<%= @ldap_connection %>
+cas.authn.ldap[0].ldapurl=<%= @ldap_uris.join(' ') %>
+cas.authn.ldap[0].use-start-tls=<%= @ldap_start_tls %>
+cas.authn.ldap[0].basedn=<%= @ldap_base_dn %>
+cas.authn.ldap[0].search-filter=<%= @ldap_search_filter %>
+cas.authn.ldap[0].binddn=<%= @ldap_bind_dn %>
+cas.authn.ldap[0].bindcredential=<%= @ldap_bind_pass %>
+<%- end -%>
+
+<%- if @enable_mfa -%>
+  <%- if @groovy_source -%>
+cas.authn.mfa.triggers.principal.global-principal-attribute-predicate.location=file:<%= @groovy_file -%>
+  <%- else -%>
+cas.authn.mfa.triggers.principal.global-principal-attribute-name-triggers=<%= @mfa_attribute_trigger %>
+cas.authn.mfa.triggers.principal.global-principal-attribute-value-regex=<%= @mfa_attribut_value.join('|') %>
+  <%- end -%>
+<%- end -%>
+
+<%- if @enable_u2f -%>
+<% if @u2f_signing_key %>cas.authn.mfa.u2f.crypto.signing.key=<%= @u2f_signing_key %><% end %>
+<% if @u2f_encryption_key %>cas.authn.mfa.u2f.crypto.encryption.key=<%= @u2f_encryption_key %><% end %>
+  <%- if @u2f_jpa_enable -%>
+cas.authn.mfa.u2f.jpa.user=<%= @u2f_jpa_username %>
+cas.authn.mfa.u2f.jpa.password=<%= @u2f_jpa_password %>
+cas.authn.mfa.u2f.jpa.driver-class=org.mariadb.jdbc.Driver
+<%# dont't bother with ssl if db is local (cloud) %>
+cas.authn.mfa.u2f.jpa.url=jdbc:mysql://<%= @u2f_jpa_server %>/<%= @u2f_jpa_db %><% unless @u2f_jpa_server == '127.0.0.1' %>?useSSL=true&disableSslHostnameVerification=true<% end %>
+cas.authn.mfa.u2f.jpa.dialect=org.hibernate.dialect.MariaDBDialect
+  <%- end -%>
+<%- end -%>
+
+<%- if @u2f_token_expiry_days -%>
+cas.authn.mfa.u2f.core.expire-devices=<%= @u2f_token_expiry_days %>
+cas.authn.mfa.u2f.core.expire-devices-time-unit=DAYS
+<%- end -%>
+<% if @tgc_signing_key %>cas.tgc.crypto.signing.key=<%= @tgc_signing_key %><% end %>
+<% if @tgc_encryption_key %>cas.tgc.crypto.encryption.key=<%= @tgc_encryption_key %><% end %>
+<% if @webflow_signing_key %>cas.webflow.crypto.signing.key=<%= @webflow_signing_key %><% end %>
+<% if @webflow_encryption_key %>cas.webflow.crypto.encryption.key=<%= @webflow_encryption_key %><% end %>
+
+<%- if @memcached_enable -%>
+cas.ticket.registry.memcached.servers=<%= @memcached_server %>:<%= @memcached_port %>
+cas.ticket.registry.memcached.transcoder=<%= @memcached_transcoder %>
+<%- end -%>
+
+<%- if @enable_cors -%>
+cas.http-web-request.cors.enabled=true
+cas.http-web-request.cors.allow-credentials=<%= @cors_allow_credentials.to_s %>
+<%# if cors is enabled but no origins provided allow all origins %>
+  <%- if @cors_allowed_origins.empty? -%>
+cas.http-web-request.cors.allow-origins[0]=*
+  <%- else -%>
+    <%- @cors_allowed_origins.each_with_index do |origin, idx| -%>
+cas.http-web-request.cors.allow-origins[<%= idx %>]=<%= origin %>
+    <%- end -%>
+  <%- end -%>
+  <%- if @cors_allowed_headers.empty? -%>
+cas.http-web-request.cors.allow-headers[0]=*
+  <%- else -%>
+    <%- @cors_allowed_headers.each_with_index do |header, idx| -%>
+cas.http-web-request.cors.allow-headers[<%= idx %>]=<%= header %>
+    <%- end -%>
+  <%- end -%>
+  <%- @cors_allowed_methods.each_with_index do |method, idx| -%>
+cas.http-web-request.cors.allow-methods[<%= idx %>]=<%= method %>
+  <%- end -%>
+<%- end -%>
+
+<%- provider_count = Hash.new(0) -%>
+<%- @delegated_authenticators.each do |delegate| -%>
+  <%- delegate.each_pair do |key, value| -%>
+    <%- next if key == 'provider' -%>
+cas.authn.pac4j.<%= delegate['provider'] %>[<%= provider_count[delegate['provider']] %>].<%= key.tr('_', '-') %>=<%= value %>
+  <%- end -%>
+ <%- provider_count[delegate['provider']] += 1 -%>
+<%- end -%>

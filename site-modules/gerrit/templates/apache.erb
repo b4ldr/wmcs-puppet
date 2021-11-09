@@ -1,0 +1,136 @@
+#####################################################################
+### THIS FILE IS MANAGED BY PUPPET
+### puppet:///gerrit/gerrit.wikimedia.org.erb
+#####################################################################
+# vim: filetype=apache
+
+<VirtualHost *:80>
+    ServerAdmin noc@wikimedia.org
+    ServerName <%= @host %>
+    <%- if !@replica_hosts.empty? -%>
+    ServerAlias <%= Array(@replica_hosts).join(' ') %>
+    <%- end -%>
+
+    DocumentRoot /var/www
+    <Directory />
+        Options FollowSymLinks
+        AllowOverride None
+    </Directory>
+    <Directory /var/www/>
+        Options Indexes FollowSymLinks MultiViews
+        AllowOverride None
+        Require all granted
+    </Directory>
+
+    ErrorLog /var/log/apache2/<%= @host %>.http.error.log
+
+    # Possible values include: debug, info, notice, warn, error, crit,
+    # alert, emerg.
+    LogLevel warn
+
+    CustomLog /var/log/apache2/<%= @host %>.http.access.log wmf
+    ServerSignature Off
+    RewriteEngine on
+    RewriteRule ^/(.*)$ https://<%= @host %>/$1 [L,R=301,NE]
+</VirtualHost>
+
+<VirtualHost *:443>
+    ServerAdmin noc@wikimedia.org
+    ServerName <%= @host %>
+    <%- if @replica_hosts -%>
+    ServerAlias <%= Array(@replica_hosts).join(' ') %>
+    <%- end -%>
+
+    # https://httpoxy.org/
+    RequestHeader unset Proxy early
+
+    SSLEngine on
+    <%- if @use_acmechief -%>
+    SSLCertificateFile /etc/acmecerts/gerrit/live/ec-prime256v1.crt
+    SSLCertificateChainFile /etc/acmecerts/gerrit/live/ec-prime256v1.chain.crt
+    SSLCertificateKeyFile /etc/acmecerts/gerrit/live/ec-prime256v1.key
+    SSLCertificateFile /etc/acmecerts/gerrit/live/rsa-2048.crt
+    SSLCertificateChainFile /etc/acmecerts/gerrit/live/rsa-2048.chain.crt
+    SSLCertificateKeyFile /etc/acmecerts/gerrit/live/rsa-2048.key
+    <%- else -%>
+    SSLCertificateFile /etc/letsencrypt/live/gerrit.devtools.wmflabs.org/fullchain.pem
+    SSLCertificateKeyFile /etc/letsencrypt/live/gerrit.devtools.wmflabs.org/privkey.pem
+    <%- end -%>
+    <%= @ssl_settings.join("\n    ") %>
+
+    # T268260
+    RequestHeader set "X-Forwarded-Proto" expr=%{REQUEST_SCHEME}
+
+    RedirectMatch ^/$ /r/
+    RedirectMatch ^/r$ /r/
+
+    # Misbehaving bots
+    SetEnvIf User-Agent 80legs bad_browser
+    SetEnvIf User-Agent bingbot bad_browser
+    SetEnvIf User-Agent Baiduspider bad_browser
+    SetEnvIf User-Agent Sogou bad_browser
+    SetEnvIf User-Agent TweetmemeBot bad_browser
+    SetEnvIf User-Agent Yeti bad_browser
+    SetEnvIf Remote_Addr 208.110.84.34 bad_browser
+    SetEnvIf Remote_Addr 89.83.122.45 bad_browser
+    SetEnvIf Remote_Addr 129.242.4.62 bad_browser
+
+    DocumentRoot /var/www
+    <Directory />
+        Options FollowSymLinks
+        AllowOverride None
+        <RequireAll>
+          Require all granted
+          Require not env bad_browser
+        </RequireAll>
+    </Directory>
+    <Directory /var/www/>
+        Options Indexes FollowSymLinks MultiViews
+        AllowOverride None
+    </Directory>
+
+    ProxyRequests Off
+    ProxyVia Off
+    ProxyPreserveHost On
+
+    <Proxy *>
+        <RequireAll>
+          Require all granted
+          Require not env bad_browser
+        </RequireAll>
+    </Proxy>
+
+    AllowEncodedSlashes On
+    RewriteEngine On
+
+    # git-review for some reason sometimes uses <https://gerrit.wikimedia.org/tools/hooks/commit-msg>
+    # instead of <https://gerrit.wikimedia.org/r/tools/hooks/commit-msg>, except when somebody is
+    # trying to reproduce this behavior. But people run into this all the time.
+    RewriteRule ^/tools/hooks/commit-msg$ https://<%= @host %>/r/tools/hooks/commit-msg
+
+    # Serve default favicon for Documentation and gitiles pages
+    RewriteRule ^/favicon.ico$ https://<%= @host %>/r/static/wikimedia-codereview-logo.cache.ico [L,R=301,NE]
+
+    # In gerrit 2.16, cloning over /p/ is broken, so redirect /r/p/ to /r/
+    RewriteRule ^/r/p/(.+)/info/(.+)$ https://<%= @host %>/r/$1/info/$2 [L,R=301,NE]
+
+    # PolyGerrit cannot serve over /r/project so uses /r/p.
+    RewriteRule ^/r/projects/(.+),dashboards/(.+)$ https://<%= @host %>/r/p/$1/+/dashboard/$2 [L,R=301,NE]
+    <%- if @maint_mode -%>
+    RedirectMatch temp "/r" "/error.html#"
+    <%- else -%>
+    ProxyPass /r/ http://127.0.0.1:8080/r/ retry=0 nocanon Keepalive=On
+    ProxyPass /g/ http://127.0.0.1:8080/r/plugins/gitiles/ retry=0 nocanon Keepalive=On
+    ErrorDocument 503 "/error.html#"
+    <%- end -%>
+
+    ErrorLog /var/log/apache2/<%= @host %>.https.error.log
+
+    # Possible values include: debug, info, notice, warn, error, crit,
+    # alert, emerg.
+    LogLevel warn
+
+    CustomLog /var/log/apache2/<%= @host %>.https.access.log cee_ecs_accesslog_170
+    ServerSignature Off
+
+</VirtualHost>

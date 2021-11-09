@@ -1,0 +1,30 @@
+server {
+    listen [::]:8100 ipv6only=off;
+    listen [::]:8143 ssl ipv6only=off;
+
+    # SSL settings
+    ssl_certificate     <%= @puppet_cert_pub %>;
+    ssl_certificate_key <%= @puppet_cert_priv %>;
+    ssl_session_cache shared:SSL:50m;
+    ssl_session_timeout 5m;
+    ssl_verify_client optional;
+    ssl_client_certificate <%= @puppet_cert_ca %>;
+
+    # Wrap the normal API but only allow GETs.
+    location / {
+        proxy_pass http://127.0.0.1:8101;
+
+        limit_except GET {
+            deny all;
+        }
+
+        allow 127.0.0.0/8;
+<% @puppetmasters.values.flatten(1).map { |p| p['worker'] }.sort.each do |server| -%>
+        allow <%= scope.function_ipresolve([server]) %>;
+<% end -%>
+<% @labs_instance_ranges.each do |range| -%>
+        allow <%= range %>;
+<% end -%>
+        deny all;
+    }
+}

@@ -1,0 +1,9 @@
+## These url templates are expanded for every wiki in large.dblist.
+## The resulting set is then run against *each server* individually.
+##
+## This is for warming up resources local to the appserver, such as APCu.
+
+# Purpose: Shared MW code in opcache, EtcdConfig in apcu, ResourceLoader in apcu
+https://%server/w/load.php?lang=en&modules=startup&only=scripts&raw=1&skin=vector
+# Purpose: API-specific MW code in opcache
+https://%server/w/api.php?action=query&meta=siteinfo&siprop=namespaces|specialpagealiases|magicwords|languages|extensiontags&format=json&formatversion=2

@@ -1,0 +1,77 @@
+# Apache configuration for Phabricator (<%= @phab_servername %>)
+# This file is managed by Puppet.
+
+<VirtualHost *:80>
+  ServerName <%= @phab_servername.gsub('http://', '').gsub('https://', '') %>
+<%- @serveraliases.each do |name| -%>
+  ServerAlias <%= name %>
+<% end -%>
+<% if !@serveradmin.empty? -%>
+  ServerAdmin <%= @serveradmin %>
+<%- end %>
+  DocumentRoot <%= @docroot %>
+
+  SetEnv PHABRICATOR_ENV www
+
+  <% if @trusted_proxies -%>
+  <IfModule mod_remoteip.c>
+    RemoteIPHeader X-Client-IP
+    RemoteIPInternalProxy <%= @trusted_proxies.join(' ') %>
+  </IfModule>
+  <% end -%>
+
+  RewriteEngine on
+
+  # Allow longer URLs for phatality / form prefill
+  LimitRequestLine 16384
+
+<% if !@serveraliases.empty? -%>
+<%- @serveraliases.each do |name| -%>
+  # Read robots.txt from disk for the alternative domain
+  RewriteCond "%{HTTP_HOST}" "<%= name.gsub('.', '\.') %>"
+  RewriteRule ^/robots.txt$ <%= @phabdir %>/robots.txt [L]
+
+<%- end %>
+
+  <Files "robots.txt">
+    Require all granted
+  </Files>
+<%- end %>
+
+  <Directory "<%= @docroot %>">
+    Options Indexes FollowSymLinks MultiViews
+    Require all granted
+  </Directory>
+
+  # needed to allow http basic auth (using https auth)
+  SetEnvIf Authorization "(.*)" HTTP_AUTHORIZATION=$1
+
+  # php-fpm
+  <FilesMatch \.php$>
+      SetHandler "proxy:unix:/run/php/fpm-www.sock|fcgi://localhost/"
+  </FilesMatch>
+
+  LogLevel warn
+  ErrorLog /var/log/apache2/phabricator_error.log
+  CustomLog /var/log/apache2/phabricator_access.log cee_ecs_accesslog_170
+  ServerSignature Off
+
+
+  RewriteCond %{HTTP:X-Forwarded-Proto} !https
+  RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
+
+<% if !@serveraliases.empty? -%>
+<%- @serveraliases.each do |name| -%>
+  # Redirect server alias home to the main server name
+  RewriteCond "%{HTTP_HOST}" "<%= name.gsub('.', '\.') %>"
+  RewriteRule ^/$ "<%= @phab_servername %>" [R,L]
+<%- end %>
+<%- end %>
+
+  RewriteRule ^/rsrc/(.*)     -                       [L,QSA]
+  RewriteRule ^/favicon.ico   -                       [L,QSA]
+  RewriteRule ^/project/sprint/board/(.*) /project/board/$1 [L,QSA,R=301]
+  RewriteRule ^/maniphest/task/create/? /maniphest/task/edit/form/1/ [L,QSA,NE,R=301]
+  RewriteRule ^(.*)$          /index.php?__path__=$1  [B,L,QSA]
+
+</VirtualHost>

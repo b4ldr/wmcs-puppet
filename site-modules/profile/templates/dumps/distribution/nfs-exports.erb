@@ -1,0 +1,9 @@
+#  THIS FILE IS MANAGED BY PUPPET
+#
+# Export dumps to Cloud VPS instances
+#
+# /etc/exports: the access control list for filesystems which may be exported
+#		to NFS clients.  See exports(5).
+#
+
+/srv/dumps/xmldatadumps/public  -ro,insecure,fsid=0,sec=sys,no_subtree_check,all_squash,nocrossmnt <%= Array(@nfs_clients).join(' ') %>

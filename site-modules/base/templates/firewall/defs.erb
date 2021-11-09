@@ -1,0 +1,73 @@
+<%-
+domain_networks = scope.lookupvar('network::constants::domain_networks')
+all_network_subnets = scope.lookupvar('network::constants::all_network_subnets')
+production_networks = scope.lookupvar('network::constants::production_networks')
+labs_networks = scope.lookupvar('network::constants::labs_networks')
+cloud_networks_public = scope.lookupvar('network::constants::cloud_networks_public')
+frack_networks = scope.lookupvar('network::constants::frack_networks')
+analytics_networks = scope.lookupvar('network::constants::analytics_networks')
+mw_appserver_networks = scope.lookupvar('network::constants::mw_appserver_networks')
+network_infra = scope.lookupvar('network::constants::network_infra')
+mgmt_networks = scope.lookupvar('network::constants::mgmt_networks')
+services_kubepods_networks = scope.lookupvar('network::constants::services_kubepods_networks')
+staging_kubepods_networks = scope.lookupvar('network::constants::staging_kubepods_networks')
+mlserve_kubepods_networks = scope.lookupvar('network::constants::mlserve_kubepods_networks')
+-%>
+
+@def $INTERNAL = (10.0.0.0/8 2620:0:860:100::/56 2620:0:861:100::/56 2620:0:862:100::/56 2620:0:863:100::/56);
+# $DOMAIN_NETWORKS is a set of all networks belonging to a domain.
+# a domain is a realm currently, but the notion is more generic than that on purpose
+@def $DOMAIN_NETWORKS = (<%- domain_networks.each do |net| -%><%= net %> <% end -%>);
+
+# $PRODUCTION_NETWORKS is a set of all production networks
+@def $PRODUCTION_NETWORKS = (<%- production_networks.each do |net| -%><%= net %> <% end -%>);
+# $LABS_NETWORKS is meant to be a set of all labs networks
+@def $LABS_NETWORKS = (<%- labs_networks.each do |net| -%><%= net %> <% end -%>);
+# $CLOUD_NETWORKS_PUBLIC is meant to be a set of all Cloud public networks
+@def $CLOUD_NETWORKS_PUBLIC = (<%- cloud_networks_public.each do |net| -%><%= net %> <% end -%>);
+# $FRACK_NETWORKS is meant to be a set of all fundraising networks
+@def $FRACK_NETWORKS = (<%- frack_networks.each do |net| -%><%= net %> <% end -%>);
+
+# flevorium (10.64.48.112/32) and furud (10.192.16.65/32) are in ANALYTICS_NETWORKS for backup purposes, see: T176506
+# Point of contact: Faidon/Otto/Luca
+@def $ANALYTICS_NETWORKS = (<%- analytics_networks.each do |net| -%><%= net %> <% end -%> 10.64.48.112/32 10.192.16.65/32 );
+@def $MW_APPSERVER_NETWORKS = (<%- mw_appserver_networks.each do |net| -%><%= net %> <% end -%>);
+@def $SERVICES_KUBEPODS_NETWORKS  = (<%- services_kubepods_networks.each do |net| -%><%= net %> <% end -%>);
+@def $STAGING_KUBEPODS_NETWORKS  = (<%- staging_kubepods_networks.each do |net| -%><%= net %> <% end -%>);
+@def $MLSERVE_KUBEPODS_NETWORKS = (<%- mlserve_kubepods_networks.each do |net| -%><%= net %> <% end -%>);
+
+@def $NETWORK_INFRA = (<%= network_infra.values.reduce('') {|memo, nets| memo += ' ' + nets.join(' ')}.strip %>);
+@def $MGMT_NETWORKS = (<%- mgmt_networks.each do |net| -%><%= net %> <% end -%>);
+
+
+@def $DEPLOYMENT_HOSTS = (<%- @deployment_hosts.each do |ip| -%><%= ip %> <% end -%>);
+@def $CUMIN_MASTERS = (<%- @cumin_masters.each do |ip| -%><%= ip %> <% end -%>);
+@def $CACHES = (<%- @cache_hosts.each do |ip| -%><%= ip %> <% end -%>);
+@def $KAFKA_BROKERS_MAIN = (<%- @kafka_brokers_main.each do |ip| -%><%= ip %> <% end -%>);
+@def $KAFKA_BROKERS_ANALYTICS = (<%- @kafka_brokers_analytics.each do |ip| -%><%= ip %> <% end -%>);
+@def $KAFKA_BROKERS_JUMBO = (<%- @kafka_brokers_jumbo.each do |ip| -%><%= ip %> <% end -%>);
+@def $KAFKA_BROKERS_LOGGING = (<%- @kafka_brokers_logging.each do |ip| -%><%= ip %> <% end -%>);
+@def $ZOOKEEPER_HOSTS_MAIN = (<%- @zookeeper_hosts_main.each do |ip| -%><%= ip %> <% end -%>);
+@def $DRUID_PUBLIC_HOSTS = (<%- @druid_public_hosts.each do |ip| -%><%= ip %> <% end -%>);
+@def $LABSTORE_HOSTS = (<%- @labstore_hosts.each do |ip| -%><%= ip %> <% end -%>);
+@def $MYSQL_ROOT_CLIENTS = (<%- @mysql_root_clients.each do |ip| -%><%= ip %> <% end -%>);
+<%-
+all_network_subnets.sort.map do |realm, sites|
+	sites.sort.map do |site, spheres|
+		spheres.sort.map do |sphere, networks |
+			networks.sort.map do |network, families| -%>
+
+# Realm: <%= realm %>, # Site: <%= site %>, # Sphere: <%= sphere %>, # Network: <%= network %>
+				<%-
+				descr = "#{site.upcase()}_#{sphere.upcase()}_#{network.upcase()}".gsub('-', '_').gsub('+', '_')
+				familydescrs = Array.new()
+				families.sort.map do |family, address|
+					familydescr = "#{descr}_#{family.upcase()}"
+					familydescrs << familydescr -%>
+@def $<%= familydescr %> = (<%= address %>);
+				<%- end -%>
+@def $<%= descr %> = (<%- familydescrs.each do |fd|%>$<%= fd %> <% end -%>);
+			<%- end
+		end
+	end
+end -%>

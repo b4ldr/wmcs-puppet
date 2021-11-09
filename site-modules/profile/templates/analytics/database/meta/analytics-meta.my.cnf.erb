@@ -1,0 +1,77 @@
+# Use for Analytics Cluster misc meta stores (Hive, Oozie, etc.)
+
+[client]
+port   = <%= @port %>
+socket = <%= @socket %>
+
+[mysqld]
+
+log_error=/var/log/mysql.err
+
+log_bin
+# Hive doesn't work with STATEMENT based binlog.
+# http://stackoverflow.com/questions/19205318/cannot-create-database-with-hive
+binlog_format = ROW
+log_slave_updates
+skip-external-locking
+skip-name-resolve
+temp-pool
+log_basename=analytics-meta
+
+user      = mysql
+socket    = <%= @socket %>
+port      = <%= @port %>
+datadir   = <%= @datadir %>
+basedir   = <%= @basedir %>
+tmpdir    = <%= @tmpdir %>
+server_id = <%= @server_id %>
+read_only = <%= @read_only %>
+
+# ssl
+ssl-ca=/etc/ssl/certs/Puppet_Internal_CA.pem
+ssl-cert=/etc/mysql/ssl/cert.pem
+ssl-key=/etc/mysql/ssl/server.key
+ssl-cipher=TLSv1.2
+
+secure_file_priv   = /dev/null
+max_allowed_packet = 64M
+sync_binlog        = 0
+expire_logs_days   = 14
+
+innodb_file_per_table          = 1
+innodb_log_file_size           = 50M
+innodb_flush_method            = O_DIRECT
+innodb_flush_log_at_trx_commit = 1
+innodb_buffer_pool_size        = <%= @innodb_pool_size %>
+innodb_buffer_pool_instances   = 4
+
+# Needed by Superset to avoid errors like the following while
+# executing alter table statements (for db upgrades):
+# "Index column size too large. The maximum column size is 767 bytes."
+# Note: in order to use the features below, you need to set
+# the target table with ROW_FORMAT=DYNAMIC
+innodb_file_format             = Barracuda
+innodb_large_prefix            = 1
+
+query_cache_type        = 1
+query_cache_size        = 16M
+
+# enable socket authentication
+plugin-load = unix_socket=auth_socket.so
+
+# Required for search/airflow installation. This will also
+# be the mariadb default some day, as the old behaviour
+# is deprecated.
+explicit_defaults_for_timestamp = on
+
+# If running as replica, do not replicate the following databases
+replicate_wild_ignore_table=superset\_staging.%
+
+max_connections = 250
+
+[mysqldump]
+
+quick
+max_allowed_packet = 16M
+
+#!includedir /etc/mysql/conf.d/

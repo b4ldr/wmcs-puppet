@@ -1,0 +1,49 @@
+varnishtest "Test switching to cache_misc vcl"
+
+server s1 {
+} -start
+
+varnish v1 -arg "-p vcl_path=${vcl_path} -p vcc_err_unref=false -p vcc_allow_inline_c=true -p cc_command='${cc_command}'" -vcl+backend {
+   backend vtc_backend {
+       .host = "${s1_addr}"; .port = "${s1_port}";
+   }
+
+   include "${basepath}/usr/share/varnish/tests/wikimedia_misc-frontend.vcl";
+}
+
+# Attach the "wikimedia_misc" label to wikimedia_misc-frontend.vcl
+varnish v1 -cli "vcl.label wikimedia_misc vcl1"
+
+# Load cache_text VCL as usual
+varnish v1 -vcl {
+    backend vtc_backend {
+        .host = "${s1_addr}"; .port = "${s1_port}";
+    }
+
+    sub vcl_recv {
+        if (req.http.Host == "wmfusercontent.org") {
+            # Switch to misc-specific VCL
+            return (vcl(wikimedia_misc));
+        }
+    }
+
+    include "${basepath}/usr/share/varnish/tests/wikimedia_text-frontend.vcl";
+}
+
+varnish v1 -cliok "vcl.list"
+varnish v1 -start
+varnish v1 -cliok "vcl.list"
+
+client c1 {
+    # Trigger misc-specific behavior
+    txreq -url "/1" -hdr "Host: wmfusercontent.org" -hdr "X-Forwarded-Proto: https"
+    rxresp
+    expect resp.status == 301
+    expect resp.http.Location == "https://www.wikimedia.org"
+
+    # Trigger text-specific behavior
+    txreq -url "/w/index.php?title=MyPage&action=info" -hdr "User-Agent: nintendo" -hdr "Host: en.wikipedia.org" -hdr "X-Forwarded-Proto: https"
+    rxresp
+    expect resp.http.location == "https://en.m.wikipedia.org/w/index.php?title=MyPage&action=info"
+    expect resp.status == 302
+} -run

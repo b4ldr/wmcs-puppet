@@ -1,0 +1,69 @@
+[Unit]
+Description=%p (Varnish HTTP Accelerator)
+
+[Service]
+Type=forking
+LimitNOFILE=500000
+LimitMEMLOCK=90000
+LimitRTPRIO=infinity
+# https://phabricator.wikimedia.org/T208574
+TasksMax=infinity
+### start sec settings
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=full
+ProtectHome=true
+NoNewPrivileges=true
+# No special powers for root with the exception of the following.
+# See capabilities(7).
+CapabilityBoundingSet=<%= @capabilities %>
+### end sec settings
+PIDFile=%t/%p.pid
+Restart=on-failure
+KillMode=process
+<% if @enable_geoiplookup -%>
+Environment="CC_COMMAND=exec gcc -std=gnu99 -g -O2 -fstack-protector-strong -Wformat -Werror=format-security -Wall -pthread -fpic -shared -Wl,-x -L/usr/local/lib/ -o %%o %%s -lmaxminddb"
+<% else -%>
+Environment="CC_COMMAND=exec gcc -std=gnu99 -g -O2 -fstack-protector-strong -Wformat -Werror=format-security -Wall -pthread -fpic -shared -Wl,-x -o %%o %%s"
+<% end -%>
+<% if @jemalloc_conf -%>
+Environment="MALLOC_CONF=<%= @jemalloc_conf %>"
+<% end -%>
+# rsyslog will see this in $programname
+SyslogIdentifier=varnish<%= @instancesuffix %>
+ExecReload=/usr/local/sbin/reload-vcl <%= @reload_vcl_opts %>
+# We start varnishd(1) without specifying a VCL file (-f ''). Use reload-vcl in
+# ExecStartPost to load and label separate VCL files first, and the main one
+# last. This is necessary given that the main VCL file might reference the
+# label of separate VCLs, and would otherwise fail to compile if loaded
+# directly with -f.
+ExecStartPost=/usr/local/sbin/reload-vcl <%= @reload_vcl_opts %> --start-child
+ExecStart=/usr/sbin/varnishd \
+-P %t/%p.pid \
+<%= @ports.map { |p| "-a :"+p.to_s }.join(" ") -%> \
+<% if @listen_uds -%>
+<% if @proxy_on_uds -%>
+-a <%= @listen_uds -%>,PROXY,user=<%= @uds_owner -%>,group=<%= @uds_group -%>,mode=<%= @uds_mode -%> \
+<% else -%>
+-a <%= @listen_uds -%>,user=<%= @uds_owner -%>,group=<%= @uds_group -%>,mode=<%= @uds_mode -%> \
+<% end -%>
+<% end -%>
+-T 127.0.0.1:<%= @admin_port -%> \
+-f '' \
+-p thread_pool_min=250 -p thread_pool_max=<%= @processorcount * 250 -%> -p thread_pool_timeout=120 \
+-p vsl_reclen=2048 \
+-p workspace_backend=128k \
+-p vcc_allow_inline_c=true \
+-S /etc/varnish/secret \
+<%= @storage -%> \
+-p thread_pool_stack=131072 \
+-p listen_depth=4096 -p vcc_err_unref=off \
+-p http_req_size=24576 \
+-p gzip_level=8 \
+-p gzip_memlevel=9 \
+<%= @runtime_params -%> \
+<%= @instance_opt -%> \
+-p cc_command=${CC_COMMAND}
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,53 @@
+# Note: This file is managed by Puppet.
+
+<VirtualHost *:80>
+    ServerName stats.wikimedia.org
+    ServerAdmin noc@wikimedia.org
+
+    ErrorLog /var/log/apache2/error.log
+    # Possible values include: debug, info, notice, warn, error, crit,
+    # alert, emerg.
+    LogLevel warn
+
+    CustomLog /var/log/apache2/access.log wmf
+    ServerSignature On
+
+    DocumentRoot /srv/stats.wikimedia.org/htdocs
+    <Directory "/srv/stats.wikimedia.org/htdocs">
+        Options Indexes FollowSymLinks MultiViews
+        AllowOverride None
+        Require all granted
+    </Directory>
+
+    # --- Wikistats v2 ---
+    # Wikistats v2 is a single page (index.html) website.
+    # Caching of the default page should not happen for long
+    # periods of time, since changes to its content (CSS, js, etc..)
+    # due to a deployment may end up in a broken user experience
+    # (until the cache revalidates its content or the operator manually
+    # drops it).
+    <Directory "/srv/stats.wikimedia.org/htdocs">
+        <Files "index.html">
+            Header set Cache-Control "max-age=10"
+        </Files>
+    </Directory>
+
+    # Wikistats v2 was in beta under /v2/ URLs.  It has now moved to
+    # the root domain. Redirect requests from /v2 to the docroot.
+    # Note: DirectorySlash is a mod_dir feature that adds a trailing
+    # slash to URLs when the target resource is a directory, enabled by
+    # default (see https://httpd.apache.org/docs/2.4/mod/mod_dir.html#directoryslash).
+    # For this reason, the redirect from /v2 to /v2/ is automatically
+    # handled by httpd itself.
+    Redirect permanent /v2/ /
+
+
+    # --- Wikistats v1 ---
+    # CGI scripts are not enabled/used for this site
+    <Directory "/srv/stats.wikimedia.org/cgi-bin">
+        Require all denied
+    </Directory>
+
+</VirtualHost>
+
+# vim: filetype=apache

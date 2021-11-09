@@ -1,0 +1,30 @@
+transport: clustershell
+log_file: <%= @cumin_log_path %>/cumin.log
+default_backend: openstack
+
+environment:
+    SSH_AUTH_SOCK: /run/keyholder/proxy.sock
+
+clustershell:
+    ssh_options:
+        - '-F <%= @ssh_config_path %>'
+
+openstack:
+    auth_url: <%= @keystone_protocol %>://<%= @keystone_api_fqdn %>:<%= @keystone_port %>
+    username: <%= @observer_username %>
+    password: <%= @observer_password %>
+    domain_suffix: <%= @nova_dhcp_domain %>
+    nova_api_version: 2.12
+    timeout: 2
+    <%- if @region -%>
+    client_params:
+        region_name: <%= @region %>
+    <%- end -%>
+    <%- if @is_project -%>
+    query_params:
+        project: <%= @labsproject %>
+    <%- end -%>
+
+plugins:
+    backends:
+        - cumin_file_backend

@@ -1,0 +1,25 @@
+<% @discovery_services.sort_by{|svc| svc['dnsdisc']}.each do |svc| -%>
+<% if svc['active_active'] -%>
+disc-<%= svc['dnsdisc'] %> => {
+<% else -%>
+disc-geo-<%= svc['dnsdisc'] %> => {
+<% end -%>
+    map => discovery-map,
+    service_types => discovery-state-<%= svc['dnsdisc'] %>,
+    dcmap => {
+    <%- svc['ip'].keys.sort.each do |dc| -%>
+        <%= dc %> => <%= svc['ip'][dc].values.pop %>
+    <%- end -%>
+    }
+}
+
+<% end -%>
+
+disc-failoid => {
+    map => discovery-map,
+    service_types => discovery-state-failoid,
+    dcmap => {
+        eqiad => 10.64.16.104, # failoid1002.eqiad.wmnet
+        codfw => 10.192.32.20, # failoid2002.codfw.wmnet
+    }
+}

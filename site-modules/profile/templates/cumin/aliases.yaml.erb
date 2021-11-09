@@ -1,0 +1,357 @@
+all: P{*}
+# Sites
+<% @datacenters.each do |dc| -%>
+<%= dc %>: P{P:cumin::target%site = <%= dc %>}
+<% end -%>
+
+# Distros
+<% ['stretch', 'buster', 'bullseye'].each do |distro| -%>
+<%= distro %>: P{F:lsbdistcodename = <%= distro %>}
+<% end -%>
+
+# Server group definitions
+acmechief: P{O:acme_chief}
+all-mw-codfw: (A:mw-api or A:mw or A:mw-jobrunner) and A:codfw
+all-mw-eqiad: (A:mw-api or A:mw or A:mw-jobrunner) and A:eqiad
+an-conf: P{O:analytics_cluster::zookeeper}
+analytics-all-eqiad: A:hadoop-all or A:hadoop-testcluster or A:aqs or A:druid or A:kafka-jumbo or A:misc-analytics or A:analytics-airflow or A:analytics-tools or A:analytics-web or A:presto-analytics or A:analytics-launcher
+analytics-airflow: P{O:search::airflow or O:analytics_cluster::airflow::research or O:analytics_cluster::airflow::platform_eng}
+analytics-launcher: P{O:analytics_cluster::launcher}
+analytics-tools: P{O:analytics_cluster::hadoop::ui or O:analytics_cluster::turnilo or O:analytics_cluster::superset or O:analytics_cluster::superset::staging}
+analytics-web: P{O:analytics_cluster::webserver}
+apt: P{O:apt_repo}
+aqs: P{O:aqs or O:aqs_next}
+aqs-next: P{O:aqs_next}
+aqs-canary: P{aqs1004.eqiad.wmnet}
+archiva: P{O:archiva}
+backup: P{O:backup::offsite or O:backup}
+bastion: P{O:bastionhost}
+bastion-canary: P{bast4003.wikimedia.org}
+centrallog: P{O:syslog::centralserver}
+chartmuseum: P{O:chartmuseum}
+cloudelastic: P{O:elasticsearch::cloudelastic}
+cloudbackup: P{O:wmcs::nfs::primary_backup::tools or O:wmcs::nfs::primary_backup::misc}
+cloudcontrol: P{O:wmcs::openstack::eqiad1::control}
+cloudcontrol-eqiad1: P{O:wmcs::openstack::eqiad1::control}
+cloudcephmon: P{O:wmcs::ceph::mon}
+cloudcephmon-eqiad1: P{O:wmcs::ceph::mon} and A:eqiad
+cloudcephosd: P{O:wmcs::ceph::osd}
+cloudcephosd-eqiad1: P{O:wmcs::ceph::osd} and A:eqiad
+cloudceph: A:cloudcephmon or A:cloudcephosd
+cloudcephosd-codfw: A:cloudcephosd and A:codfw
+cloudcephmon-codfw: A:cloudcephmon and A:codfw
+cloudceph-codfw: A:cloudcephosd-codfw or A:cloudcephmon-codfw
+cloudceph-eqiad1: A:cloudcephmon-eqiad1 or A:cloudcephosd-eqiad1
+cloudmetrics: P{O:wmcs::monitoring}
+cloudnet: P{O:wmcs::openstack::eqiad1::net}
+cloudnet-eqiad1: P{O:wmcs::openstack::eqiad1::net}
+cloudservices: P{O:wmcs::openstack::eqiad1::services}
+cloudservices-eqiad1: P{O:wmcs::openstack::eqiad1::services}
+cloudvirt: P{O:wmcs::openstack::eqiad1::virt or O:wmcs::openstack::eqiad1::virt_ceph or O:wmcs::openstack::eqiad1::virt_ceph_and_backy}
+cloudvirt-eqiad1: P{O:wmcs::openstack::eqiad1::virt or O:wmcs::openstack::eqiad1::virt_ceph or O:wmcs::openstack::eqiad1::virt_ceph_and_backy}
+cloud-eqiad1: A:cloudcontrol-eqiad1 or A:cloudnet-eqiad1 or A:cloudservices-eqiad1 or A:cloudvirt-eqiad1 or A:cloudceph-eqiad1
+cloudcontrol-codfw1dev: P{O:wmcs::openstack::codfw1dev::control}
+cloudnet-codfw1dev: P{O:wmcs::openstack::codfw1dev::net}
+cloudservices-codfw1dev: P{O:wmcs::openstack::codfw1dev::services}
+cloudstore: P{O:wmcs::nfs::secondary}
+cloudvirt-codfw1dev: P{O:wmcs::openstack::codfw1dev::virt_ceph}
+clouddb-codfw1dev: P{O:wmcs::openstack::codfw1dev::db}
+cloudgw-codfw1dev: P{O:wmcs::openstack::codfw1dev::cloudgw}
+cloud-codfw1dev: A:cloudcontrol-codfw1dev or A:cloudnet-codfw1dev or A:cloudservices-codfw1dev or A:cloudvirt-codfw1dev or A:clouddb-codfw1dev or A:cloudgw-codfw1dev or A:cloudceph-codfw
+conf: P{O:configcluster}
+conf-canary: P{conf2004.codfw.wmnet}
+conf-codfw: A:conf and A:codfw
+conf-eqiad: A:conf and A:eqiad
+contint: P{O:ci::master}
+cp: P{O:cache::upload or O:cache::text}
+cp-upload: P{O:cache::upload}
+cp-text: P{O:cache::text}
+<% @datacenters.each do |dc| -%>
+cp-<%= dc %>: A:cp and A:<%= dc %>
+<% [ 'text', 'upload' ].each do |cache| -%>
+cp-<%= cache %>_<%= dc %>: A:cp-<%= cache %> and A:<%= dc %>
+<% end -%>
+<% end -%>
+cumin: P{O:cluster::management}
+cuminunpriv: P{O:cluster::unprivmanagement}
+db-all: A:db-core or A:db-inventory or A:db-wikireplica or A:db-misc or A:db-parsercache or A:db-sanitarium or A:db-store
+db-multiinstance: P{O:mariadb::core_multiinstance or O:mariadb::misc::analytics::backup or O:mariadb::misc::multiinstance} or A:db-sanitarium or A:db-store
+db-core: P{O:mariadb::core or O:mariadb::core_multiinstance or O:mariadb::sanitarium_master}
+db-inventory: P{O:mariadb::misc::db_inventory}
+db-wikireplica: P{O:wmcs::db::wikireplicas::web_multiinstance or O:wmcs::db::wikireplicas::analytics_multiinstance or O:wmcs::db::wikireplicas::dedicated::analytics_multiinstance}
+db-misc: P{O:mariadb::misc or O:mariadb::misc::multiinstance or O:mariadb::misc::phabricator or O:mariadb::misc::analytics::backup}
+db-parsercache: P{O:mariadb::parsercache}
+db-sanitarium-master: P{O:mariadb::sanitarium_master}
+db-sanitarium: P{O:mariadb::sanitarium_multiinstance}
+db-store: P{O:mariadb::dbstore_multiinstance}
+<% @mariadb_roles.each do |role| -%>
+db-role-<%= role %>: P{P:mariadb::mysql_role%role = <%= role %>}
+<% end -%>
+<% @mariadb_sections.each do |section| -%>
+<% unless section.start_with?("test-") -%>
+db-section-<%= section %>: P{R:profile::mariadb::section%section = <%= section %>}
+<% end -%>
+<% end -%>
+db-backups: P{O:dbbackups::metadata or O:dbbackups::content}
+db-backup-source: A:db-store and P{db[1,2]*}
+db-proxy: P{O:mariadb::proxy::master or O:mariadb::proxy::replicas}
+dbmonitor: P{O:tendril}
+debmonitor: P{O:debmonitor::server}
+deployment-servers: P{O:deployment_server}
+dns-auth: P{R:Class = profile::dns::auth}
+dns-auth-canary: P{authdns2001.wikimedia.org}
+dns-rec: P{R:Class = profile::dns::recursor}
+docker-registry: P{O:docker::registry or O:docker_registry_ha::registry}
+dns-rec-canary: P{dns2001.wikimedia.org}
+dragonfly-peer: P{R:Class = dragonfly::dfdaemon}
+dragonfly-supernode: P{O:dragonfly::supernode}
+druid-analytics: P{O:druid::analytics::worker}
+druid-public: P{O:druid::public::worker}
+druid: A:druid-analytics or A:druid-public
+druid-canary: P{an-druid1003.eqiad.wmnet}
+druid-test: P{O:druid::test_analytics::worker}
+dumps: P{O:dumps::generation::server:alldumps or O:dumps::generation::server::misccrons or O:dumps::generation::server::xmldumps or O:dumps::generation::server::xmlfallback or O:dumps::web::htmldumps}
+elastic: P{O:elasticsearch::cirrus}
+elastic-canary: P{elastic1051.eqiad.wmnet}
+elastic-codfw: A:elastic and A:codfw
+elastic-eqiad: A:elastic and A:eqiad
+eventlogging: P{O:eventlogging::analytics}
+failoid: P{O:failoid}
+flowspec: P{O:flowspec}
+ganeti: P{O:ganeti}
+ganeti-test: P{O:ganeti_test}
+ganeti-codfw: A:ganeti and A:codfw
+ganeti-eqiad: A:ganeti and A:eqiad
+ganeti-esams: A:ganeti and A:esams
+ganeti-ulsfo: A:ganeti and A:ulsfo
+ganeti-eqsin: A:ganeti and A:eqsin
+ganeti-all: A:ganeti or A:ganeti-test
+gerrit: P{O:gerrit}
+gitlab: P{O:gitlab}
+graphite: P{O:graphite::production}
+hadoop: A:hadoop-worker or A:hadoop-master or A:hadoop-standby
+hadoop-all: A:hadoop or A:hadoop-coordinator or A:hadoop-hdfs-backup or A:hadoop-coordinator
+hadoop-test: A:hadoop-worker-test or A:hadoop-master-test or A:hadoop-standby-test or A:hadoop-coordinator-test or A:hadoop-ui-test or A:hadoop-client-test
+hadoop-all-test: A:hadoop-test or A:hadoop-coordinator-test
+hadoop-coordinator: A:hadoop-coordinator-primary or A:hadoop-coordinator-secondary
+hadoop-coordinator-primary: P{O:analytics_cluster::coordinator}
+hadoop-coordinator-secondary: P{O:analytics_cluster::coordinator::replica}
+hadoop-coordinator-test: P{O:analytics_test_cluster::coordinator}
+hadoop-hdfs-backup: P{flerovium.eqiad.wmnet or furud.codfw.wmnet}
+hadoop-hdfs-journal: P{C:bigtop::hadoop::journalnode} and A:hadoop-worker
+hadoop-master: P{O:analytics_cluster::hadoop::master}
+hadoop-standby: P{O:analytics_cluster::hadoop::standby}
+hadoop-master-test: P{O:analytics_test_cluster::hadoop::master}
+hadoop-standby-test: P{O:analytics_test_cluster::hadoop::standby}
+hadoop-worker: P{O:analytics_cluster::hadoop::worker}
+hadoop-worker-canary: P{analytics1058.eqiad.wmnet}
+hadoop-worker-test: P{O:analytics_test_cluster::hadoop::worker}
+hadoop-hdfs-journal-test: P{C:bigtop::hadoop::journalnode} and A:hadoop-worker-test
+hadoop-testcluster: A:hadoop-test or A:hadoop-client-test or A:hadoop-ui-test or A:druid-test or A:presto-analytics-test
+hadoop-client: P{O:statistics::explorer}
+hadoop-client-test: P{O:analytics_test_cluster::client}
+hadoop-ui: A:hadoop-hue or A:hadoop-yarn
+hadoop-yarn: P{O:analytics_cluster::hadoop::yarn}
+hadoop-hue: P{an-tool1009.eqiad.wmnet}
+hadoop-ui-test: P{O:analytics_test_cluster::hadoop::ui}
+hadoop-dumps-client: P{O:dumps::distribution::server}
+icinga: P{O:alerting_host}
+idp: P{O:idp} or A:idp-test
+idp-test: P{O:idp_test}
+installserver: P{O:installserver::light or O:apt_repo}
+installserver-light: P{O:installserver::light}
+kafka-all: A:kafka-main or A:kafka-jumbo or A:kafka-logging or A:kafka-test
+kafka-main: P{O:kafka::main}
+kafka-main-canary: P{kafka-main2001.codfw.wmnet}
+kafka-main-codfw: A:kafka-main and A:codfw
+kafka-main-eqiad: A:kafka-main and A:eqiad
+kafka-jumbo-canary: P{kafka-jumbo1001.eqiad.wmnet}
+kafka-jumbo: P{O:kafka::jumbo::broker}
+kafka-jumbo-eqiad: A:kafka-jumbo and A:eqiad
+kafka-logging: P{O:kafka::logging}
+kafka-logging-eqiad: A:kafka-logging and A:eqiad
+kafka-logging-codfw: A:kafka-logging and A:codfw
+kafka-test: P{O:kafka::test::broker}
+kafka-test-eqiad: P{O:kafka::test::broker} and A:eqiad
+kafkamon: P{O:kafka::monitoring_buster}
+kafka-mirror-maker: P{C:profile::kafka::mirror}
+kafka-mirror-maker-jumbo-eqiad: A:kafka-jumbo-eqiad and A:kafka-mirror-maker
+kafka-mirror-maker-main-codfw: A:kafka-main-codfw and A:kafka-mirror-maker
+kafka-mirror-maker-main-eqiad: A:kafka-main-eqiad and A:kafka-mirror-maker
+kafka-mirror-maker-test-eqiad: A:kafka-test-eqiad and A:kafka-mirror-maker
+kerberos: P{O:kerberos::kdc}
+kerberos-kadmin: P{<%= @kerberos_kadmin_host %>}
+kubernetes-etcd: P{O:etcd::v3::kubernetes}
+kubernetes-masters: P{O:kubernetes::master}
+kubernetes-staging: P{O:etcd::v3::kubernetes::staging or O:kubernetes::staging::master or O:kubernetes::staging::worker}
+kubernetes-workers: P{O:kubernetes::worker}
+kubernetes-all: A:kubernetes-etcd or A:kubernetes-masters or A:kubernetes-staging or A:kubernetes-workers
+cloudmetrics: P{O:wmcs::monitoring}
+labs-nfs: P{O:labs::nfs::misc or O:dumps::distribution::server or O:labs::nfs::secondary or O:labs::nfs::secondary_backup::tools or O:labs::nfs::secondary_backup::misc}
+labweb: P{O:wmcs::openstack::eqiad1::labweb}
+ldap-corp: P{O:openldap::corp}
+ldap-replicas: P{O:openldap::replica}
+ldap-replicas-eqiad: A:ldap-replicas and A:eqiad
+ldap-replicas-codfw: A:ldap-replicas and A:codfw
+ldap-main: P{O:openldap::labs}
+ldap-all: A:ldap-corp or A:ldap-replicas or A:ldap-main
+lists: P{O:lists}
+logstash: P{C:logstash or O:logstash::elasticsearch or O:logstash::elasticsearch7}
+logstash-canary: P{logstash1007.eqiad.wmnet}
+lvs: P{O:lvs::balancer}
+lvs-canary: P{lvs4007.ulsfo.wmnet}
+lvs-codfw: A:lvs and A:codfw
+lvs-eqiad: A:lvs and A:eqiad
+lvs-esams: A:lvs and A:esams
+lvs-ulsfo: A:lvs and A:ulsfo
+lvs-eqsin: A:lvs and A:eqsin
+maps: P{O:maps::master or O:maps::replica}
+maps-canary: P{maps1009.eqiad.wmnet}
+mcrouter: P{P:mediawiki::mcrouter_wancache or P:mediawiki::mcrouter_exporter}
+mcrouter-codfw: A:mcrouter and A:codfw
+mcrouter-eqiad: A:mcrouter and A:eqiad
+memcached: P{O:mediawiki::memcached}
+memcached-canary: P{mc1037.eqiad.wmnet}
+memcached-codfw: A:memcached and A:codfw
+memcached-eqiad: A:memcached and A:eqiad
+memcached-gutter: P{O:mediawiki::memcached::gutter}
+mirrors: P{O:mirrors}
+miscweb: P{O:miscweb}
+ml-serve-master: P{O:ml_k8s::master}
+ml-serve-worker: P{O:ml_k8s::worker}
+ml-serve-worker-eqiad: A:ml-serve-worker and A:eqiad
+ml-serve-worker-codfw: A:ml-serve-worker and A:codfw
+ml-serve-master-eqiad: A:ml-serve-master and A:eqiad
+ml-serve-master-codfw: A:ml-serve-master and A:codfw
+ml-serve: A:ml-serve-master or A:ml-serve-worker
+ml-serve-canary: P{ml-serve2001.codfw.wmnet}
+ml-serve-eqiad: A:ml-serve and A:eqiad
+ml-serve-codfw: A:ml-serve and A:codfw
+mw: P{O:mediawiki::appserver}
+mw-app-canary: P{O:mediawiki::canary_appserver}
+mw-api: P{O:mediawiki::appserver::api}
+mw-api-canary: P{O:mediawiki::appserver::canary_api}
+mw-api-codfw: A:mw-api and A:codfw
+mw-api-eqiad: A:mw-api and A:eqiad
+mw-canary: A:mw-app-canary or A:mw-api-canary or A:parsoid-canary
+mw-codfw: A:mw and A:codfw
+mw-eqiad: A:mw and A:eqiad
+mw-jobrunner: P{O:mediawiki::jobrunner}
+mw-jobrunner-canary: P{mw1311.eqiad.wmnet}
+mw-jobrunner-codfw: A:mw-jobrunner and A:codfw
+mw-jobrunner-eqiad: A:mw-jobrunner and A:eqiad
+mw-maintenance: P{O:mediawiki::maintenance}
+mwlog: P{O:logging::mediawiki::udp2log}
+mx: P{O:mail::mx}
+mx-canary: P{mx2001.wikimedia.org}
+ncredir: P{O:ncredir}
+ncredir-codfw: A:ncredir and A:codfw
+ncredir-eqiad: A:ncredir and A:eqiad
+ncredir-esams: A:ncredir and A:esams
+ncredir-ulsfo: A:ncredir and A:ulsfo
+ncredir-eqsin: A:ncredir and A:eqsin
+netbox: P{O:netbox::frontend}
+netbox-canary: P{O:netbox::standalone}
+netbox-all: A:netbox or A:netbox-canary
+netboxdb: P{O:netbox::database}
+netflow: P{O:netinsights}
+netmon: P{O:network::monitor}
+ores: P{O:ores}
+ores-canary: P{ores1001.eqiad.wmnet}
+ores-eqiad: A:ores and A:eqiad
+ores-codfw: A:ores and A:codfw
+ores-poolcounter: P{O:orespoolcounter}
+otrs: P{O:otrs}
+parsoid: P{O:parsoid}
+parsoid-canary: P{wtp1025.eqiad.wmnet or wtp1026.eqiad.wmnet or parse2001.codfw.wmnet or parse2002.codfw.wmnet}
+parsoid-codfw: A:parsoid and A:codfw
+parsoid-eqiad: A:parsoid and A:eqiad
+planet: P{O:planet}
+ping: P{O:ping_offload}
+piwik: P{O:piwik}
+pki: P{O:pki::root} or P{O:pki::multirootca}
+poolcounter: P{O:poolcounter::server}
+poolcounter-codfw: A:poolcounter and A:codfw
+poolcounter-eqiad: A:poolcounter and A:eqiad
+presto-analytics: P{O:analytics_cluster::presto::server}
+presto-analytics-canary: P{an-presto1001.eqiad.wmnet}
+presto-analytics-test: P{O:analytics_test_cluster::presto::server}
+# after T243057 is done, replace the following with `prometheus: P{O:prometheus}`
+prometheus: P{P:prometheus::ops}
+puppetboard: P{O:puppetboard}
+puppetdb: P{O:puppetmaster::puppetdb}
+puppetmaster: A:puppetmaster-backend or A:puppetmaster-frontend
+puppetmaster-backend: P{O:puppetmaster::backend}
+puppetmaster-frontend: P{O:puppetmaster::frontend}
+pybaltest: P{O:pybaltest}
+redis: A:redis-misc-master or A:redis-misc-slave
+redis-misc-canary: P{rdb1006.eqiad.wmnet}
+redis-misc-codfw: (A:redis-misc-master or A:redis-misc-slave) and A:codfw
+redis-misc-eqiad: (A:redis-misc-master or A:redis-misc-slave) and A:eqiad
+redis-misc-master: P{O:redis::misc::master}
+redis-misc-slave: P{O:redis::misc::slave}
+releases: P{O:releases}
+relforge: P{O:elasticsearch::relforge}
+restbase: P{O:restbase::production} or A:restbase-dev
+restbase-canary: P{restbase1016.eqiad.wmnet}
+restbase-codfw: A:restbase and A:codfw
+restbase-eqiad: A:restbase and A:eqiad
+restbase-dev: P{O:restbase::dev_cluster}
+rpki: P{O:rpkivalidator}
+schema: P{O:eventschemas::service}
+schema-eqiad: A:schema and A:eqiad
+schema-codfw: A:schema and A:codfw
+sessionstore: P{O:sessionstore}
+snapshot: P{O:dumps::generation::worker::dumper or O:dumps::generation::worker::dumper_monitor or O:dumps::generation::worker::dumper_misc_crons_only or O:dumps::generation::worker::testbed}
+snapshot-canary: P{O:dumps::generation::worker::testbed}
+spare: P{O:spare::system}
+sretest: P{O:sretest}
+sretestunpriv: P{sretest1001.eqiad.wmnet}
+stat: P{O:statistics::explorer}
+swift: A:swift-fe or A:swift-be
+swift-be: P{O:swift::storage}
+swift-be-canary: P{ms-be1028.eqiad.wmnet}
+swift-be-codfw: A:swift-be and A:codfw
+swift-be-eqiad: A:swift-be and A:eqiad
+swift-fe: P{O:swift::proxy}
+swift-fe-canary: P{ms-fe1005.eqiad.wmnet}
+swift-fe-codfw: A:swift-fe and A:codfw
+swift-fe-eqiad: A:swift-fe and A:eqiad
+thanos: A:thanos-fe or A:thanos-be
+thanos-be: P{O:thanos::backend}
+thanos-be-codfw: A:thanos-be and A:codfw
+thanos-be-eqiad: A:thanos-be and A:eqiad
+thanos-fe: P{O:thanos::frontend}
+thanos-fe-codfw: A:thanos-fe and A:codfw
+thanos-fe-eqiad: A:thanos-fe and A:eqiad
+thumbor: P{O:thumbor::mediawiki}
+thumbor-canary: P{thumbor1001.eqiad.wmnet}
+thumbor-codfw: A:thumbor and A:codfw
+thumbor-eqiad: A:thumbor and A:eqiad
+url-downloader: P{O:url_downloader}
+wdqs-all: P{O:wdqs::public or O:wdqs::internal or O:wdqs::test}
+wdqs-main: P{O:wdqs::public or O:wdqs::internal}
+wdqs-internal: P{O:wdqs::internal}
+wdqs-public: P{O:wdqs::public}
+wdqs-test: P{O:wdqs::test}
+webperf: P{O:webperf::processors_and_site or O:webperf::profiling_tools}
+wikidough: P{O:wikidough}
+wikireplicas-all: A:wikireplicas-dedicated or A:wikireplicas-multiinstance
+wikireplicas-dedicated: P{O:wmcs::db::wikireplicas::dedicated::analytics or O:wmcs::db::wikireplicas::dedicated::analytics_multiinstance}
+wikireplicas-multiinstance: P{P:wmcs::db::wikireplicas::mariadb_multiinstance}
+xhgui: P{O:webperf::xhgui}
+zookeeper-main-eqiad: P{O:configcluster} and A:eqiad
+zookeeper-main-codfw: P{O:configcluster} and A:codfw
+zookeeper-druid-public: P{O:druid::public::worker} and P{C:profile::zookeeper::server}
+zookeeper-druid-analytics: P{O:druid::analytics::worker} and P{C:profile::zookeeper::server}
+zookeeper-analytics: P{O:analytics_cluster::zookeeper}
+
+# Miscellaneous groups
+misc-analytics: P{O:statistics::web or O:piwik or O:analytics_cluster::webserver} or A:eventlogging
+misc-apache: P{O:microsites::peopleweb or C:grafana::production or O:doc or O:requesttracker or O:otrs or O:miscweb} or A:planet or A:releases
+misc-devel: P{O:webperf::processors_and_site or O:webperf::profiling_tools or O:ve or O:archiva or O:docker::registry} or A:mwlog
+misc-nonprod: P{O:spare::system or O:test or O:pybaltest or O:insetup or O:insetup_noferm or O:sretest}
+misc-ops: A:installserver or A:cumin or A:url-downloader or A:icinga or A:netmon or A:kafkamon or A:puppetboard or A:apt or A:debmonitor or A:debmonitor or A:backup or A:ping or A:rpki or A:flowspec or A:pki or P{O:logging::webrequest::ops or O:builder or O:syslog::centralserver or O:pmacct or O:mirrors}
+misc-others: P{O:mw_rc_irc or O:etherpad or O:lists or O:netinsights}
+misc-releng: P{O:phabricator} or A:contint or A:gerrit or A:gitlab or A:mw-maintenance
+misc-wmcs: A:labweb or P{O:wmcs::monitoring} or A:cloudcontrol or A:cloudnet or A:cloudservices

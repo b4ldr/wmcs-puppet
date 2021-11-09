@@ -1,0 +1,9 @@
+# START_DAEMON:
+#   Set to 1 to start the zuul daemon
+START_DAEMON=1
+
+<% if @statsd_host != "" %>
+export STATSD_HOST=<%= @statsd_host %>
+export STATSD_PORT=8125
+<% end %>
+DAEMON_ARGS='-c /etc/zuul/zuul-server.conf'

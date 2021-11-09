@@ -1,0 +1,41 @@
+#####################################################################
+### THIS FILE IS MANAGED BY PUPPET
+### puppet:///publichtml/apacheconfig.erb
+#####################################################################
+# vim: filetype=apache
+
+<VirtualHost *:80>
+    ServerAdmin noc@wikimedia.org
+    ServerName <%= @virtual_host %>
+
+    DocumentRoot <%= @document_root %>
+    <%- @cas_settings.each_pair do |key, setting| -%>
+      <%- unless setting.nil? or setting == :undef -%>
+    <%= key %> <%= setting %>
+      <%-end -%>
+    <%-end -%>
+
+
+    UserDir public_html
+
+    ErrorLog /var/log/apache2/error.log
+
+    # Possible values include: debug, info, notice, warn, error, crit,
+    # alert, emerg.
+    LogLevel warn
+
+    CustomLog /var/log/apache2/access.log wmf
+
+    <Directory />
+        Require all granted
+    </Directory>
+
+    <Location "/">
+        Header set Access-Control-Allow-Origin "*"
+        # Nothing should set Allow-Credentials, and even if it gets set
+        # it should not be exploitable, but this is a wikimedia.org
+        # domain with user-defined content so let's be extra paranoid.
+        Header unset Access-Control-Allow-Credentials
+    </Location>
+
+</VirtualHost>

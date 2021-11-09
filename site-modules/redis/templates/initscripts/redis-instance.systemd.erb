@@ -1,0 +1,14 @@
+[Unit]
+Description=Advanced key-value store
+After=network.target
+
+[Service]
+Type=forking
+ExecStart=/usr/bin/redis-server /etc/redis/<%= @instance_name %>.conf
+Restart=always
+User=redis
+Group=redis
+LimitNOFILE=<%= @open_files %>
+
+[Install]
+WantedBy=multi-user.target

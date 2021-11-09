@@ -1,0 +1,28 @@
+[default]
+archive_after_days=40
+projectname=<%= @labsproject -%>
+
+[archivedbs]
+hostname_substring=sgecron
+
+[gridengine]
+hostname_substring=sgegrid-master
+
+[crontab]
+hostname_substring=sgecron
+
+[archive]
+all_projects_on_server=tools, toolsbeta
+
+# We need to define base_dir_* and archive_dir_* for each project listed above
+base_dir_tools = /srv/tools/shared/tools/project/
+archive_dir_tools = /srv/tools/archivedtools/
+
+base_dir_toolsbeta = /srv/misc/shared/toolsbeta/project/
+archive_dir_toolsbeta = /srv/misc/shared/toolsbeta/archivedtools/
+
+hostname_substring=labstore
+
+# Creds with the power to delete entries:
+ldap_bind_dn=<%= @novaadmin_bind_dn %>
+ldap_bind_pass=<%= @novaadmin_bind_pass %>

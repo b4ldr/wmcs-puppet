@@ -1,0 +1,66 @@
+graphite::production:
+  - pontoon-graphite-04.monitoring.eqiad1.wikimedia.cloud
+
+syslog::centralserver:
+  - pontoon-log-01.monitoring.eqiad1.wikimedia.cloud
+
+puppetmaster::pontoon:
+  - pontoon-puppet-01.monitoring.eqiad1.wikimedia.cloud
+
+puppetdb:
+  - pontoon-puppetdb-01.monitoring.eqiad1.wikimedia.cloud
+
+builder:
+  - pontoon-builder-01.monitoring.eqiad1.wikimedia.cloud
+
+prometheus:
+  - pontoon-prometheus-01.monitoring.eqiad1.wikimedia.cloud
+
+grafana:
+  - pontoon-grafana-01.monitoring.eqiad1.wikimedia.cloud
+
+logstash::elasticsearch7:
+  - pontoon-elastic7-02.monitoring.eqiad1.wikimedia.cloud
+
+kafka::logging:
+  - pontoon-kafka-01.monitoring.eqiad1.wikimedia.cloud
+
+kafka::monitoring_buster:
+  - pontoon-kafkamon-01.monitoring.eqiad1.wikimedia.cloud
+
+logstash7:
+  - pontoon-logstash7-03.monitoring.eqiad1.wikimedia.cloud
+
+configcluster:
+  - pontoon-conf-01.monitoring.eqiad1.wikimedia.cloud
+
+alerting_host:
+  - pontoon-icinga-01.monitoring.eqiad1.wikimedia.cloud
+
+acme_chief:
+  - pontoon-acmechief-01.monitoring.eqiad1.wikimedia.cloud
+
+netmon:
+  - pontoon-netmon-01.monitoring.eqiad1.wikimedia.cloud
+
+apt_repo:
+  - pontoon-apt-01.monitoring.eqiad1.wikimedia.cloud
+
+logging::mediawiki::udp2log:
+  - pontoon-mwlog-01.monitoring.eqiad1.wikimedia.cloud
+
+thanos::backend:
+  - pontoon-ms-be-01.monitoring.eqiad1.wikimedia.cloud
+  - pontoon-ms-be-02.monitoring.eqiad1.wikimedia.cloud
+
+thanos::frontend:
+  - pontoon-thanos-01.monitoring.eqiad1.wikimedia.cloud
+
+cluster::management:
+  - pontoon-cumin-01.monitoring.eqiad1.wikimedia.cloud
+
+pontoon::frontend:
+  - pontoon-frontend-02.monitoring.eqiad1.wikimedia.cloud
+
+pontoon::lb:
+  - pontoon-lb-02.monitoring.eqiad1.wikimedia.cloud

@@ -1,0 +1,12 @@
+[Unit]
+Description=Monitors Poolcounter stats output and makes it available to Prometheus
+Documentation=https://github.com/Wikia/poolcounter-prometheus-exporter
+
+[Service]
+ExecStart=/usr/bin/poolcounter-prometheus-exporter
+Environment=EXPORTER_LISTEN_ADDRESS=:<%= @exporter_port %>
+User=poolcounter
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

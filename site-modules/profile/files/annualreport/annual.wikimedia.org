@@ -1,0 +1,28 @@
+# vim: filetype=apache
+# https://annual.wikimedia.org (T599)
+
+<VirtualHost *:80>
+    ServerAdmin noc@wikimedia.org
+    ServerName annual.wikimedia.org
+
+    DocumentRoot /srv/org/wikimedia/annualreport
+
+    ErrorLog /var/log/apache2/error.log
+    LogLevel warn
+    CustomLog /var/log/apache2/access.log wmf
+
+    Header always append X-Frame-Options DENY
+    # Reports will be hosted to wikimediafoundation.org - T226066
+    RedirectMatch 302 ^/$ https://wikimediafoundation.org/about/annualreport/2020-annual-report/
+    RedirectMatch permanent ^/(2018)/?$ https://wikimediafoundation.org/about/2018-annual-report
+    RedirectMatch permanent ^/(2019)/?$ https://wikimediafoundation.org/about/annualreport/2019-annual-report/
+    RedirectMatch permanent ^/(2020)/?$ https://wikimediafoundation.org/about/annualreport/2020-annual-report/
+
+    <Directory /srv/org/wikimedia/annualreport>
+        Require all granted
+    </Directory>
+
+    # Old annual reports from 2007 through 2013 are PDF files on Foundation Wiki.
+    RedirectMatch ^/(200[7-9]|201[0-3])/?$ https://foundation.wikimedia.org/wiki/Annual_Report
+
+</VirtualHost>

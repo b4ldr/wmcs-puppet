@@ -1,0 +1,66 @@
+# vim: filetype=apache
+<VirtualHost *:443>
+    ServerName <%= @virtual_host %>
+<%- unless @server_aliases.empty? -%>
+    ServerAlias <%= @server_aliases.join(' ') %>
+<%- end -%>
+    ServerAdmin noc@wikimedia.org
+    # https://httpoxy.org/
+    RequestHeader unset Proxy early
+    SSLEngine On
+    SSLCertificateFile /etc/acmecerts/<%= @acme_chief_cert %>/live/ec-prime256v1.crt
+    SSLCertificateChainFile /etc/acmecerts/<%= @acme_chief_cert %>/live/ec-prime256v1.chain.crt
+    SSLCertificateKeyFile /etc/acmecerts/<%= @acme_chief_cert %>/live/ec-prime256v1.key
+    SSLCertificateFile /etc/acmecerts/<%= @acme_chief_cert %>/live/rsa-2048.crt
+    SSLCertificateChainFile /etc/acmecerts/<%= @acme_chief_cert %>/live/rsa-2048.chain.crt
+    SSLCertificateKeyFile /etc/acmecerts/<%= @acme_chief_cert %>/live/rsa-2048.key
+    <%= @ssl_settings.join("\n    ") %>
+    <%- @cas_settings.each_pair do |key, setting| -%>
+      <%- unless setting.nil? or setting == :undef -%>
+    <%= key %> <%= setting %>
+      <%-end -%>
+    <%-end -%>
+
+    DocumentRoot <%= @document_root %>
+
+    <DirectoryMatch (/usr/share/icinga/htdocs|/usr/lib/cgi-bin/icinga|/etc/icinga/stylesheets)>
+        Options FollowSymLinks
+        SSLRequireSSL
+        Options ExecCGI
+        DirectoryIndex index.html
+        AllowOverride None
+
+        <%- @cas_auth_settings.each_pair do |key, setting| -%>
+          <%- if setting.is_a?(Array) -%>
+            <%- setting.each do |_setting| -%>
+        <%= key %> <%= _setting %>
+            <%- end -%>
+          <%- else -%>
+        <%= key %> <%= setting %>
+          <%- end -%>
+        <%- end -%>
+
+    </DirectoryMatch>
+
+    # Documentation for CGI parameters: https://icinga.com/docs/icinga1/latest/en/cgiparams.html
+    # /alerts: Show only firing (HARD state) alerts (props 262144) plus hosts/services with notifications enabled (props 8192)
+    # /problems: Show alerts regardless of status (same as "all problems" from icinga web UI)
+    RedirectMatch ^/alerts$ https://<%= @virtual_host %>/cgi-bin/icinga/status.cgi?allunhandledproblems&sortobject=services&sorttype=2&sortoption=3&serviceprops=270336&hostprops=270336
+    RedirectMatch ^/problems$ https://icinga.wikimedia.org/cgi-bin/icinga/status.cgi?allproblems&sortobject=services&sorttype=2&sortoption=3
+    RedirectMatch ^/$ https://<%= @virtual_host %>/icinga
+    ErrorLog /var/log/apache2/<%= @virtual_host %>_error.log
+    LogLevel warn
+</VirtualHost>
+
+<VirtualHost *:80>
+    ServerName cas-<%= @virtual_host %>
+    ServerAdmin noc@wikimedia.org
+    DocumentRoot /usr/share/icinga/htdocs
+
+    RewriteEngine on
+    RewriteCond %{SERVER_PORT} !^443$
+    RewriteRule ^/(.*)$ https://<%= @virtual_host %>/$1 [L,R=301]
+
+    ErrorLog /var/log/apache2/<%= @virtual_host %>_error.log
+    LogLevel warn
+</VirtualHost>

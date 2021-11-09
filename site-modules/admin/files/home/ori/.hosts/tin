@@ -1,0 +1,92 @@
+#!/bin/bash
+
+. /etc/profile.d/mediawiki.sh
+
+export PRETTY_FORMAT="%C(yellow bold)%h%C(reset): %s%n"
+
+change_summary() {
+    local change_id subject sha1="$1"
+    change_id="$(git log -1 | grep -Po '(?<=Change-Id: )I[[:xdigit:]]{9}')"
+    subject="$(git log -1 --pretty=format:"%s" "$sha1" | tr -d '"'"'")"
+    echo "${change_id}: ${subject}"
+}
+
+change() {
+    change=$1
+    [[ $1 == https* ]] && change=$(grep -Po '\d{6}' <<<"$1")
+    subject="$(curl -s "https://gerrit.wikimedia.org/r/changes/${change}/detail" | tail -c +6 | jq -r '.subject' | tr '"' "'")"
+    subject="${subject/\$/\\$}"
+    echo "\"${change:0:10}: ${subject}\""
+}
+
+looksgood() {
+    ( git remote -v | grep -q mediawiki-config ) && {
+        git merge origin/master;
+        return
+    };
+    dir=$(pwd);
+    branch="origin/wmf/${dir#/srv/mediawiki-staging/php-}";
+    prev_head="$(git rev-parse HEAD)"
+    git rebase --quiet "$branch"
+    while read -r extension; do
+        echo "$(tput setaf 4)Updating $(tput setaf 3; tput bold)${extension}$(tput sgr0)"
+        git submodule update --quiet --init --recursive "$extension"
+    done < <(git log -p "${prev_head}..HEAD" | grep -Po '(?<= b/)extensions/.*' | sort | uniq)
+    while read -r vendor; do
+        echo "$(tput setaf 4)Updating $(tput setaf 3; tput bold)vendor/$(tput sgr0)"
+        git submodule update --quiet --init --recursive vendor
+    done < <(git log -p "${prev_head}..HEAD" | grep -P '(?<= b/)vendor/.*' | head -1)
+    echo
+    while read -r commit; do
+        change_summary "$commit"
+    done < <(git --no-pager log --no-merges --grep="Change-Id:" -5 --pretty="%h" "${prev_head}..${branch}")
+}
+
+fetch() {
+    cd "$MEDIAWIKI_STAGING_DIR"
+    if [ "$1" = "config" ]; then
+        cd wmf-config
+        git fetch origin >/dev/null 2>&1
+        git --no-pager diff HEAD origin
+    else
+        branch_dir="$(branchdir $1)"
+        branch="origin/wmf/${branch_dir#/srv/mediawiki-staging/php-}"
+        cd "${branch_dir}"
+        git fetch >/dev/null 2>&1
+        git --no-pager log --pretty=format:"$PRETTY_FORMAT" "HEAD..${branch}"
+    fi
+}
+
+cdbranch() {
+    cd "$(branchdir $1)"
+}
+
+bump() {
+    git submodule update --init --recursive extensions/$1
+}
+
+deploy() {
+    pushd /srv/deployment/$1/* &>/dev/null && (
+        git deploy finish
+        [ "$1" = "--no-update" ] || { git fetch; git checkout origin/master; }
+        git deploy start
+    ) &>/dev/null && (
+        yes | git deploy sync 2>&1 | grep completed
+    ) && { popd &>/dev/null; notice "Ok."; } || warn "Failed."
+}
+
+sync() {
+    local target="$1" ; shift ; local message="$@"
+
+    if [ -z "$target" -o -z "$message" ]; then
+        echo >&2 "Usage: sync SYNC_TARGET LOG_MESSAGE"
+        return 1
+    elif [ ! -e "$target"  ]; then
+        echo >&2 "No such file: ${target}"
+        return 1
+    elif [ -d "$target" ]; then
+        scap sync-dir "$target" "$message"
+    else
+        scap sync-file "$target" "$message"
+    fi
+}

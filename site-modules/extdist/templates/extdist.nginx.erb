@@ -1,0 +1,27 @@
+#####################################################################
+#### THIS FILE IS MANAGED BY PUPPET
+#### puppet:///extdist/extdist.nginx.erb
+####
+####  Changes to this file will be discarded by Puppet periodically
+####  and without warning.
+####
+######################################################################
+# nginx configuration for extdist
+
+server {
+    listen 80;
+
+    # Enforce HTTPS only
+    if ($http_x_forwarded_proto != "https") {
+          rewrite ^(.*)$ https://$http_host$1 permanent;
+    }
+
+    location / {
+        return 302 https://www.mediawiki.org/wiki/Special:ExtensionDistributor;
+    }
+
+    location /dist {
+        alias <%= @dist_dir %>;
+        autoindex on;
+    }
+}

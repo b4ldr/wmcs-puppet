@@ -1,0 +1,120 @@
+# This file is managed by puppet!
+# Package generated configuration file
+# See the sshd_config(5) manpage for details
+
+# What ports, IPs and protocols we listen for
+Port <%= @listen_port %>
+<%- unless @listen_addresses.empty? -%>
+    <%- @listen_addresses.each do |listen| -%>
+ListenAddress <%= listen %>
+    <%- end -%>
+<%- else -%>
+# Use these options to restrict which interfaces/protocols sshd will bind to
+#ListenAddress ::
+#ListenAddress 0.0.0.0
+<%- end -%>
+Protocol 2
+# HostKeys for protocol version 2
+HostKey /etc/ssh/ssh_host_rsa_key
+<%- if @realm == "labs" then -%>
+HostKey /etc/ssh/ssh_host_dsa_key
+<%- end -%>
+HostKey /etc/ssh/ssh_host_ecdsa_key
+HostKey /etc/ssh/ssh_host_ed25519_key
+
+<%- if @disable_nist_kex -%>
+KexAlgorithms curve25519-sha256@libssh.org,diffie-hellman-group-exchange-sha256
+<%- end -%>
+
+# Logging
+SyslogFacility AUTH
+LogLevel VERBOSE
+
+# Authentication:
+LoginGraceTime 120
+PermitRootLogin <%= @_permit_root %>
+
+<%- if @explicit_macs -%>
+# Message Authentication codes
+MACs hmac-sha2-512-etm@openssh.com,hmac-sha2-256-etm@openssh.com,umac-128-etm@openssh.com,hmac-sha2-512,hmac-sha2-256,umac-128@openssh.com
+<%- end -%>
+
+StrictModes yes
+
+Ciphers chacha20-poly1305@openssh.com,aes256-gcm@openssh.com,aes128-gcm@openssh.com,aes256-ctr,aes192-ctr,aes128-ctr
+
+PubkeyAuthentication yes
+#AuthorizedKeysFile	%h/.ssh/authorized_keys
+AuthorizedKeysFile	<%= @authorized_keys_file.join(' ') %>
+
+# Don't read the user's ~/.rhosts and ~/.shosts files
+IgnoreRhosts yes
+
+<%- if @enable_hba -%>
+HostbasedAuthentication yes
+HostbasedUsesNameFromPacketOnly no
+
+# matching entries shosts.equiv requires a reverse DNS lookup
+UseDNS yes
+<%- else -%>
+HostbasedAuthentication no
+<%- end -%>
+IgnoreUserKnownHosts yes
+
+# To enable empty passwords, change to yes (NOT RECOMMENDED)
+PermitEmptyPasswords no
+
+# Change to yes to enable challenge-response passwords (beware issues with
+# some PAM modules and threads)
+ChallengeResponseAuthentication <%= @challenge_response_auth ? 'yes': 'no' %>
+
+# Globally deny logon via password, only allow SSH-key login.
+PasswordAuthentication no
+
+<%- if @disable_agent_forwarding -%>
+# Don't allow people to forward their agents either.
+AllowAgentForwarding no
+<%- end -%>
+
+# GSSAPIAuthentication off by default, GSSAPICleanupCredentials enabled by default
+<%- if @enable_kerberos -%>
+GSSAPIAuthentication yes
+<%- end -%>
+
+X11DisplayOffset 10
+PrintMotd no
+PrintLastLog yes
+TCPKeepAlive yes
+#UseLogin no
+
+<%- if @ssh_tcp_forwarding then -%>
+AllowTcpForwarding <%= @ssh_tcp_forwarding %>
+<%- end -%>
+
+<%- if @gateway_ports -%>
+# Allow remote hosts to connect to ports forwarded by the client
+GatewayPorts yes
+<%- end -%>
+<%- if @max_sessions -%>
+MaxSessions <%= @max_sessions %>
+<%- end -%>
+<%- if @max_startups -%>
+MaxStartups <%= @max_startups %>
+<%- end -%>
+#Banner /etc/issue.net
+
+# Allow client to pass locale environment variables
+AcceptEnv LANG LC_*
+
+Subsystem sftp /usr/lib/openssh/sftp-server
+
+UsePAM yes
+
+<%- if @realm == "labs" then -%>
+AuthorizedKeysCommand <%= @authorized_keys_command %>
+AuthorizedKeysCommandUser ssh-key-ldap-lookup
+<%- end -%>
+##
+## Anything below this point must start with a match declaration
+## or will only apply to the previous Matches above.
+##

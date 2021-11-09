@@ -1,0 +1,12 @@
+version: 1
+disable_existing_loggers: False
+
+root:
+    handlers: [stdout_rsyslog]
+    level: INFO
+
+handlers:
+    stdout_rsyslog:
+        class: mjolnir.logging.StructuredLoggingHandler
+        rsyslog: True
+        fmt: "%(name)s %(pathname)s %(filename)s %(module)s %(process)s %(message)s %(exc_info)"

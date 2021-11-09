@@ -1,0 +1,156 @@
+# Warning: This file is managed by Puppet!
+# Production MySQL 8.0+ hosts
+
+[client]
+port   = 3306
+socket = <%= @socket %>
+
+[mysqld]
+
+user               = mysql
+socket             = <%= @socket %>
+port               = 3306
+# no extra_port on MySQL
+basedir            = <%= @basedir %>
+datadir            = <%= @datadir %>
+tmpdir             = <%= @tmpdir %>
+server-id          = <%= @server_id %>
+report_host        = <%= @fqdn %>
+wsrep_cluster_name = <%= @site %> # For orchestrator. T266635
+
+# Always start in read_only mode.
+# Master selection will be handled by cluster control.
+#read-only = on
+
+skip-external-locking
+skip-name-resolve
+# No pool of threads on MySQL
+max-connections                = 10000
+back-log                       = 500
+max-connect-errors             = 1000000000
+max-allowed-packet             = 32M
+connect_timeout                = 3
+# query_cache deprecated on 8.0
+event-scheduler                = 1
+#log-warnings not on MySQL
+thread-stack                   = 192K
+thread-cache_size              = 300
+interactive-timeout            = 28800
+wait-timeout                   = 3600
+transaction-isolation          = REPEATABLE-READ
+#use-stat-tables not on MySQL
+# enable socket-based authentication, and fail
+# if it doesn't load
+plugin-load-add                = auth_socket.so
+auth_socket                    = FORCE_PLUS_PERMANENT
+
+# binary log an replication options
+log-bin
+log-slave_updates
+sync-binlog                    = 1
+binlog-cache-size              = 1M
+max-binlog-size                = 1000M
+binlog-format                  = <%= @binlog_format %>
+
+# expire_logs_days deprecated on 8.0
+<% if @replication_role == 'master' -%>
+binlog-expire-logs-seconds     = 604800
+<% else -%>
+binlog-expire-logs-seconds     = 2592000
+<% end -%>
+slave-transaction-retries      = 4294967295
+
+# table limits
+tmp-table-size                 = 64M
+max-heap-table-size            = 64M
+table-open-cache               = 50000
+table-definition-cache         = 40000
+open-files-limit               = 200000
+
+<% if @semi_sync != 'off' -%>
+# Semi-sync replication
+# In case MySQL doesn't start due to this plugin failing, comment the next
+# 'plugin-load-add' line and all the 'rpl_semi_sync_*' lines.
+<% end -%>
+<% if @semi_sync == 'master' or @semi_sync == 'both' -%>
+plugin-load-add                    = rpl_semi_sync_master=semisync_master.so
+rpl_semi_sync_master_enabled       = 1
+rpl_semi_sync_master_timeout       = 100
+rpl_semi_sync_master_wait_no_slave = 0
+<% end -%>
+<% if @semi_sync == 'slave' or @semi_sync == 'both' -%>
+plugin-load-add                    = rpl_semi_sync_slave=semisync_slave.so
+rpl_semi_sync_slave_enabled        = 1
+<% end -%>
+
+# optimizer options
+sql-mode                       = ''
+optimizer-switch               = 'mrr=on,mrr_cost_based=on'
+
+# charsets and collations
+character-set-server           = binary
+character-set-filesystem       = binary
+collation-server               = binary
+
+# InnoDB options
+default-storage-engine         = InnoDB
+innodb_file_per_table          = 1
+innodb_buffer_pool_size        = <%= (Float(@memorysize.split[0]) * 0.75).round %>G
+innodb_log_file_size           = 2G
+innodb_flush_log_at_trx_commit = 1
+innodb_flush_method            = O_DIRECT
+innodb_thread_concurrency      = 0
+innodb_io_capacity             = 1000
+# innodb_stats_sample_pages not on MySQL
+innodb_stats_method            = nulls_unequal
+
+# dump and load innodb buffer at start and stop
+innodb_buffer_pool_load_at_startup  = 1
+innodb_buffer_pool_dump_at_shutdown = 1
+
+<% if @kernelversion < "3.19" %>
+# Until kernel 3.16 http://www.spinics.net/lists/stable/msg61873.html
+# At least, I think so. For now we need to avoid the an assertion failure on Trusty w/ 3.13
+innodb_use_native_aio          = 0
+innodb_read_io_threads         = 16
+innodb_write_io_threads        = 8
+<% end %>
+
+<% if @ssl == 'on' or @ssl == 'puppet-cert' %>
+# ssl
+ssl-ca=/etc/ssl/certs/Puppet_Internal_CA.pem
+ssl-cert=/etc/mysql/ssl/cert.pem
+ssl-key=/etc/mysql/ssl/server.key
+ssl-cipher=TLSv1.2
+<% end %>
+
+# profiling and metrics
+<% if @p_s == 'on' %>
+# Enabling performance_schema (disabled by default in MariaDB10)
+performance_schema                                     = 1
+# downsizing performance schema memory usage: T99485
+performance_schema_max_thread_instances                = 500
+performance_schema_max_cond_instances                  = 1000
+performance_schema_accounts_size                       = 300
+performance_schema_hosts_size                          = 300
+performance_schema_events_statements_history_size      = 10
+performance_schema_events_statements_history_long_size = 1000
+performance_schema_events_waits_history_size           = 10
+performance_schema_events_waits_history_long_size      = 1000
+performance_schema_events_stages_history_size          = 10
+performance_schema_events_stages_history_long_size     = 1000
+performance_schema_max_mutex_instances                 = 5000
+performance_schema_max_rwlock_instances                = 2000
+performance_schema_max_socket_instances                = 500
+performance_schema_max_table_instances                 = 1000
+<% else %>
+# only enable userstat if p_s is disabled
+performance_schema                                     = 0
+userstat                                               = 1
+<% end %>
+
+[mysqldump]
+
+quick
+max_allowed_packet = 32M
+

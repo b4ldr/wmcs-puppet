@@ -1,0 +1,30 @@
+[DEFAULT]
+bind_ip = 0.0.0.0
+bind_port = 6002
+devices = /srv/swift-storage/
+workers = <%= @processorcount %>
+db_preallocation = on
+<% if @statsd_host -%>
+log_statsd_host = <%= @statsd_host %>
+log_statsd_port = <%= @statsd_port %>
+log_statsd_metric_prefix = <%= @statsd_metric_prefix %>
+log_statsd_sample_rate_factor = <%= @statsd_sample_rate_factor %>
+<% end -%>
+
+[pipeline:main]
+pipeline = recon account-server
+
+[filter:recon]
+use = egg:swift#recon
+recon_cache_path = /var/cache/swift
+
+[app:account-server]
+use = egg:swift#account
+
+[account-replicator]
+concurrency = 1
+
+[account-auditor]
+concurrency = 1
+
+[account-reaper]

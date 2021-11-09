@@ -1,0 +1,330 @@
+Name: jenkins
+Method: http://pkg.jenkins-ci.org/debian-stable/
+Suite: binary
+Flat: thirdparty/ci
+GetInRelease: no
+Architectures: all>amd64
+VerifyRelease: FCEF32E745F2C3D5
+ListShellHook: grep-dctrl -X -S jenkins || [ $? -eq 1 ]
+
+Name: hwraid-stretch
+Method: http://hwraid.le-vert.net/debian
+Components: main>thirdparty/hwraid
+UDebComponents:
+GetInRelease: no
+Suite: stretch
+Architectures: amd64 source
+VerifyRelease: 6005210E23B3D3B4
+ListShellHook: grep-dctrl -e -S '^megacli$' || [ $? -eq 1 ]
+
+Name: hp-mcp-stretch
+Method:  http://downloads.linux.hpe.com/SDR/repo/mcp
+Components: non-free>thirdparty/hwraid
+UDebComponents:
+GetInRelease: no
+Suite: stretch/current
+Architectures: amd64
+# Multiple keys in use: https://downloads.linux.hpe.com/SDR/keys.html
+VerifyRelease: FADD8D64B1275EA3|C208ADDE26C2B797
+ListShellHook: grep-dctrl -e -S '^hp-health|hpssa|hpssacli|hpssaducli|hpacucli|ssaducli|ssacli$' || [ $? -eq 1 ]
+
+Name: hp-mcp-buster
+Method:  http://downloads.linux.hpe.com/SDR/repo/mcp
+Components: non-free>thirdparty/hwraid
+UDebComponents:
+GetInRelease: no
+Suite: buster/current
+Architectures: amd64
+# Multiple keys in use: https://downloads.linux.hpe.com/SDR/keys.html
+VerifyRelease: FADD8D64B1275EA3|C208ADDE26C2B797
+ListShellHook: grep-dctrl -e -S '^hp-health|hpssa|hpssacli|hpssaducli|hpacucli|ssaducli|ssacli$' || [ $? -eq 1 ]
+
+Name: elastic55
+Method: https://artifacts.elastic.co/packages/5.x/apt
+Components: main>thirdparty/elastic55
+UDebComponents:
+Suite: stable
+GetInRelease: no
+Architectures: amd64
+VerifyRelease: D27D666CD88E42B4
+ListShellHook: grep-dctrl \( -S 'elasticsearch' -a -F Version --eq 5.5.2 \) -o \( -S 'kibana' -a -F Version --eq 5.5.2 \) -o \( -S logstash -a -F Version --eq 1:5.5.2-1 \) || [ $? -eq 1 ]
+
+Name: elastic56
+Method: https://artifacts.elastic.co/packages/5.x/apt
+Components: main>thirdparty/elastic56
+UDebComponents:
+Suite: stable
+GetInRelease: no
+Architectures: amd64
+VerifyRelease: D27D666CD88E42B4
+ListShellHook: grep-dctrl \( -S 'elasticsearch' -a -F Version --eq 5.6.15 \) -o \( -S 'kibana' -a -F Version --eq 5.6.15 \) -o \( -S logstash -a -F Version --eq 1:5.6.15-1 \) || [ $? -eq 1 ]
+
+Name: elastic65
+Method: https://artifacts.elastic.co/packages/oss-6.x/apt
+Components: main>thirdparty/elastic65
+UDebComponents:
+Suite: stable
+GetInRelease: no
+Architectures: amd64
+VerifyRelease: D27D666CD88E42B4
+ListShellHook: grep-dctrl \( -S 'elasticsearch-oss' -a -F Version --eq 6.5.4 \) -o \( -S 'kibana-oss' -a -F Version --eq 6.5.4 \) -o \( -S logstash -a -F Version --eq 1:6.5.4-1 \) || [ $? -eq 1 ]
+
+Name: elasticsearch-curator5
+Method: https://packages.elastic.co/curator/5/debian9
+Components: main>thirdparty/elasticsearch-curator5
+UDebComponents:
+Suite: stable
+GetInRelease: no
+Architectures: amd64
+VerifyRelease: D27D666CD88E42B4
+ListShellHook: grep-dctrl -X -S elasticsearch-curator || [ $? -eq 1 ]
+
+Name: elastic74
+Method: https://artifacts.elastic.co/packages/oss-7.x/apt
+Components: main>thirdparty/elastic74
+UDebComponents:
+Suite: stable
+GetInRelease: no
+Architectures: amd64
+VerifyRelease: D27D666CD88E42B4
+ListShellHook: grep-dctrl \( -S 'elasticsearch-oss' -a -F Version --eq 7.4.1 \) -o \( -S 'kibana-oss' -a -F Version --eq 7.4.1 \) -o \( -S 'logstash-oss' -a -F Version --eq 1:7.4.1-1 \) || [ $? -eq 1 ]
+
+Name: elastic78
+Method: https://artifacts.elastic.co/packages/oss-7.x/apt
+Components: main>thirdparty/elastic78
+UDebComponents:
+Suite: stable
+GetInRelease: no
+Architectures: amd64
+VerifyRelease: D27D666CD88E42B4
+ListShellHook: grep-dctrl \( -S 'elasticsearch-oss' -a -F Version --eq 7.8.0 \) -o \( -S 'kibana-oss' -a -F Version --eq 7.8.0 \) -o \( -S 'logstash-oss' -a -F Version --eq 1:7.8.0-1 \) || [ $? -eq 1 ]
+
+Name: elastic79
+Method: https://artifacts.elastic.co/packages/oss-7.x/apt
+Components: main>thirdparty/elastic79
+UDebComponents:
+Suite: stable
+GetInRelease: no
+Architectures: amd64
+VerifyRelease: D27D666CD88E42B4
+ListShellHook: grep-dctrl \( -S 'elasticsearch-oss' -a -F Version --eq 7.9.1 \) -o \( -S 'kibana-oss' -a -F Version --eq 7.9.1 \) -o \( -S 'logstash-oss' -a -F Version --eq 1:7.9.1-1 \) || [ $? -eq 1 ]
+
+Name: elastic710
+Method: https://artifacts.elastic.co/packages/oss-7.x/apt
+Components: main>thirdparty/elastic710
+UDebComponents:
+Suite: stable
+GetInRelease: no
+Architectures: amd64
+VerifyRelease: D27D666CD88E42B4
+ListShellHook: grep-dctrl \( -S 'elasticsearch-oss' -a -F Version --eq 7.10.0 \) -o \( -S 'kibana-oss' -a -F Version --eq 7.10.0 \) -o \( -S 'logstash-oss' -a -F Version --eq 7.10.0 \) || [ $? -eq 1 ]
+
+Name: grafana
+Method: https://packages.grafana.com/oss/deb
+Components: main>thirdparty/grafana
+UDebComponents:
+Suite: stable
+Architectures: amd64
+VerifyRelease: 8C8C34C524098CB6
+ListShellHook: grep-dctrl \( -P 'grafana' --exact-match -a -FVersion --lt 8 -a -FVersion --ge 7 \) || [ $? -eq 1 ]
+
+Name: confluent
+Method: http://packages.confluent.io/deb/4.0
+Components: main>thirdparty/confluent
+UDebComponents:
+Suite: stable
+Architectures: amd64
+VerifyRelease: 670540C841468433
+ListShellHook: grep-dctrl -e -P '^confluent-kafka-2\.11' || [ $? -eq 1 ]
+
+Name: mono-project-stretch
+Method: https://download.mono-project.com/repo/debian
+Components: main>thirdparty/mono-project-stretch
+UDebComponents:
+Suite: stable-stretch
+Architectures: amd64 source
+VerifyRelease: A6A19B38D3D831EF
+ListShellHook: grep-dctrl -e -S '^(cecil|cli-common|core-setup|fsharp|gtk-sharp2|libgdiplus|mod-mono|mono|mono-basic|mono-llvm|mono-tools|monodevelop|msbuild|nuget|nunit|referenceassemblies-pcl|xamarin-gtk-theme|xsp)$' || [ $? -eq 1 ]
+
+Name: thirdparty/kubeadm-k8s-kubernetes.io-1-19
+Method: https://apt.kubernetes.io/
+Suite: kubernetes-xenial
+Components: main>thirdparty/kubeadm-k8s-1-19
+UDebComponents:
+Architectures: amd64
+VerifyRelease: FEEA9169307EA071
+ListShellHook: grep-dctrl \( -P 'kubeadm' -o -P 'kubelet' -o -P 'kubectl' -a -FVersion --lt 1.20 -a -FVersion --ge 1.19 \) || [ $? -eq 1 ]
+
+Name: thirdparty/kubeadm-k8s-kubernetes.io-1-20
+Method: https://apt.kubernetes.io/
+Suite: kubernetes-xenial
+Components: main>thirdparty/kubeadm-k8s-1-20
+UDebComponents:
+Architectures: amd64
+VerifyRelease: FEEA9169307EA071
+ListShellHook: grep-dctrl \( -P 'kubeadm' -o -P 'kubelet' -o -P 'kubectl' -a -FVersion --lt 1.21 -a -FVersion --ge 1.20 \) || [ $? -eq 1 ]
+
+Name: thirdparty/kubeadm-k8s-kubernetes.io
+Method: https://apt.kubernetes.io/
+Suite: kubernetes-xenial
+Components: main>thirdparty/kubeadm-k8s-1-19 main>thirdparty/kubeadm-k8s-1-20
+UDebComponents:
+Architectures: amd64
+VerifyRelease: FEEA9169307EA071
+ListShellHook: grep-dctrl \( -P 'kubernetes-cni' -o -P 'cri-tools' \) || [ $? -eq 1 ]
+
+Name: thirdparty/kubeadm-k8s-docker.com
+Method: https://download.docker.com/linux/debian/
+Suite: buster
+Components: stable>thirdparty/kubeadm-k8s-1-19 stable>thirdparty/kubeadm-k8s-1-20
+UDebComponents:
+Architectures: amd64
+VerifyRelease: 7EA0A9C3F273FCD8
+ListShellHook: grep-dctrl \( -e -P '^docker-ce|docker-ce-cli|$' -a -FVersion --ge 5:18.09 \) -o  \( -P 'containerd.io' -a -FVersion --ge 1.2.13-2 \) || [ $? -eq 1 ]
+
+Name: thirdparty/helm3
+Method: https://baltocdn.com/helm/stable/debian
+Suite: all
+Components: main>thirdparty/kubeadm-k8s-1-19 main>thirdparty/kubeadm-k8s-1-20
+UDebComponents:
+Architectures: amd64
+VerifyRelease: 294AC4827C1A168A
+ListShellHook: grep-dctrl -e -P '^helm$' -a -FVersion --ge 3.3 || [ $? -eq 1 ]
+
+Name: thirdparty/docker-ci
+Method: https://download.docker.com/linux/debian/
+Suite: stretch
+Components: stable>thirdparty/ci
+UDebComponents:
+Architectures: amd64
+VerifyRelease: 7EA0A9C3F273FCD8
+ListShellHook: grep-dctrl -e -P '^docker-ce|docker-ce-cli|containerd\.io$' || [ $? -eq 1 ]
+
+Name: amd-rocm38
+Method: http://repo.radeon.com/rocm/apt/3.8/
+Suite: xenial
+Components: main>thirdparty/amd-rocm38
+UDebComponents:
+Architectures: amd64
+VerifyRelease: 9386B48A1A693C5C
+ListShellHook: grep-dctrl -e -S '^(rocthrust|hipcub|hcc|hip-hcc|hip-base|hip-doc|hip-samples|hip-rocclr|llvm-amdgpu|rocm-gdb|rocm-dbgapi|rocm-smi-lib64|rocm-debug-agent|roctracer-dev|hsa-rocr-dev|hsakmt-roct|miopen-hip|miopen-opencl|mivisionx|rocblas|rocfft|rocm-cmake|rocm-dev|rocm-device-libs|rocm-opencl|rocm-opencl-dev|rocm-utils|rocrand|hsakmt-roct-dev|rocprofiler-dev|hip_hcc|hip_base|rocm-clang-ocl|hip_doc|hip_samples|rocm-smi|rccl|rocm-libs|hipblas|rocminfo|comgr|rocr_debug_agent|hsa-amd-aqlprofile|rocsparse|hipsparse|rocalution|rocprim|miopengemm|rock-dkms|rock-dkms-firmware|hip-rocclr|rocsolver)$' || [ $? -eq 1 ]
+
+Name: amd-rocm42
+Method: http://repo.radeon.com/rocm/apt/4.2/
+Suite: xenial
+Components: main>thirdparty/amd-rocm42
+UDebComponents:
+Architectures: amd64
+VerifyRelease: 9386B48A1A693C5C
+ListShellHook: grep-dctrl -e -S '^(rocthrust|hipcub|hcc|hip-hcc|hip-base|hip-doc|hip-samples|hip-rocclr|llvm-amdgpu|rocm-gdb|rocm-dbgapi|rocm-smi-lib|rocm-debug-agent|roctracer-dev|hsa-rocr-dev|hsakmt-roct|miopen-hip|miopen-opencl|mivisionx|rocblas|rocfft|rocm-cmake|rocm-dev|rocm-device-libs|rocm-opencl|rocm-opencl-dev|rocm-utils|rocrand|hsakmt-roct-dev|rocprofiler-dev|hip_hcc|hip_base|rocm-clang-ocl|hip_doc|hip_samples|rccl|rocm-libs|hipblas|rocminfo|comgr|rocr_debug_agent|hsa-amd-aqlprofile|rocsparse|hipsparse|rocalution|rocprim|miopengemm|hip-rocclr|rocsolver|migraphx|half|openmp-extras|hipfft)$' || [ $? -eq 1 ]
+
+Name: amd-rocm431
+Method: http://repo.radeon.com/rocm/apt/4.3.1/
+Suite: xenial
+Components: main>thirdparty/amd-rocm431
+UDebComponents:
+Architectures: amd64
+VerifyRelease: 9386B48A1A693C5C
+ListShellHook: grep-dctrl -e -S '^(rocthrust|hipcub|hcc|hip-hcc|hip-base|hip-doc|hip-samples|hip-rocclr|llvm-amdgpu|rocm-gdb|rocm-dbgapi|rocm-smi-lib|rocm-debug-agent|roctracer-dev|hsa-rocr-dev|hsakmt-roct|miopen-hip|miopen-opencl|mivisionx|rocblas|rocfft|rocm-cmake|rocm-dev|rocm-device-libs|rocm-opencl|rocm-opencl-dev|rocm-utils|rocrand|hsakmt-roct-dev|rocprofiler-dev|hip_hcc|hip_base|rocm-clang-ocl|hip_doc|hip_samples|rccl|rocm-libs|hipblas|rocminfo|comgr|rocr_debug_agent|hsa-amd-aqlprofile|rocsparse|hipsparse|rocalution|rocprim|miopengemm|hip-rocclr|rocsolver|migraphx|half|openmp-extras|hipfft)$' || [ $? -eq 1 ]
+
+Name: thirdparty/ceph-nautilus-buster
+Method: https://mirror.croit.io/debian-nautilus
+Components: main>thirdparty/ceph-nautilus-buster
+UDebComponents:
+Suite: buster
+Architectures: amd64
+VerifyRelease: 718C1F180B5A84A3
+ListShellHook: grep-dctrl --invert-match --eregex --field=Package '^.*-dbg_.*$' || [ $? -eq 1 ]
+
+Name: thirdparty/ceph-octopus
+Method: https://download.ceph.com/debian-octopus
+Components: main>thirdparty/ceph-octopus
+UDebComponents:
+Suite: buster
+Architectures: amd64
+VerifyRelease: E84AC2C0460F3994
+# skip any debugging package, as they are too big and can be manually installed if needed for debugging
+ListShellHook: grep-dctrl --invert-match --eregex --field=Package '^.*-dbg_.*$' || [ $? -eq 1 ]
+
+Name: bigtop14
+Method: http://repos.bigtop.apache.org/releases/1.4.0/debian/9/amd64
+Components: contrib>thirdparty/bigtop14
+UDebComponents:
+Suite: bigtop
+Architectures: amd64 source
+VerifyRelease: DBBF9D42B7B4BD70
+ListShellHook: grep-dctrl -e -S '^(avro-libs|bigtop-groovy|bigtop-jsvc|bigtop-tomcat|bigtop-utils|crunch|hadoop|hbase|hive|hue|impala|kite|llama|mahout|oozie|parquet|parquet-format|sentry|solr|flume-ng|spark-core|sqoop|sqoop2|whirr|zookeeper|flink)$' || [ $? -eq 1 ]
+
+Name: bigtop15
+Method: http://repos.bigtop.apache.org/releases/1.5.0/debian/9/amd64
+Components: contrib>thirdparty/bigtop15
+UDebComponents:
+Suite: bigtop
+Architectures: amd64 source
+VerifyRelease: 2922A48261524827
+ListShellHook: grep-dctrl -e -S '^(avro-libs|bigtop-groovy|bigtop-jsvc|bigtop-tomcat|bigtop-utils|crunch|hadoop|hbase|hive|hue|impala|kite|llama|mahout|oozie|parquet|parquet-format|sentry|solr|flume-ng|spark-core|sqoop|sqoop2|whirr|zookeeper|flink)$' || [ $? -eq 1 ]
+
+Name: bigtop15-buster
+Method: http://repos.bigtop.apache.org/releases/1.5.0/debian/10/amd64
+Components: contrib>thirdparty/bigtop15
+UDebComponents:
+Suite: bigtop
+Architectures: amd64 source
+VerifyRelease: 2922A48261524827
+ListShellHook: grep-dctrl -e -S '^(avro-libs|bigtop-groovy|bigtop-jsvc|bigtop-tomcat|bigtop-utils|crunch|hadoop|hbase|hive|hue|impala|kite|llama|mahout|oozie|parquet|parquet-format|sentry|solr|flume-ng|spark-core|sqoop|sqoop2|whirr|zookeeper|flink)$' || [ $? -eq 1 ]
+
+Name: postgres
+Method: http://apt.postgresql.org/pub/repos/apt
+Components: main>thirdparty/postgres96
+UDebComponents:
+Suite: buster-pgdg
+Architectures: amd64 source
+VerifyRelease: 7FCC7D46ACCC4CF8
+ListShellHook: grep-dctrl -X -S postgresql-9.6 || [ $? -eq 1 ]
+
+Name: matomo
+Method: http://debian.matomo.org/
+Suite: piwik
+Components: main>thirdparty/matomo
+UDebComponents:
+Architectures: amd64
+GetInRelease: no
+VerifyRelease: 81E2E78B66FED89E
+ListShellHook: grep-dctrl -X -S matomo || [ $? -eq 1 ]
+
+Name: pyall
+Method: https://people.debian.org/~paravoid/python-all
+Components: main>thirdparty/pyall
+Suite: buster
+UDebComponents:
+Architectures: amd64
+VerifyRelease: 1C0576B1761693CB
+ListShellHook: grep-dctrl -e -S '^python3\.[568]$' || [ $? -eq 1 ]
+
+Name: thirdparty/gitlab
+Method: https://packages.gitlab.com/gitlab/gitlab-ce/debian/
+Components: main>thirdparty/gitlab
+UDebComponents:
+Suite: buster
+Architectures: amd64
+VerifyRelease: 3F01618A51312F3F
+ListShellHook: grep-dctrl \( -P 'gitlab-ce' -a -FVersion --lt 14.4 -a -FVersion --ge 14.3 \) || [ $? -eq 1 ]
+
+Name: thirdparty/gitlab-runner
+Method: https://packages.gitlab.com/runner/gitlab-runner/debian/
+Components: main>thirdparty/gitlab-runner
+UDebComponents:
+Suite: buster
+Architectures: amd64
+VerifyRelease: 3F01618A51312F3F
+ListShellHook: grep-dctrl \( -P 'gitlab-runner' -a -FVersion --lt 14.4 -a -FVersion --ge 14.3 \) || [ $? -eq 1 ]
+
+Name: routinator
+Method: https://packages.nlnetlabs.nl/linux/debian/
+Suite: bullseye
+Components: main>thirdparty/routinator
+UDebComponents:
+Architectures: amd64
+GetInRelease: no
+VerifyRelease: 94E92A0708C4CC43
+ListShellHook: grep-dctrl -X -S routinator || [ $? -eq 1 ]

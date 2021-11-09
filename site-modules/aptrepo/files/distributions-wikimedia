@@ -1,0 +1,202 @@
+Origin: Wikimedia
+Label: Wikimedia
+Suite: stretch-wikimedia
+Codename: stretch-wikimedia
+AlsoAcceptFor: stretch stretch-backports
+Version: 9
+Architectures: source amd64 i386
+Components: main
+# sorted list, leading whitespace matters!
+ component/calico-future
+ component/cassandra22
+ component/cassandra311
+ component/ceph
+ component/ci
+ component/elastalert
+ component/elastic55
+ component/elastic56
+ component/elastic65
+ component/facter3
+ component/ganeti216
+ component/git
+ component/icu63
+ component/kubernetes-future
+ component/lilypond
+ component/mtail
+ component/node10
+ component/php72
+ component/prometheus-node-exporter
+ component/puppet5
+ component/puppetdb4
+ component/pyall
+ component/python-ldap-bpo
+ component/spicerack
+ component/systemd241
+ component/tesseract-410-bpo
+ component/thumbor
+ component/vp9
+ thirdparty/amd-rocm38
+ thirdparty/amd-rocm42
+ thirdparty/amd-rocm431
+ thirdparty/bigtop14
+ thirdparty/bigtop15
+ thirdparty/ci
+ thirdparty/confluent
+ thirdparty/elastic55
+ thirdparty/elastic56
+ thirdparty/elastic65
+ thirdparty/elasticsearch-curator5
+ thirdparty/grafana
+ thirdparty/hwraid
+ thirdparty/k8s
+ thirdparty/kubeadm-k8s-1-19
+ thirdparty/kubeadm-k8s-1-20
+ thirdparty/matomo
+ thirdparty/mono-project-stretch
+ thirdparty/oath
+ thirdparty/php72
+UDebComponents: main component/node10 component/systemd241
+Update:
+# sorted list, leading whitespace matters!
+ amd-rocm38
+ amd-rocm42
+ amd-rocm431
+ bigtop14
+ bigtop15
+ confluent
+ elastic55
+ elastic56
+ elastic65
+ elasticsearch-curator5
+ grafana
+ hp-mcp-stretch
+ hwraid-stretch
+ matomo
+ mono-project-stretch
+ thirdparty/docker-ci
+ thirdparty/helm3
+ thirdparty/kubeadm-k8s-kubernetes.io-1-19
+ thirdparty/kubeadm-k8s-kubernetes.io-1-20
+ thirdparty/kubeadm-k8s-kubernetes.io
+Description: Wikimedia packages for Debian stretch
+SignWith: 9D392D3FFADF18FB
+DebOverride: deb-override
+Log:
+ log
+
+Origin: Wikimedia
+Label: Wikimedia
+Suite: buster-wikimedia
+Codename: buster-wikimedia
+AlsoAcceptFor: buster buster-backports
+Version: 10
+Architectures: source amd64 i386
+Components: main
+# sorted list, leading whitespace matters!
+ component/calico-future
+ component/cassandra311
+ component/cergen
+ component/ci
+ component/dnsdist
+ component/envoy-future
+ component/idp-test
+ component/iptables185
+ component/jdk8
+ component/kubernetes-future
+ component/libmysql-java
+ component/mailman3
+ component/memcached16
+ component/mtail
+ component/pdns-recursor
+ component/php72
+ component/php74
+ component/postgis
+ component/pygments
+ component/redis2
+ component/rsyslog
+ component/rsyslog-k8s
+ component/spicerack
+ component/varnish6
+ component/wmf-sre-laptop
+ thirdparty/amd-rocm38
+ thirdparty/amd-rocm42
+ thirdparty/amd-rocm431
+ thirdparty/bigtop14
+ thirdparty/bigtop15
+ thirdparty/ceph-nautilus-buster
+ thirdparty/ceph-octopus
+ thirdparty/ci
+ thirdparty/confluent
+ thirdparty/elastic710
+ thirdparty/elastic74
+ thirdparty/elastic78
+ thirdparty/elastic79
+ thirdparty/gitlab
+ thirdparty/gitlab-runner
+ thirdparty/grafana
+ thirdparty/hwraid
+ thirdparty/kubeadm-k8s-1-19
+ thirdparty/kubeadm-k8s-1-20
+ thirdparty/matomo
+ thirdparty/opensearch1
+ thirdparty/php56
+ thirdparty/postgres96
+ thirdparty/pyall
+UDebComponents: main
+Update:
+# sorted list, leading whitespace matters!
+ amd-rocm38
+ amd-rocm42
+ amd-rocm431
+ bigtop14
+ bigtop15
+ confluent
+ elastic74
+ elastic78
+ elastic79
+ elastic710
+ grafana
+ jenkins
+ hp-mcp-buster
+ hwraid-stretch
+ postgres
+ matomo
+ pyall
+ thirdparty/ceph-nautilus-buster
+ thirdparty/ceph-octopus
+ thirdparty/gitlab
+ thirdparty/gitlab-runner
+ thirdparty/helm3
+ thirdparty/kubeadm-k8s-kubernetes.io-1-19
+ thirdparty/kubeadm-k8s-kubernetes.io-1-20
+ thirdparty/kubeadm-k8s-kubernetes.io
+ thirdparty/kubeadm-k8s-docker.com
+Description: Wikimedia packages for Debian buster
+SignWith: 9D392D3FFADF18FB
+DebOverride: deb-override
+Log:
+ log
+
+Origin: Wikimedia
+Label: Wikimedia
+Suite: bullseye-wikimedia
+Codename: bullseye-wikimedia
+AlsoAcceptFor: bullseye bullseye-backports
+Version: 11
+Architectures: source amd64 i386
+Components: main
+# sorted list, leading whitespace matters!
+ component/jdk8
+ thirdparty/hwraid
+ thirdparty/opensearch1
+ thirdparty/routinator
+UDebComponents: main
+Update:
+# sorted list, leading whitespace matters!
+ hwraid-stretch
+ routinator
+Description: Wikimedia packages for Debian buster
+SignWith: 9D392D3FFADF18FB
+DebOverride: deb-override
+Log:
+ log

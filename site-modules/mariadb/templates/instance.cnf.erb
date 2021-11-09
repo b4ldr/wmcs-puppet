@@ -1,0 +1,14 @@
+[mysqld@<%= @title %>]
+datadir = <%= @datadir_instance %>
+tmpdir = <%= @tmpdir_instance %>
+socket = <%= @socket_instance %>
+port = <%= @port %>
+extra-port = <%= Integer(@port) + 20 %>
+<% if @innodb_buffer_pool_size -%>
+innodb_buffer_pool_size = <%= @innodb_buffer_pool_size %>
+<% end -%>
+read-only = <%= @read_only %>
+
+<% @mysqld_extra_configs.keys.sort.each do |key| -%>
+<%= key %> = <%= @mysqld_extra_configs[key] %>
+<% end -%>

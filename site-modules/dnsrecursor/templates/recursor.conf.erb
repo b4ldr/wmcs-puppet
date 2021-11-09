@@ -1,0 +1,134 @@
+# This file is managed by puppet - don't edit it locally!
+# recursor.conf
+# https://doc.powerdns.com/md/recursor/settings/
+
+<%
+    def flatten_ips(ips)
+        result = []
+        if ips.is_a?(Hash) then
+            ips.sort.map do |k, v|
+                result += flatten_ips(v)
+            end
+        elsif ips.is_a?(Array) then
+            ips.each do |v|
+                result += flatten_ips(v)
+            end
+        else
+            result << ips
+        end
+        return result
+    end
+-%>
+
+# location of configuration directory (recursor.conf)
+config-dir=/etc/powerdns/
+
+setgid=pdns
+setuid=pdns
+
+daemon=yes
+threads=<%= @threads %>
+pdns-distributes-queries=no
+reuseport=yes
+
+# local-address	IP addresses to listen on, separated by spaces or commas
+local-address=<%= flatten_ips(@listen_addresses).sort.join(" ") %>
+local-port=53
+
+# available since: 3.6
+#loglevel=1
+log-common-errors=<%= @log_common_errors %>
+# suppress logging of questions and answers
+quiet=yes
+# trace	if we should output heaps of logging
+trace=off
+max-mthreads=512
+
+# which domains we only accept delegations from
+delegation-only=com,net
+
+# If set, only allow these comma separated netmasks to recurse
+<%- if @allow_from_listen -%>
+allow-from=<%= (@allow_from + flatten_ips(@listen_addresses)).join(", ") %>
+<%- else -%>
+allow-from=<%= @allow_from.join(", ") %>
+<%- end -%>
+
+<% if @allow_forward_zones -%>
+# Zones for which we forward queries, comma separated domain=ip pairs
+forward-zones=<%= @forward_zones -%>, <%= @additional_forward_zones -%>
+<% end -%>
+
+<% if @allow_edns_whitelist -%>
+# we need ECS to ensure our geoip resolution (e.g. for discovery hostnames) works correctly regardless of which recursor (x-dc) a client uses
+<% if @install_from_component -%>
+# https://doc.powerdns.com/recursor/upgrade.html#x-to-4-5-1
+edns-subnet-allow-list=<%= @wmf_authdns.join(', ') %>
+<%- else -%>
+edns-subnet-whitelist=<%= @wmf_authdns.join(', ') %>
+<%- end -%>
+<% end -%>
+<% if @allow_incoming_ecs -%>
+# whether to process and pass along source ECS information (example: received by and passed from dnsdist)
+use-incoming-edns-subnet=yes
+<% end -%>
+<% if @lua_hooks -%>
+# lua scripts allow extending the resolver
+# with custom behavior
+lua-dns-script=/etc/powerdns/recursorhooks.lua
+<% end -%>
+
+# zones for which we have authoritative data, comma separated domain=file pairs 
+<% if @auth_zones -%>
+auth-zones=<%= @auth_zones -%>
+<% end -%>
+
+# maximum number of entries in the main cache (default 1000000)
+max-cache-entries=<%= @max_cache_entries %>
+
+# maximum number of seconds to keep a negative cached entry in memory
+max-negative-ttl=<%= @max_negative_ttl %>
+
+# maximum number of simultaneous TCP clients
+max-tcp-clients=<%= @max_tcp_clients %>
+
+# TCP sessions per client (IP address)
+max-tcp-per-client=<%= @max_tcp_per_client %>
+
+# Timeout in seconds when talking to TCP clients
+client-tcp-timeout=<%= @client_tcp_timeout %>
+
+# maximum number of packets to store statistics for
+# /usr/bin/rec_control top-remotes
+stats-ringbuffer-entries=1000
+
+# where the controlsocket will live
+<% if @install_from_component -%>
+# the location of the socket-dir was changed in 4.3.0
+socket-dir=/var/run/pdns-recursor/
+<% else -%>
+socket-dir=/var/run/
+<% end -%>
+
+# loads /etc/host entries on start
+# useful for debugging
+export-etc-hosts=<%= @export_etc_hosts %>
+
+<% if @version_hostname -%>
+# Use version-string to query the server hostname under LVS and/or anycast
+version-string=<%= @hostname %>
+<% end -%>
+
+# This prevents pdns from polling a public server to check for sec fixes
+security-poll-suffix=
+
+# Root hints distributed by Debian w/ 4.x
+hint-file=/usr/share/dns/root.hints
+
+<% if @install_from_component and @allow_qname_minimisation -%>
+# QNAME minimisation support was added in pdns 4.3.0.
+qname-minimization=yes
+<% end -%>
+# DNSSEC support is new in pdns-recursor 4.x, and buggy until 4.1.x
+# https://doc.powerdns.com/recursor/dnssec.html
+dnssec=<%= @dnssec %>

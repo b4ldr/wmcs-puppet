@@ -1,0 +1,42 @@
+# NOTE: This file is maintained by puppet!
+
+# /index.html loads pretty-autoindex static JS to render the autoindex_format json
+# directory tree inside of the /repositories directory.
+
+server {
+    listen <%= @port %>;
+    server_name <%= @server_name %><%= @server_alias ? ' ' + Array(@server_alias).sort.join(' ') : '' %>;
+    root <%= @document_root %>;
+    # A (TLS?) proxy in front of this server might result in a bad redirect from nginx.
+    # Use relative redirects.
+    absolute_redirect off;
+
+    location / {
+        index index.html;
+        autoindex on;
+        autoindex_format json;
+        charset utf-8;
+
+        # Enable browser access for pretty-autoindex javascript.
+        add_header  Access-Control-Allow-Origin "<%= @allow_origin || "http://#{@server_name}" %>";
+        add_header  Cache-Control "public, max-age=60, s-maxage=60";
+    }
+
+    # Deny all files that start with . (e.g. .git).
+    location ~ ^\. {
+        deny all;
+    }
+
+    # By setting the content-type of these files to text/plain,
+    # we make them viewable in browsers.
+    # yaml, avsc|idl (Avro), Markdown, and extensionless versioned
+    # and 'latest'schema files (yaml) should be text.
+    location ~ (\.yaml|\.avsc|\.idl|\.md|\d\.\d\.\d|latest)$ {
+        types { } default_type "text/plain; charset=utf-8";
+    }
+
+    # Serve minified .js and .css files from the gzipped files.
+    gzip_static always;
+    gzip_proxied any;
+    gzip_vary on;
+}

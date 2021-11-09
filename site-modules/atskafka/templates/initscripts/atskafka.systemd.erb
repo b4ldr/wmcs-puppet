@@ -1,0 +1,6 @@
+[Unit]
+Description=Stream ATS request logs to Kafka -- <%= @name %> instance
+
+[Service]
+ExecStart=/usr/bin/atskafka -kafkaConfig <%= @conf_file %> -kafkaTopic <%= @topic %> -numericFields <%= @numeric %> -socket <%= @socket %>
+Restart=on-failure

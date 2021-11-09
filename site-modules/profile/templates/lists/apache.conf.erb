@@ -1,0 +1,149 @@
+# vim: filetype=apache
+
+<VirtualHost *:80>
+    ServerAdmin noc@wikimedia.org
+    ServerName <%= @lists_servername %>
+    RewriteEngine on
+    RewriteRule ^/(?!hyperkitty/)(.*)$ https://<%= @lists_servername %>/$1 [R=301]
+    <IfModule mod_proxy_uwsgi.c>
+        # Note: even though this looks like it's going to pass all traffic over
+        # to mailman3-web, the above rewrite will send all non-hyperkitty paths
+        # to HTTPS. So only hyperkitty will be served through this.
+        ProxyPass / unix:/run/mailman3-web/uwsgi.sock|uwsgi://localhost/
+    </IfModule>
+</VirtualHost>
+
+<VirtualHost *:443>
+    ServerAdmin noc@wikimedia.org
+    ServerName <%= @lists_servername %>
+    # https://httpoxy.org/
+    RequestHeader unset Proxy early
+    SSLEngine On
+    <% if @acme_chief_cert %>
+    SSLCertificateFile /etc/acmecerts/<%= @acme_chief_cert %>/live/rsa-2048.crt
+    SSLCertificateChainFile /etc/acmecerts/<%= @acme_chief_cert %>/live/rsa-2048.chain.crt
+    SSLCertificateKeyFile /etc/acmecerts/<%= @acme_chief_cert %>/live/rsa-2048.key
+    <% else %>
+    # certbot certs
+    SSLCertificateFile /etc/letsencrypt/live/<%= @lists_servername %>/fullchain.pem
+    SSLCertificateKeyFile /etc/letsencrypt/live/<%= @lists_servername %>/privkey.pem
+    <% end %>
+    <%= @ssl_settings.join("\n    ") %>
+
+    Header set Content-Security-Policy "default-src 'self'; connect-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'"
+    Alias /mailman3/favicon.ico /var/lib/mailman3/web/static/postorius/img/favicon.ico
+    Alias /mailman3/static      /var/lib/mailman3/web/static
+    <Directory "/var/lib/mailman3/web/static">
+        Require all granted
+    </Directory>
+    <IfModule mod_proxy_uwsgi.c>
+        ProxyPass /mailman3/favicon.ico !
+        ProxyPass /mailman3/static !
+        ProxyPassMatch "^/(accounts|mailman3|hyperkitty|postorius|user-profile)(/|$)" unix:/run/mailman3-web/uwsgi.sock|uwsgi://localhost
+    </IfModule>
+    <IfModule security2_module>
+        SecRuleEngine On
+        SecRequestBodyAccess On
+
+        # Set up a collection for IP addresses
+        SecAction "id:1000,phase:1,initcol:IP=%{REMOTE_ADDR},pass,nolog"
+
+        # Exempt IPv4 addresses of monitoring hosts
+        # alert1001.wikimedia.org
+        SecRule REMOTE_ADDR "208.80.154.88"  "id:1005,allow"
+        # alert2001.wikimedia.org
+        SecRule REMOTE_ADDR "208.80.153.84"  "id:1006,allow"
+
+        # Increment per IP subscribe counter and set expiration to 60 minutes
+        SecRule REQUEST_METHOD "POST" "id:1100,chain,pass,nolog"
+        SecRule REQUEST_URI "\/(postorius\/lists\/.*\/anonymous_subscribe|mailman\/subscribe.*)" "setvar:IP.subscribecount=+1,expirevar:IP.subscribecount=3600"
+
+        # Throw a 429 if more than 5 POST requests to subscription URL from the same IP within 60 minutes
+        SecRule IP:subscribecount "@gt 5" "id:1101,chain,deny,status:429,log,msg:'IP address %{REMOTE_ADDR} has been rate limited'"
+        SecRule REQUEST_METHOD "POST" chain
+        SecRule REQUEST_URI "\/(postorius\/lists\/.*\/anonymous_subscribe|mailman\/subscribe.*)"
+
+        # Set up a collection for email addresses ignoring "+" subaddress extensions and case
+        # TX.1 and TX.2 are the $1 and $2 regex captures
+        SecRule ARGS:email "(.*?)(?:\+.*)?(@.*)" "id:1200,pass,phase:2,t:lowercase,capture,nolog,chain,initcol:USER=%{TX.1}%{TX.2}"
+        SecRule REQUEST_METHOD "POST" chain
+        SecRule REQUEST_URI "\/(postorius\/lists\/.*\/anonymous_subscribe|mailman\/subscribe.*)"
+
+        # Increment per email address subscribe counter and set expiration to 60 minutes
+        SecRule REQUEST_METHOD "POST" "id:1201,phase:2,chain,pass,nolog"
+        SecRule REQUEST_URI "\/(postorius\/lists\/.*\/anonymous_subscribe|mailman\/subscribe.*)" "setvar:USER.subscribecount=+1,expirevar:USER.subscribecount=3600"
+
+        # Throw a 429 if more than 5 POST requests to subscription URL with the same email within 60 minutes
+        SecRule USER:subscribecount "@gt 5" "id:1202,chain,deny,status:429,log,msg:'Email address %{ARGS.email} (collapsed to %{TX.1}%{TX.2}) has been rate limited'"
+        SecRule REQUEST_METHOD "POST" chain
+        SecRule REQUEST_URI "\/(postorius\/lists\/.*\/anonymous_subscribe|mailman\/subscribe.*)"
+
+        # Give a friendly-ish error message when rate limiting
+        ErrorDocument 429 "You are doing that too often. Please try again later."
+
+    </IfModule>
+
+    # Does not obey robots.txt; causing operational issues, 2014-06-23
+    BrowserMatch "ArchiveTeam ArchiveBot" bad_browser
+    BrowserMatch "Firefox/[0-9A-F]{4}" bad_browser
+    <Location />
+        <RequireAll>
+            Require all granted
+            Require not env bad_browser
+            <%- @web_deny_conditions.each do |cnd| -%>
+            Require not <%= cnd %>
+            <%- end %>
+        </RequireAll>
+    </Location>
+
+    DocumentRoot /var/www
+    <Directory />
+        Options FollowSymLinks
+        AllowOverride None
+        Require all granted
+    </Directory>
+
+    Alias /pipermail/ "/var/lib/mailman/archives/public/"
+    Alias /images/    "/usr/share/images/"
+
+    RedirectMatch permanent ^/(index\.html?)?$ https://<%= @lists_servername %>/postorius/lists/
+    RedirectMatch temp ^/mailman/$        https://<%= @lists_servername %>/postorius/lists/
+
+    # anti-subscription bot mitigation
+    RewriteEngine on
+    RewriteCond &%{QUERY_STRING} &pw(-conf)?= [NC]
+    RewriteRule ^(.*)$ - [F]
+
+    # ban requests from mailbait, a mailbombing service
+    RewriteCond %{HTTP_REFERER} "mailbait.info" [NC]
+    RewriteRule ^(.*)$ - [F]
+
+    # Disable export endpoint (T282957)
+    <LocationMatch "^/hyperkitty/list/.*/export/.*">
+        Require all denied
+    </LocationMatch>
+
+    # If the Mailman3 list directory exists, redirect listinfo/admin pages to postorius
+    RewriteMap lc int:tolower
+    RewriteCond /var/lib/mailman3/lists/${lc:$2}.<%= @lists_servername %> -d
+    RewriteRule ^/mailman/(listinfo|admin|admindb|options|subscribe)/([a-zA-Z0-9\._-]*?)($|/) https://<%= @lists_servername %>/postorius/lists/${lc:$2}.<%= @lists_servername %>/ [R=301]
+
+    # Use the map to redirect pipermail URLs. Test that the key is present,
+    # and if so, emit a 301 redirect.
+    RewriteMap pipermail "dbm:/var/lib/mailman3/redirects/redirects.dbm"
+    RewriteCond "${pipermail:$1}" !=""
+    RewriteRule "^/pipermail/(.*)" "/hyperkitty/list/${pipermail:$1}" [R=302]
+
+    # list renames
+    <% @renamed_lists.each do |oldname, newname| -%>
+    Redirect permanent /mailman/listinfo/<%= oldname %> https://<%= @lists_servername %>/mailman/listinfo/<%= newname %>
+    <% end %>
+
+    Redirect permanent /pipermail/wikidata-l                  https://<%= @lists_servername %>/pipermail/wikidata/
+
+    ErrorLog /var/log/apache2/<%= @lists_servername %>-error.log
+    CustomLog /var/log/apache2/<%= @lists_servername %>-access.log wmf
+
+    # Make sure we serve with utf-8 charset (T261031)
+    AddDefaultCharset utf-8
+</VirtualHost>

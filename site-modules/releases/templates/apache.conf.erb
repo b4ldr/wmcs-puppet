@@ -1,0 +1,37 @@
+<VirtualHost *:80>
+    ServerName <%= @sitename %>
+    ServerAdmin <%= @server_admin %>
+
+    DocumentRoot /srv/org/wikimedia/releases/
+
+    IndexOptions FancyIndexing VersionSort SuppressHTMLPreamble
+    IndexOrderDefault Descending Name
+    IndexIgnore "releases-header.html"
+    HeaderName ./releases-header.html
+
+    <Location "/charts/">
+        Header set Cache-Control no-cache,must-revalidate
+    </Location>
+    <Directory /srv/org/wikimedia/releases/>
+        Options Indexes FollowSymLinks MultiViews
+        IndexIgnore "releases-header.html"
+        HeaderName ./releases-header.html
+        AllowOverride All
+        Require all granted
+        <Files "index.yaml">
+            Header set Cache-Control no-cache,must-revalidate
+        </Files>
+    </Directory>
+
+    <Directory /srv/org/wikimedia/releases/mediawiki/>
+        IndexIgnore "releases-header-mw.html"
+        HeaderName ./releases-header-mw.html
+    </Directory>
+
+    ErrorLog /var/log/apache2/<%= @sitename %>.error.log
+
+    LogLevel warn
+
+    CustomLog /var/log/apache2/<%= @sitename %>.access.log wmf
+    ServerSignature On
+</VirtualHost>

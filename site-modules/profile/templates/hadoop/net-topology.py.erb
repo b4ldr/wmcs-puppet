@@ -1,0 +1,28 @@
+#!/usr/bin/env python
+
+# NOTE: This file is managed by Puppet.
+
+# Returns a rack/row name for the given node name.
+
+# Usage:
+#   net-topology.py <ipaddr|fqdn>
+
+import socket
+from sys import argv
+
+# Maps fqdn to a unique /datacenter/rack/row id.
+nodes = {
+    <%= @net_topology.map { |host, rack| "'#{host}':  '#{rack}'" }.sort.join(",\n    ") %>
+}
+
+if len(argv) < 2:
+    node = 'default'
+else:
+    node = argv[1]
+
+# If the node doesn't have a key in nodes, perhaps it is a
+# short hostname or IP address.  Look it up!
+if node not in nodes:
+    node = socket.getfqdn(node)
+
+print(nodes.get(node, '/<%= @site %>/default/rack'))

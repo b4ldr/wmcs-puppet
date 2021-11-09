@@ -1,0 +1,13 @@
+# This file is managed by Puppet.
+# puppet:///statistics/wmde/logrotate.erb
+# Rotate statistics/wmde cron output logs
+#
+<%= @log_dir %>/*.log {
+       notifempty
+       maxage 10
+       rotate 2
+       dateext
+       compress
+       delaycompress
+       missingok
+}

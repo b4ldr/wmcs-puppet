@@ -1,0 +1,17 @@
+#!/bin/bash
+# This file is managed by Puppet.
+#
+# Wrapper script to invoke airflow from the correct context
+#
+if [ "$(whoami)" != "<%= @service_user %>" ]; then
+    echo ERROR: Must be run as service_user: <%= @service_user %>
+    exit 1
+fi
+
+export AIRFLOW_HOME="<%= @conf_dir %>"
+# skein is a library used by custom airflow plugins to submit
+# jobs to the yarn cluster.
+export SKEIN_CONFIG="<%= @run_dir %>/skein"
+source /etc/default/hadoop
+source "<%= @deploy_dir %>/venv/bin/activate"
+airflow "$@"

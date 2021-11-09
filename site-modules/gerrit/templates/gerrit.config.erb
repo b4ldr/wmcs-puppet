@@ -1,0 +1,275 @@
+# Full documentation is at:
+#
+# https://gerrit.wikimedia.org/r/Documentation/config-gerrit.html
+#
+
+[auth]
+    type = LDAP
+    cookieSecure = true
+    cookiePath = /
+    registerUrl = https://wikitech.wikimedia.org/w/index.php?title=Special:CreateAccount&returnto=Gerrit/NewUser
+    gitBasicAuth = true
+    gitBasicAuthPolicy = HTTP_LDAP
+[cache]
+    directory = cache
+[cache "changeid_project"]
+    memoryLimit = 3096
+[cache "ldap_groups_byinclude"]
+    maxAge = 1 hour
+[cache "ldap_usernames"]
+    maxAge = 1 hour
+    memoryLimit = 2048
+# to be removed when we upgrade to 2.16 / 3.0
+[cache "groups"]
+    # this is what upstream use to make it unlimited
+    # in 2.16 / 3.0
+    memoryLimit = 9223372036854775807
+[cache "groups_byname"]
+    # this is what upstream use to make it unlimited
+    # in 2.16 / 3.0
+    memoryLimit = 9223372036854775807
+[cache "groups_byuuid"]
+    # this is what upstream use to make it unlimited
+    # in 2.16 / 3.0
+    memoryLimit = 9223372036854775807
+[cache "projects"]
+    memoryLimit = 3096
+    loadOnStartup = true
+[cache "static_content"]
+    maxAge = 1 day
+[cache "web_sessions"]
+    maxAge = 90 days
+    memoryLimit = 8192
+    diskLimit = 256m
+[capability]
+    administrateServer = group ldap/gerritadmin
+[change]
+    disablePrivateChanges = true
+    # Moving changes may be counter-intuitive and probably needs
+    # discussion before turning it on.
+    # See https://gerrit-review.googlesource.com/Documentation/config-gerrit.html#change.move
+    # Since Gerrit v2.15 does not have the possibility to move
+    # changes, we turn it off for now. Once it has been discussed if
+    # we want it, we can still turn it on.
+    move = false
+[changeCleanup]
+    # Not actually used, but Gerrit complains if unset
+    interval = 1 week
+    startTime = Sat 02:59
+[changeMerge]
+    test = true
+    checkFrequency = 0
+[commentlink "bugzilla"]
+    match = "\\b[bB][uU][gG]\\:?\\s+#?(\\d+)\\b"
+    link = https://bugzilla.wikimedia.org/$1
+[commentlink "changeid"]
+    match = \\b(I[0-9a-f]{7,40})\\b
+    link = /q/$1
+[commentlink "ci-test-result"]
+    match = <li>([^ ]+) (<a href=\"https://integration\\.wikimedia\\.org/ci/[a-zA-Z0-9/_.-]+\" target=\"_blank\" rel=\"nofollow\">)[^<]+</a> : ([a-zA-Z_]+)([^<]*)</li>
+    html = <li class=\"ci_comment_test\"><span class=\"ci_comment_test_name\">$2$1</a></span> <span class=\"ci_comment_test_result\"><span class=\"ci_result_$3\">$3</span>$4</span></li>
+[commentlink "codereview"]
+    match = \\br(\\d+)\\b
+    link = https://www.mediawiki.org/wiki/Special:Code/MediaWiki/$1
+[commentlink "commit"]
+    match = (^|\\s|[:,!?\\(\\[\\{])([0-9a-f]{7,40})\\b
+    html = $1<a href=\"/q/$2\">$2</a>
+[commentlink "cve"]
+    match = \\b(CVE\\-\\d{4}\\-\\d+)\\b
+    link = https://cve.mitre.org/cgi-bin/cvename.cgi?name=$1
+[commentlink "its-phabricator"]
+    # $1 must hold the bug number because of the notification bots that are using this.
+    match = "\\bT(\\d+)(#\\d+)?\\b(?![#\"]|</a>)"
+    link = https://phabricator.wikimedia.org/T$1$2
+[commentlink "mingle-analytics"]
+    match = "\\b([aA]nalytics\\s*[:-]?\\s*[cC]ard|[cC]ard\\s*[:-]?\\s*[aA]nalytics)\\s*\\#?\\s*(\\d+)\\b"
+    link = https://wikimedia.mingle.thoughtworks.com/projects/analytics/cards/$2
+[commentlink "rt"]
+    match = "\\b[rR][tT]\\:?\\s+#?(\\d+)\\b"
+    link = https://rt.wikimedia.org/Ticket/Display.html?id=$1
+[commentlink "scid"]
+    match = "\\b[sS][cC][iI][dD]\\:?\\s+#?(\\d+)\\b"
+    link = https://meta.wikimedia.org/w/index.php?oldid=$1
+[commentlink "pipeline-dashboard"]
+    match = pipeline-dashboard:\\s+([a-z-]+)
+    html = <a href=\"https://integration.wikimedia.org/ci/blue/organizations/jenkins/$1/activity\"><span class=\"wmf-badge-logo\">Wikimedia Pipeline</span></a>
+[commentlink "pipeline-build-result"]
+    match = pipeline-build-result:\\s+(SUCCESS|FAILURE)\\s+\\(job:\\s+([a-z-]+),\\s+build:\\s+(\\d+)\\)
+    html = <a href=\"https://integration.wikimedia.org/ci/blue/organizations/jenkins/$2/detail/service-pipeline-test-and-publish/$3/pipeline\"><span class=\"wmf-badge-left\">Image Build</span><span class=\"wmf-badge-$1\">$1</span></a>
+[commitmessage]
+    maxSubjectLength = 100
+    maxLineLength = 120
+[container]
+    # Parameters in the container section are solely used by the `gerrit.sh`
+    # wrapper which we do NOT use on the WMF instance.
+    #
+    # One must instead inject the parameters in the ExecStart systemd unit.
+    #
+    # `gerrit init` makes a few update, list them there to avoid unwanted
+    # modifications:
+    user = gerrit2
+    javaHome = <%= @java_home %>
+    javaOptions = "-Dflogger.backend_factory=com.google.common.flogger.backend.log4j.Log4jBackendFactory#getInstance"
+    javaOptions = "-Dflogger.logging_context=com.google.gerrit.server.logging.LoggingContext#getInstance"
+[core]
+    packedGitOpenFiles = <%= @git_open_files %>
+    packedGitLimit = 4g
+    packedGitWindowSize = 16k
+    streamFileThreshold = 100m
+    useRecursiveMerge = true
+[execution]
+    defaultThreadPoolSize = 2
+[gc]
+    aggressive = true
+    interval = 1 week
+    startTime = Sat 02:00
+[gerrit]
+    basePath = <%= @git_dir %>
+    canonicalWebUrl = <%= @url %>
+    faviconPath = static/wikimedia-codereview-logo.cache.ico
+    # Used in gerrit 2.16+
+    # see https://gerrit-review.googlesource.com/Documentation/config-gerrit.html#gerrit.listProjectsFromIndex
+    listProjectsFromIndex = true
+    reportBugUrl = https://phabricator.wikimedia.org/maniphest/task/create/?projects=PHID-PROJ-lc5rwomzjp6fmcdpbw43
+    serverId = e9e9afe9-4712-486d-8885-f54b72dd1951
+[groups]
+    newGroupsVisibleToAll = true
+[http]
+    addUserAsResponseHeader = true
+[httpd]
+    listenUrl = proxy-https://127.0.0.1:8080/r/
+    maxQueued = 500
+    minThreads = 10
+    maxThreads = 60
+    maxWait = 2 min
+[index]
+    type = LUCENE
+    batchThreads = 1
+    autoReindexIfStale = false
+# User gerritbot
+[its-phabricator]
+    url = https://phabricator.wikimedia.org/
+    # To be removed once we upgrade to 2.14+.
+    username = gerritbot
+    commentOnChangeAbandoned = false
+    commentOnChangeMerged = false
+    commentOnChangeRestored = false
+    commentOnChangeCreated = false
+    commentOnCommentAdded = false
+    commentOnPatchSetCreated = false
+    commentOnRefUpdatedGitWeb = false
+[log]
+    jsonLogging = true
+    textLogging = true
+[ldap]
+    server = ldaps://<%= @ldap_host %>
+    accountBase = ou=people,<%= @ldap_base_dn %>
+    accountPattern = (&(objectClass=person)(cn=${username})(!(pwdPolicySubentry=cn=disabled,ou=ppolicies,dc=wikimedia,dc=org)))
+    accountFullName = cn
+    groupBase = ou=groups,<%= @ldap_base_dn %>
+    groupMemberPattern = (&(objectClass=groupOfNames)(member=${dn}))
+    groupScope = one
+    # Fixes T152640
+    localUsernameToLowerCase = true
+    connectTimeout = 5 s
+    readTimeout = 5 s
+[lfs]
+    plugin = lfs
+[mimetype "application/javascript"]
+    safe = true
+[mimetype "application/x-php"]
+    safe = true
+[mimetype "image/bmp"]
+    safe = true
+[mimetype "image/gif"]
+    safe = true
+[mimetype "image/jpeg"]
+    safe = true
+[mimetype "image/png"]
+    safe = true
+[mimetype "image/tiff"]
+    safe = true
+[mimetype "image/x-icon"]
+    safe = true
+[mimetype "text/css"]
+    safe = true
+[mimetype "text/javascript"]
+    safe = true
+[mimetype "text/plain"]
+    safe = true
+[mimetype "text/x-php"]
+    safe = true
+
+# https://gerrit.wikimedia.org/r/plugins/metrics-reporter-prometheus/Documentation/config.md
+[plugin "metrics-reporter-prometheus"]
+# The pattern matching is done against the Gerrit internal metrics listed at
+# https://gerrit.wikimedia.org/r/Documentation/metrics.html
+#
+# Metrics exposed by the plugin can be seen at:
+# https://gerrit.wikimedia.org/r/plugins/metrics-reporter-prometheus/metrics
+    excludeMetrics = ^change/submit.*
+    excludeMetrics = ^http/server/rest_api/.*
+    excludeMetrics = ^http/server/rest_api/.*
+    excludeMetrics = license/cla_check_count
+    excludeMetrics = ^plugin/latency.*
+    excludeMetrics = ^reviewer_suggestion/.*
+    excludeMetrics = ^sequence/next_id_latency.*
+
+[plugin "webhooks"]
+    sslVerify = true
+[noteDb "changes"]
+    autoMigrate = false
+    trial = false
+    write = true
+    read = true
+    sequence = true
+    primaryStorage = note db
+    disableReviewDb = true
+[pack]
+    deltacompression = true
+[receive]
+    maxObjectSizeLimit = 100m
+    maxBatchChanges = 10
+    enableSignedPush = false
+    autogc = false
+[repository "*"]
+    ownerGroup = Gerrit Managers
+[repository "mediawiki/*"]
+    ownerGroup = mediawiki
+[repository "operations/*"]
+    ownerGroup = ldap/ops
+[sendemail]
+    includeDiff = true
+    connectTimeout = 30 sec
+    smtpServer = localhost
+    threadPoolSize = 2
+[sshd]
+    listenAddress = *:29418
+    loginGraceTime = 60 s
+    idleTimeout = 3600 s
+    maxConnectionsPerUser = 4
+    mac = -hmac-md5
+    mac = -hmac-md5-96
+    threads = 28
+    batchThreads = 4
+[theme]
+    backgroundColor = fff
+    topMenuColor = fff
+    trimColor = eee
+    selectionColor = d8edf9
+    tableOddRowColor = f7f7f7
+    tableEvenRowColor = fff
+[trackingid "bugzilla"]
+    footer = Bug:
+    match = "\\#?\\d{1,6}"
+    system = Bugzilla
+[trackingid "phabricator"]
+    footer = Bug:
+    match = T\\d+
+    system = Phab
+[trackingid "rt"]
+    footer = RT:
+    match = "\\#?\\d{1,6}"
+    system = RT
+[user]
+    email = gerrit@wikimedia.org

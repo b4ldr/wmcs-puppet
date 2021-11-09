@@ -1,0 +1,7 @@
+fixtures:
+    symlinks:
+        squid: "#{source_dir}"
+        logrotate: "../../../../logrotate"
+        stdlib: "../../../../stdlib"
+        wmflib: "../../../../wmflib"
+        systemd: "../../../../systemd"

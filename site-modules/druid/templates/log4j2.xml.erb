@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<Configuration status="warn">
+    <Appenders>
+        <RollingFile name="RollingFile"
+            fileName="/var/log/druid/<%= @service %>.log"
+            filePattern="/var/log/druid/<%= @service %>.%i.log">
+            <PatternLayout>
+                <Pattern>%d{ISO8601} %p %c: %m%n</Pattern>
+            </PatternLayout>
+            <Policies>
+                <SizeBasedTriggeringPolicy size="128 MB"/>
+            </Policies>
+            <DefaultRolloverStrategy max="4"/>
+        </RollingFile>
+        <RollingFile name="RollingMetricsFile"
+            fileName="/var/log/druid/<%= @service %>-metrics.log"
+            filePattern="/var/log/druid/<%= @service %>-metrics.%i.log">
+            <Policies>
+                <SizeBasedTriggeringPolicy size="10 MB"/>
+            </Policies>
+            <DefaultRolloverStrategy max="5"/>
+        </RollingFile>
+        <% if @service == 'broker' or @service == 'historical' -%>
+        <RollingFile name="AccessLogFile"
+            fileName="/var/log/druid/<%= @service %>-access.log"
+            filePattern="/var/log/druid/<%= @service %>-access.%i.log">
+            <Policies>
+                <SizeBasedTriggeringPolicy size="10 MB"/>
+            </Policies>
+            <DefaultRolloverStrategy max="5"/>
+        </RollingFile>
+        <% end -%>
+        <% if @service == 'broker' or @service == 'historical' or @service == 'middlemanager' -%>
+        <RollingFile name="RollingRequestsFile"
+            fileName="/var/log/druid/<%= @service %>-requests.log"
+            filePattern="/var/log/druid/<%= @service %>-requests.%i.log">
+            <Policies>
+                <SizeBasedTriggeringPolicy size="100 MB"/>
+            </Policies>
+            <DefaultRolloverStrategy max="3"/>
+        </RollingFile>
+        <% end -%>
+    </Appenders>
+
+    <Loggers>
+        <Logger name="<%= @logger_prefix %>.java.util.emitter.core.LoggingEmitter" level="info" additivity="false">
+          <AppenderRef ref="RollingMetricsFile"/>
+        </Logger>
+        <% if @service == 'broker' or @service == 'historical' or @service == 'middlemanager' -%>
+        <Logger name="<%= @logger_prefix %>.server.log.LoggingRequestLogger" level="info" additivity="false">
+          <AppenderRef ref="RollingRequestsFile"/>
+        </Logger>
+        <% end -%>
+        <% if @service == 'broker' or @service == 'historical' -%>
+        <Logger name="<%= @logger_prefix %>.jetty.RequestLog" additivity="false" level="DEBUG">
+            <AppenderRef ref="AccessLogFile"/>
+        </Logger>
+        <% end -%>
+        <Root level="info">
+            <AppenderRef ref="RollingFile"/>
+        </Root>
+    </Loggers>
+</Configuration>

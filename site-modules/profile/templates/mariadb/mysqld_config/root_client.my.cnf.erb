@@ -1,0 +1,5 @@
+# Client-only configuration, for servers that have to be clients but
+# do not have mysqld installed
+
+<%= scope.function_template([File.dirname(__FILE__) + "/" + "client_subtemplate.erb"]) %>
+

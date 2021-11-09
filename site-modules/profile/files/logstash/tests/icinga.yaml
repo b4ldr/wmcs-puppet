@@ -1,0 +1,64 @@
+fields:
+  program: "icinga"
+codec: "json_lines"
+ignore:
+  - "@timestamp"
+  - "host"
+  - "tags"
+  - "normalized"
+testcases:
+  - input:
+      - >
+        {
+          "message":"SERVICE NOTIFICATION: irc;labtestpuppetmaster2001;Unmerged changes on repository puppet;CRITICAL;notify-service-by-irc;There is one unmerged change in puppet (dir /var/lib/git/operations/puppet, ref HEAD..origin/production).",
+          "level": "INFO",
+          "facility": "local1",
+          "type": "syslog"
+        }
+      - >
+        {
+          "message": "HOST ALERT: mw2280;DOWN;HARD;2;PING CRITICAL - Packet loss = 100%",
+          "level": "INFO",
+          "facility": "local1",
+          "type": "syslog"
+        }
+    expected:
+      - labels:
+          check_name: "Unmerged changes on repository puppet"
+          check_status: "CRITICAL"
+          contact_group: "irc"
+          target_host: "labtestpuppetmaster2001"
+          notification_command: "notify-service-by-irc"
+        message: "There is one unmerged change in puppet (dir /var/lib/git/operations/puppet, ref HEAD..origin/production)."
+        log:
+          original: "SERVICE NOTIFICATION: irc;labtestpuppetmaster2001;Unmerged changes on repository puppet;CRITICAL;notify-service-by-irc;There is one unmerged change in puppet (dir /var/lib/git/operations/puppet, ref HEAD..origin/production)."
+          level: "INFO"
+          syslog:
+            facility:
+              code: 17
+              name: "local1"
+            priority: 142
+            severity:
+              code: 6
+              name: "informational"
+        service:
+          type: "icinga"
+        ecs:
+          version: "1.7.0"
+        event:
+          kind: "alert"
+      - message: "HOST ALERT: mw2280;DOWN;HARD;2;PING CRITICAL - Packet loss = 100%"
+        service:
+          type: "icinga"
+        log:
+          level: "INFO"
+          syslog:
+            facility:
+              code: 17
+              name: "local1"
+            priority: 142
+            severity:
+              code: 6
+              name: "informational"
+        ecs:
+          version: "1.7.0"

@@ -1,0 +1,10 @@
+[Unit]
+Description=Prometheus network interface saturation exporter
+
+[Service]
+Restart=always
+User=prometheus
+ExecStart=/usr/local/bin/prometheus-nic-saturation-exporter<% if @listen_address %> -l <%= @listen_address %><% end %>
+
+[Install]
+WantedBy=multi-user.target

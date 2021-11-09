@@ -1,0 +1,169 @@
+#####################################################################
+### THIS FILE IS MANAGED BY PUPPET
+### puppet:///openldap/slapd.erb
+#####################################################################
+
+# Only allow v3 bindings
+#allow bind_v2
+
+# Schema and objectClass definitions
+include         /etc/ldap/schema/core.schema
+include         /etc/ldap/schema/cosine.schema
+include         /etc/ldap/schema/rfc2307bis.schema
+include         /etc/ldap/schema/inetorgperson.schema
+include         /etc/ldap/schema/dyngroup.schema
+include         /etc/ldap/schema/samba.schema
+include         /etc/ldap/schema/ppolicy.schema
+
+<% if @extra_schemas -%>
+    <%- @extra_schemas.each do |extra_schema| %>
+include /etc/ldap/schema/<%= extra_schema %>
+<% end %>
+<% end -%>
+# Where the pid file is put. The init.d script
+# will not stop the server if you change this.
+pidfile         /var/run/slapd/slapd.pid
+
+# List of arguments that were passed to the server
+argsfile        /var/run/slapd/slapd.args
+
+# Read slapd.conf(5) for possible values
+loglevel        <%= @logging %>
+
+# Where the dynamically loaded modules are stored
+modulepath  /usr/lib/ldap
+moduleload  back_hdb
+moduleload  back_monitor
+moduleload  memberof
+moduleload  syncprov
+moduleload  auditlog
+moduleload  ppolicy
+moduleload  deref
+moduleload  unique
+
+# Maximum number of entries that is returned for a search operation
+# Limit size of individual searches, but allow a paged query to get the whole db
+<% if @size_limit then %>
+sizelimit size.soft=<%= @size_limit %> size.hard=<%= @size_limit %> size.prtotal=unlimited
+<% else %>
+sizelimit size.soft=2048 size.hard=2048 size.prtotal=unlimited
+<% end %>
+
+# 10 minute idle timeout for ill-behaved clients
+idletimeout 600
+writetimeout 30
+
+# Limit amount of cpu's that is used for indexing.
+tool-threads 1
+
+#######################################################################
+## TLS/SSL config
+
+<%- if @ca and @key and @certificate -%>
+TLSCACertificateFile <%= @ca %>
+TLSCertificateFile <%= @certificate %>
+TLSCertificateKeyFile <%= @key %>
+<%- end -%>
+
+#######################################################################
+## Databases
+
+database        monitor
+rootdn          "cn=admin,<%= @suffix %>"
+readonly        <%= @read_only %>
+
+access to dn.subtree="cn=monitor"
+	by dn="cn=admin,<%= @suffix %>" write
+	by dn="cn=monitor,<%= @suffix %>" read
+	by self write
+	by * none
+
+database            hdb
+suffix              <%= @suffix %>
+directory           <%= @datadir %>
+rootdn              "cn=admin,<%= @suffix %>"
+readonly            <%= @read_only %>
+# rootpw "..." # Not really needed, it is in-tree
+
+overlay auditlog
+auditlog /var/lib/ldap/slapd-audit.log
+
+overlay deref
+overlay memberof
+
+#######################################################################
+## Password policy (default is to store passwords in plaintext)
+# This policy will store passwords an unsalted SHA1 hashes.
+# This is a requirement for Google Apps Directory Sync
+
+overlay ppolicy
+ppolicy_hash_cleartext
+password-hash {<%= @hash_passwords %>}
+
+#######################################################################
+## Replication
+
+# Unique ID
+ServerID <%= @server_id %>
+
+overlay syncprov
+syncprov-checkpoint 100 5
+syncprov-sessionlog 100
+syncprov-reloadhint TRUE
+
+overlay unique
+unique_uri ldap:///?uidNumber?sub?(objectClass=posixaccount)
+unique_uri ldap:///?gidNumber?sub?(objectClass=posixgroup)
+unique_uri ldap:///?cn?sub?(objectClass=posixaccount)
+
+## Replication ACL
+
+# Replication user
+access  to dn.subtree="<%= @suffix %>"
+	by dn.base="cn=repluser,<%= @suffix %>" read
+	by * break
+
+limits dn.exact="cn=repluser,<%= @suffix %>" time=unlimited size=unlimited
+
+<%- if @master -%>
+# And at the same time a replica
+syncrepl rid=1
+	provider=ldap://<%= @master %>:389
+	searchbase="<%= @suffix %>"
+        type=refreshOnly
+	retry="60 10 300 +"
+        interval=00:00:01:00
+        filter="(objectClass=*)"
+        scope=sub
+        schemachecking=on
+        bindmethod=simple
+        starttls=critical
+        tls_reqcert=demand
+        tls_cacert=/etc/ssl/certs/ca-certificates.crt
+	binddn="cn=repluser,<%= @suffix %>"
+	credentials="<%= @sync_pass %>"
+<%- end -%>
+<%- if @master and @mirrormode -%>
+# Mirror-Mode. This is not true multi-master, but really useful nonetheless
+mirrormode on
+<%- end -%>
+
+#######################################################################
+## General parameters and indexes
+
+dbconfig set_cachesize 0 2097152 0
+dbconfig set_lk_max_objects 1500
+dbconfig set_lk_max_locks 1500
+dbconfig set_lk_max_lockers 1500
+dbconfig set_lg_regionmax 262144
+dbconfig set_lg_bsize 2097152
+dbconfig set_flags DB_LOG_AUTOREMOVE
+
+# LDAP indices
+include /etc/ldap/indices.conf
+
+lastmod         on
+checkpoint      512 30
+
+# ACLs
+include /etc/ldap/acls.conf

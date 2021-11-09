@@ -1,0 +1,57 @@
+# Beta master or stand-alone
+
+# Please use separate .cnf templates for each type of server.
+
+[client]
+port   = 3306
+socket = <%= @socket %>
+
+[mysqld]
+
+log_bin
+log_slave_updates
+skip-external-locking
+skip-name-resolve
+temp-pool
+
+user        = mysql
+socket      = <%= @socket %>
+port        = 3306
+basedir     = <%= @basedir %>
+datadir     = <%= @datadir %>
+tmpdir      = <%= @tmpdir %>
+server_id   = <%= @server_id %>
+report_host = <%= @fqdn %>
+read_only   = 1
+
+# enable socket authentication
+plugin-load = unix_socket=auth_socket.so
+
+secure_file_priv   = /dev/null
+max_connections    = 250
+max_allowed_packet = 32M
+sync_binlog        = 1
+binlog_format      = statement
+expire_logs_days   = 7
+connect_timeout    = 3
+max_connect_errors = 1000000000
+query_cache_size   = 0
+query_cache_type   = 0
+
+innodb_file_per_table   = 1
+innodb_buffer_pool_size = <%= (Float(@memorysize.split[0]) * 0.75).round %>G
+innodb_log_file_size    = 500M
+
+[mysqld_safe]
+
+syslog
+
+[mysqldump]
+
+quick
+max_allowed_packet = 32M
+
+[mysql]
+prompt = "\u@\h[\d]> "
+
+#!includedir /etc/mysql/conf.d/

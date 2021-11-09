@@ -1,0 +1,12 @@
+#!/bin/bash
+# This script builds all the base images we need and pushes
+# them to the appropriate docker registry
+set -e
+DAY=$(date +%Y%m%d)
+DISTRIBUTIONS="${DISTRIBUTIONS:-<%= @distributions.join(" ") %>}"
+REGISTRY='<%= @docker_registry %>'
+PUBLIC_REGISTRY=${PUBLIC_REGISTRY:-docker-registry.wikimedia.org}
+for distro in $DISTRIBUTIONS;
+do
+    build-bare-slim $distro
+done

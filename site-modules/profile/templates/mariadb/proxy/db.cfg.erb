@@ -1,0 +1,24 @@
+# Note: This file is managed by puppet.
+
+global
+    pidfile <%= @pid %>
+    daemon
+    user haproxy
+    group haproxy
+    stats socket <%= @socket %> mode 666 level user
+
+defaults
+    #log global
+    mode tcp
+    option dontlognull
+    option tcp-smart-accept
+    option tcp-smart-connect
+    #option dontlog-normal
+    retries 3
+    option redispatch
+    maxconn 5000
+    timeout connect 3000ms
+    timeout client  28800s
+    timeout server  28800s
+
+# Put custom blocks in /etc/haproxy/conf.d

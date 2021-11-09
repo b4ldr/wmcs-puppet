@@ -1,0 +1,18 @@
+[Unit]
+Description=Prometheus exporter for MySQL (instance %i)
+Documentation=https://prometheus.io/docs/introduction/overview/
+ConditionPathExists=/etc/default/prometheus-mysqld-exporter@%i
+#Ensure the exporter is (re-)started and stopped with the relevant
+#mariadb instance
+After=mariadb@%i.service
+Requisite=mariadb@%i.service
+
+[Service]
+Restart=always
+User=prometheus
+Group=prometheus
+EnvironmentFile=/etc/default/prometheus-mysqld-exporter@%i
+ExecStart=/usr/bin/prometheus-mysqld-exporter $ARGS
+
+[Install]
+WantedBy=multi-user.target

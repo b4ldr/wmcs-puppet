@@ -1,0 +1,91 @@
+# https://github.com/prymitive/karma/blob/master/docs/CONFIGURATION.md
+alertmanager:
+  interval: 10s
+  servers:
+    - name: "<%= @facts['domain']  %>"
+      uri: "http://localhost:9093"
+      proxy: true
+
+<% if @auth_header %>
+# Auto-fill silence dialog with the authenticated user
+authentication:
+  header:
+    name: <%= @auth_header %>
+    value_re: ^(.+)$
+<% end %>
+
+receivers:
+  # Hide 'logger' receiver, common to all alerts
+  strip:
+    - 'logger'
+
+labels:
+  strip:
+    # Hide 'info' label since it is duplicated into 'summary' annotation for Icinga alerts
+    - 'info'
+  valueOnly:
+    # Don't display 'severity' and 'alertname' label name since that's
+    # implied, and highlighted by colors
+    - 'severity'
+    - 'alertname'
+  color:
+    custom:
+      # Highlight 'instance' (host) label for better visibility
+      instance:
+        - value_re: '.*'
+          color: '#696969'
+
+      # Match Icinga background colors for 'severity'
+      severity:
+        - value: 'page'
+          color: '#e74c3c'
+        - value: 'critical'
+          color: '#ffd4c9'
+        - value: 'warning'
+          color: '#ffda9f'
+        - value: 'unknown'
+          color: '#eeaeee'
+
+# Sort by decreasing severity
+grid:
+  sorting:
+    order: label
+    reverse: false
+    label: severity
+    customValues:
+      labels:
+        severity:
+          page: 0
+          critical: 1
+          warning: 2
+          unknown: 3
+
+# UI defaults
+ui:
+  multiGridLabel: 'severity'
+  # Default to about two groups per line, depending on users' display.
+  # Users wishing to change this can do so from the "cog menu" on top right. Preferences are saved
+  # into the browser's Local Storage.
+  minimalGroupWidth: 450
+
+history:
+  rewrite:
+    # Fetching history doesn't work on librenms/grafana alerts.
+    - source: 'https://(librenms|grafana)\..*'
+      uri: ''
+
+# Start with 'description' label collapsed
+annotations:
+  hidden:
+    - description
+
+filters:
+  default:
+    - "@state=active"
+
+karma:
+  name: "Alerts for <%= @facts['domain'] %>"
+
+# Enable ack'ing alerts via silences. See also alertmanager::ack
+alertAcknowledgement:
+  enabled: true

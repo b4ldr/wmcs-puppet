@@ -1,0 +1,9 @@
+/var/log/aphlict/*.log {
+    daily
+    compress
+    delaycompress
+    copytruncate
+    missingok
+    notifempty
+    rotate 7
+}

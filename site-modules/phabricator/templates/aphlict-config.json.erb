@@ -1,0 +1,26 @@
+{
+  "servers": [
+    {
+      "type": "client",
+      "port": <%= @client_port %>,
+      "listen": "<%= @client_listen %>"
+<% if @enable_ssl -%>
+      ,
+      "ssl.key": "<%= @sslkey %>",
+      "ssl.cert": "<%= @sslcert %>",
+      "ssl.chain": "<%= @sslchain %>"
+<%- end %>
+    },
+    {
+      "type": "admin",
+      "port": <%= @admin_port %>,
+      "listen": "<%= @admin_listen %>"
+    }
+  ],
+  "logs": [
+    {
+      "path": "/var/log/aphlict/aphlict.log"
+    }
+  ],
+  "pidfile": "/var/run/aphlict/aphlict.pid"
+}

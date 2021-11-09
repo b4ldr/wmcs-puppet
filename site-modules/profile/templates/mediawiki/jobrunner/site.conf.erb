@@ -1,0 +1,60 @@
+# This file is managed by Puppet
+<VirtualHost *:<%= @port %>>
+    DocumentRoot "/srv/mediawiki"
+    # Only accept health check requests.
+    RewriteEngine On
+    <Directory /srv/mediawiki>
+       Require all granted
+    </Directory>
+    RewriteCond  %{REQUEST_URI} !^/w/health-check.php
+    RewriteRule ^ - [R=404,L]
+    # This takes precedence over the catchall in the general configuration
+    <FilesMatch "\.php$">
+        SetHandler "proxy:<%= @fcgi_proxy %>"
+    </FilesMatch>
+    ErrorLog ${APACHE_LOG_DIR}/jq-public-error.log
+    CustomLog ${APACHE_LOG_DIR}/jq-public-access.log wmf
+</VirtualHost>
+
+<VirtualHost *:<%= @local_only_port %>>
+    ServerName jobrunner.svc.<%= scope['::site'] %>.wmnet
+    ServerAlias jobrunner.discovery.wmnet
+    Timeout 1202
+    DocumentRoot "/srv/mediawiki"
+    RewriteEngine On
+    <Directory /srv/mediawiki>
+       Require all granted
+    </Directory>
+    # Only selected paths are allowed here
+    RewriteCond %{REQUEST_URI} !^/(w/health-check|rpc/RunSingleJob)\.php
+    RewriteRule ^ - [R=404,L]
+
+    <FilesMatch "\.php$">
+        SetHandler "proxy:<%= @fcgi_proxy %>"
+    </FilesMatch>
+    ErrorLog ${APACHE_LOG_DIR}/jobqueue-error.log
+    CustomLog ${APACHE_LOG_DIR}/jobqueue-access.log wmf
+</VirtualHost>
+
+<VirtualHost *:<%= @local_only_port %>>
+    ServerName videoscaler.svc.<%= scope['::site'] %>.wmnet
+    ServerAlias videoscaler.discovery.wmnet
+    # We support *very* long processing jobs when videoscaling
+    Timeout 86402
+    DocumentRoot "/srv/mediawiki"
+    # Only selected paths are allowed here
+    RewriteEngine On
+    <Directory /srv/mediawiki>
+       Require all granted
+    </Directory>
+
+    # Only selected paths are allowed here
+    RewriteCond %{REQUEST_URI} !^/(w/health-check|rpc/RunSingleJob)\.php
+    RewriteRule ^ - [R=404,L]
+
+    <FilesMatch "\.php$">
+        SetHandler "proxy:<%= @fcgi_proxy %>"
+    </FilesMatch>
+    ErrorLog ${APACHE_LOG_DIR}/videoscaler-error.log
+    CustomLog ${APACHE_LOG_DIR}/videoscaler-access.log wmf
+</VirtualHost>

@@ -1,0 +1,6 @@
+fixtures:
+    symlinks:
+        apereo_cas: "#{source_dir}"
+        stdlib: "../../../../stdlib"
+        wmflib: "../../../../wmflib"
+        network: "../../../../git"

@@ -1,0 +1,178 @@
+{
+  "template" : "logstash-*",
+  "settings" : {
+    "number_of_shards" : 1,
+    "number_of_replicas" : 2,
+    "index.refresh_interval" : "5s",
+    "index.mapping.total_fields.limit": 4096,
+    "analysis" : {
+      "analyzer" : {
+        "default" : {
+          "type" : "standard",
+          "stopwords" : "_none_"
+        }
+      }
+    }
+  },
+  "mappings" : {
+    "_default_" : {
+      "_all" : {
+        "enabled" : true,
+        "omit_norms": true
+      },
+      "date_detection" : false,
+      "numeric_detection": false,
+      "dynamic_templates" : [
+        {
+          "string_fields" : {
+            "match" : "*",
+            "match_mapping_type" : "string",
+            "mapping" : {
+              "type" : "text",
+              "index" : true,
+              "omit_norms" : true,
+              "fields" : {
+                "raw" : {
+                  "type" : "keyword",
+                  "index" : true,
+                  "doc_values": true
+                }
+              }
+            }
+          }
+        },
+        {
+          "boolean_to_string" : {
+            "match_mapping_type" : "boolean",
+            "mapping" : {
+              "type" : "text",
+              "index" : true,
+              "omit_norms": true,
+              "fields": {
+                "raw": {
+                  "index": true,
+                  "type": "keyword",
+                  "doc_values": true
+                }
+              }
+            }
+          }
+        },
+        {
+          "double_to_string" : {
+            "match_mapping_type" : "double",
+            "mapping" : {
+              "type" : "text",
+              "index" : true,
+              "omit_norms": true,
+              "fields": {
+                "raw": {
+                  "index": true,
+                  "type": "keyword",
+                  "doc_values": true
+                }
+              }
+            }
+          }
+        },
+        {
+          "long_to_string" : {
+            "match_mapping_type" : "long",
+            "mapping" : {
+              "type" : "text",
+              "index" : true,
+              "omit_norms": true,
+              "fields": {
+                "raw": {
+                  "index": true,
+                  "type": "keyword",
+                  "doc_values": true
+                }
+              }
+            }
+          }
+        }
+      ],
+      "properties" : {
+        "@timestamp" : {
+          "type" : "date",
+          "index" : true,
+          "doc_values": true
+        },
+        "@version" : {
+          "type" : "keyword",
+          "index" : true,
+          "doc_values": true
+        },
+        "geoip"  : {
+          "type" : "object",
+          "dynamic" : true,
+          "properties" : {
+            "location" : {
+              "type" : "geo_point",
+              "doc_values": true
+            }
+          }
+        },
+        "host" : {
+          "type" : "keyword",
+          "index" : true,
+          "doc_values": true
+        },
+        "level" : {
+          "type" : "keyword",
+          "index" : true,
+          "doc_values": true
+        },
+        "message" : {
+          "type" : "text",
+          "index" : true,
+          "omit_norms" : true
+        },
+        "normalized_message" : {
+          "type": "text",
+          "index" : true,
+          "omit_norms" : true,
+          "fields": {
+            "raw": {
+              "type": "keyword",
+              "index": true,
+              "doc_values": true
+            }
+          }
+        },
+        "sequence_id" : {
+          "type": "long",
+          "doc_values": true
+        },
+        "tags" : {
+          "type" : "keyword",
+          "index" : true,
+          "doc_values": true
+        },
+        "type" : {
+          "type" : "keyword",
+          "index" : true,
+          "doc_values": true
+        },
+        "udp_sender" : {
+          "type" : "keyword",
+          "index" : true,
+          "doc_values": true
+        },
+        "request_time" : {
+          "type" : "float",
+          "doc_values": true
+        },
+        "upstream_time" : {
+          "type" : "float",
+          "doc_values": true
+        },
+        "response_size" : {
+          "type" : "long",
+          "doc_values": true
+        }
+      }
+    }
+  }
+}

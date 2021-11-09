@@ -1,0 +1,37 @@
+<VirtualHost *:80>
+    ServerName <%= @sitename %>
+    ServerAdmin noc@wikimedia.org
+    <Location />
+        Require all denied
+    </Location>
+</VirtualHost>
+
+<VirtualHost *:443>
+    ServerName <%= @sitename %>
+    ServerAdmin noc@wikimedia.org
+    # https://httpoxy.org/
+    RequestHeader unset Proxy early
+
+    SSLEngine on
+    SSLCertificateFile /etc/acmecerts/librenms/live/ec-prime256v1.crt
+    SSLCertificateChainFile /etc/acmecerts/librenms/live/ec-prime256v1.chain.crt
+    SSLCertificateKeyFile /etc/acmecerts/librenms/live/ec-prime256v1.key
+    SSLCertificateFile /etc/acmecerts/librenms/live/rsa-2048.crt
+    SSLCertificateChainFile /etc/acmecerts/librenms/live/rsa-2048.chain.crt
+    SSLCertificateKeyFile /etc/acmecerts/librenms/live/rsa-2048.key
+    <%= @ssl_settings.join("\n    ") %>
+
+    DocumentRoot <%= @install_dir %>/html
+    <Directory <%= @install_dir %>/html>
+        Options Indexes FollowSymLinks MultiViews
+        AllowOverride All
+        Require all granted
+    </Directory>
+
+    ErrorLog /var/log/apache2/<%= @sitename %>.error.log
+    LogLevel warn
+
+    CustomLog /var/log/apache2/<%= @sitename %>.access.log wmf
+    ServerSignature On
+
+</VirtualHost>

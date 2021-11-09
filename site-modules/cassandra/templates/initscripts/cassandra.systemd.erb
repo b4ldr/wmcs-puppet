@@ -1,0 +1,16 @@
+[Unit]
+Description=distributed storage system for structured data
+After=network.target
+# On bootstrap / provisioning, don't attempt to start all instances,
+# wait instead for the guard file to exist, see also T214166
+ConditionPathExists=<%= @config_directory %>/service-enabled
+
+[Service]
+User=cassandra
+PIDFile=<%= @pid_file %>
+LimitNOFILE=100000
+LimitMEMLOCK=infinity
+Environment="CASSANDRA_INCLUDE=/etc/cassandra.in.sh"
+Environment="CASSANDRA_CONF=<%= @config_directory %>"
+Environment="CASSANDRA_INSTANCE=<%= @instance_id %>"
+ExecStart=/usr/sbin/cassandra -p <%= @pid_file %>

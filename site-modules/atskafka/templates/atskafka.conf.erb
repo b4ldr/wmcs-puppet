@@ -1,0 +1,24 @@
+{
+<% if @tls -%>
+  "security.protocol":        "SSL",
+  "ssl.ca.location":          "<%= @tls['ca_location'] %>",
+  "ssl.key.location":         "<%= @tls['key_location'] %>",
+  "ssl.key.password":         "<%= @tls['key_password'] %>",
+  "ssl.certificate.location": "<%= @tls['certificate_location'] %>",
+  "ssl.cipher.suites":        "<%= @tls['cipher_suites'] %>",
+  "ssl.curves.list":          "<%= @tls['curves_list'] %>",
+  "ssl.sigalgs.list":         "<%= @tls['sigalgs_list'] %>",
+<% end -%>
+  "client.id":                "atskafka",
+  "bootstrap.servers":        "<%= @kafka_servers %>",
+  "statistics.interval.ms":   <%= @stats_interval_ms %>,
+  "queue.buffering.max.ms":   <%= @buffering_ms %>,
+  "queue.buffering.max.messages": <%= @buffering_max_messages %>,
+  "batch.num.messages":       <%= @batch_num_messages %>,
+  "message.send.max.retries": <%= @send_max_retries %>,
+  "socket.send.buffer.bytes": <%= @send_buffer_bytes %>,
+  "request.required.acks":    <%= @request_required_acks %>,
+  "request.timeout.ms":       <%= @request_timeout_ms %>,
+  "message.timeout.ms":       <%= @message_timeout_ms %>,
+  "compression.codec":        "<%= @compression_codec %>"
+}

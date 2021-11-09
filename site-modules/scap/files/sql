@@ -1,0 +1,32 @@
+#!/bin/bash
+
+# This file is managed by Puppet (modules/scap/files/sql).
+
+# See T199152
+
+case "$1" in
+    "" | --help)
+        exec mwscript mysql.php --wiki=metawiki --help
+        ;;
+    --write | --group)
+        echo "A DB name or --wiki must be the first parameter to sql" >&2
+        echo "Example: sql enwiki --write" >&2
+        ;;
+    --*)
+        # If the user is passing options, assume they know what they're doing
+        exec mwscript mysql.php "$@"
+        ;;
+    wikishared)
+        # Back compat access to 'wikishared' on the extension1 cluster.
+        exec mwscript mysql.php --wiki=metawiki --wikidb=wikishared --cluster=extension1 "$@"
+        ;;
+    *)
+        # --wikidb works for any DB that MW can figure out a hostname for.
+        # We can pass any valid wiki for --wiki, it doesn't need to be in the
+        # same section. This works for centralauth, and even for the mystery
+        # DBs in s3 that aren't known to MW at all, like jamestemp and katesdb.
+        db="$1"
+        shift
+        exec mwscript mysql.php --wiki=metawiki --wikidb="$db" "$@"
+        ;;
+esac

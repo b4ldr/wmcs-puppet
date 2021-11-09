@@ -1,0 +1,18 @@
+[client]
+port   = <%= @port %>
+socket = <%= @socket %>
+<% if @ssl == 'on' or @ssl == 'puppet-cert' %>
+# ssl
+ssl-ca=<%= @ssl_ca %>
+  <% if @ssl_verify_server_cert %>
+ssl-verify-server-cert
+  <% end %>
+<% end %>
+
+[mysql]
+prompt = <%= @prompt %>
+
+[mysqldump]
+quick
+max_allowed_packet = <%= @max_allowed_packet %>
+

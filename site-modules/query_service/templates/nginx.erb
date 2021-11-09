@@ -1,0 +1,206 @@
+limit_conn_zone $http_x_client_ip zone=byaddr:10m;
+
+# Namespace alias map: alias -> real namespace
+# http://nginx.org/en/docs/http/ngx_http_map_module.html states that
+# variables are evaluated on-demand, so we don't have to worry about
+# resolution until later
+map $namespace $aliased {
+    include <%= @alias_map %>;
+}
+
+server {
+    listen <%= @port %> default_server;
+    listen [::]:<%= @port %> default_server;
+    listen <%= @additional_port %> default_server;
+    listen [::]:<%= @additional_port %> default_server;
+    # Ban empty User-Agents per policy.
+    if ($http_user_agent ~ ^\s*-?\s*$) {
+        return 403;
+    }
+
+    add_header X-Served-By <%= @hostname %> always;
+
+    # etag in nginx are based on mtime, which is not guaranteed to be the same
+    # across multiple servers so let's disable etags and use more robust
+    # caching mechanisms
+    etag off;
+
+    error_page 503 @maintenance;
+    location @maintenance {
+<% if @gui_url -%>
+        # While not entirely obvious, this will get proxied to the microsite
+        # but maintain the 503 code
+        rewrite ^(.*)$ /maint.html;
+<% else -%>
+        root <%= @package_dir %>/gui;
+        rewrite ^(.*)$ /maint.html break;
+<% end -%>
+    }
+
+    # Rate limit error
+    error_page 429 @rate_limit;
+    location @rate_limit {
+        add_header Cache-Control no-cache always;
+        echo Rate limit exceeded;
+        echo_flush;
+    }
+
+    # Temporarily ban a User-Agent sending problematic queries
+    # Note ~ means case sensitive match, need to surround regex w/ "" also
+    if ($http_user_agent ~ "My User Agent.*") {
+        return 429;
+    }
+
+    # Temporarily ban dailymotion (2021-09-09)
+    if ($http_user_agent ~ "VideocatalogTopic.*") {
+        return 429;
+    }
+
+<% if @oauth -%>
+    location /error403 {
+      internal;
+      proxy_pass http://127.0.0.1:9999/oauth/check_login;
+    }
+
+    location /_check_auth {
+      internal;
+      if ($request_uri = '/readiness-probe') {
+          return 200;
+      }
+      proxy_pass http://127.0.0.1:9999/oauth/check_auth;
+    }
+
+    location /_oauth_token_verify {
+      error_page 403 = /error403;
+      proxy_set_header 'X-redirect-url' '<%= @oauth_success_redirect_url %>';
+      proxy_pass http://127.0.0.1:9999/oauth/oauth_verify$is_args$args;
+    }
+    location /_logout {
+      proxy_pass http://127.0.0.1:9999/oauth/logout;
+    }
+<% end %>
+
+    location / {
+        if (-f /var/lib/nginx/wdqs/data-reload) {
+          add_header Content-Type text/html always;
+          return 503 '<H2>Data Reload in progress</H2>\nPlease come back later.';
+        }
+<% if @oauth -%>
+        auth_request /_check_auth;
+        error_page 403 = /error403;
+<% end -%>
+
+<% if @gui_url -%>
+        proxy_pass <%= @gui_url %>;
+        proxy_set_header Host $http_host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header Cookie "";
+<% else -%>
+        root <%= @package_dir %>/gui;
+
+        location ~ ^/(css|js) {
+            add_header Cache-Control "public, max-age=604800, s-maxage=604800";
+        }
+
+        add_header Cache-Control "public, max-age=300, s-maxage=300";
+<% end -%>
+    }
+
+<% if !@gui_url -%>
+    location /custom-config.json {
+        alias <%= @gui_config %>;
+    }
+
+    location /favicon.ico {
+        alias <%= @favicon %>;
+    }
+<% end -%>
+
+    location /status {
+        stub_status  on;
+        access_log   off;
+    }
+
+    rewrite ^/readiness-probe$ /sparql?query=%20ASK%7B%20%3Fx%20%3Fy%20%3Fz%20%7D;
+
+    rewrite ^/sparql$ /bigdata/namespace/<%= @blazegraph_main_ns %>/sparql;
+
+    # Check whether we're dealing with a namespace
+    if ( $uri ~ ^/bigdata/namespace/([a-zA-Z0-9_]+)/sparql$) {
+        set $namespace $1;
+    }
+    # See if we have an alias. If we do, rewrite to use the alias.
+    if ( $aliased ) {
+        rewrite ^ /bigdata/namespace/$aliased/sparql last;
+    }
+
+<% if @enable_ldf -%>
+    location ~ ^/bigdata/(namespace/[a-zA-Z0-9_]+/sparql|ldf|assets) {
+<% else -%>
+    location ~ ^/bigdata/(namespace/[a-zA-Z0-9_]+/sparql|assets) {
+<% end -%>
+        if (-f /var/lib/nginx/wdqs/data-reload) {
+          add_header Content-Type text/html always;
+          return 503 '<H2>Data Reload in progress</H2>\nPlease come back later.';
+        }
+<% if @oauth -%>
+        auth_request /_check_auth;
+        error_page 403 = /error403;
+<% end -%>
+        if ( $uri ~ ^/bigdata/assets ) {
+            add_header Cache-Control "public, max-age=604800, s-maxage=604800";
+        }
+
+        # use IP address for the backend and not "localhost" to ensure
+        # connection is done over IPv4 (backend is configured as IPv4 only)
+        set $endpoint "http://127.0.0.1:9999";
+        if ( $uri ~ ^/bigdata/namespace/(categories|dcatap) ) {
+                set $endpoint "http://127.0.0.1:9990";
+        }
+        proxy_pass $endpoint;
+
+        # Allow only 5 connections per IP
+        limit_conn byaddr 5;
+        limit_conn_status 429;
+
+        proxy_set_header Host $http_host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        # drop cookies
+        proxy_set_header Cookie "";
+
+        # Default 60 second max query time
+        set $xmaxqueryheader "<%= @max_query_time_millis %>";
+
+        # 5 minute max query time for internal requests on port <%= @additional_port %>
+        if ( $server_port = <%= @additional_port %> ) {
+            set $xmaxqueryheader "300000";
+        }
+
+        proxy_set_header X-BIGDATA-MAX-QUERY-MILLIS $xmaxqueryheader;
+        proxy_set_header X-BIGDATA-READ-ONLY "yes";
+
+        add_header X-Served-By <%= @hostname %> always;
+        add_header Access-Control-Allow-Origin * always;
+        add_header Cache-Control "public, max-age=300";
+        add_header Vary Accept;
+
+        client_max_body_size 1m;
+        client_body_buffer_size 1m;
+        proxy_intercept_errors off;
+        proxy_buffering on;
+        proxy_buffer_size 16k;
+        proxy_buffers 256 16k;
+        proxy_busy_buffers_size 256k;
+        proxy_temp_file_write_size 16k;
+        proxy_max_temp_file_size 10m;
+        proxy_read_timeout 300;
+
+        limit_except GET OPTIONS POST {
+            deny all;
+        }
+    }
+}

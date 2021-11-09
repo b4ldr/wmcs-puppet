@@ -1,0 +1,88 @@
+#!/bin/sh
+
+#
+# This script is intended to be used to symlink .jar files found
+# in an Archiva repository into a directory with links named by
+# the .jars' sha1 sum.  If the .jar file's sha1 does not match the
+# sha1 that archiva expects, the file will not be symlinked.
+#
+
+
+usage () {
+    script_name=$(basename ${0})
+    echo "
+${script_name} <artifact-repository-path> <git-fat-path> [--real-paths]
+  Creates symlinks from all .jars, .wars and .zips and some other types of
+  archives found in <artifact-repository-path> to sha1 filenames in
+  <git-fat-path>.
+
+  If --real-paths is passed as the last argument, the full absolute
+  real paths to targets in artifact-repository-path will be used
+  when creating symlinks.  Otherwise targets will be linked to
+  as they are returned by find.  (WMF is not currently using this option).
+
+  Example: ${script_name} /var/lib/archiva/repositories /var/lib/git-fat/archiva
+"
+}
+
+# Prints absolute realpath of a file.
+# This works on OS X using python and Linux using readlink -f.
+real_path () {
+    # if on OS X, use python.  OS X doesn't have readlink -f
+    if [ $(uname) = 'Darwin' ]; then
+        echo $(python -c "import os,sys; print os.path.realpath(sys.argv[1])" "${1}")
+    # else just use readlink -f
+    else
+        echo $(readlink -f "${1}")
+    fi
+}
+
+if [ -z "${1}" -o -z "${2}" ]; then
+    usage
+    exit 1
+fi
+
+# Archiva keeps sha1s of every file it has in its repository.
+# If a .sha1 file exists, use its contents.
+# Else compute the sha1 of the provided file_path now.
+archiva_sha1sum() {
+    file_path="${1}"
+
+    if [ -f ${file_path}.sha1 ]; then
+        cat ${file_path}.sha1 | awk '{print $1}'
+    else
+        sha1sum $file_path | awk '{print $1}'
+    fi
+}
+
+
+artifact_repository_path="${1}"
+git_fat_path="${2}"
+
+if [ "${3}" = '--real-paths' ]; then
+    real_paths='yes'
+else
+    real_paths='no'
+fi
+
+
+# First remove any broken links (files that have been deleted from archiva)
+/usr/bin/find -L "${git_fat_path}" -type l -exec rm -v {} \;
+
+# Find all artifact files and symlink them.
+# We sort them so that any artifacts with identical shas will have the
+# alphanumerically latest artifacts linked last.
+# The .indexer directory is used by archiva to store its indexes, there is no
+# need to hash the files there.
+for artifact in $(find $artifact_repository_path -type f \( -name "*.jar" -o -name "*.war" -o -name "*.zip" -o -name "*.tar.gz" -o -name "*.whl" \) ! -path "*/.indexer/*"  | sort);  do
+    if [ "${real_paths}" = 'yes' ]; then
+        artifact=$(real_path "${artifact}")
+    fi
+
+    artifact_sha1="$(archiva_sha1sum ${artifact})"
+    git_fat_file="${git_fat_path}/${artifact_sha1}"
+
+    # symlink $git_fat_file -> $archiva_file if it isn't already a link
+    test -L "${git_fat_file}" || /bin/ln -svf "${artifact}" "${git_fat_file}"
+done
+

@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="<%= @title %>">
+
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="mobile-web-app-capable" content="yes">
+        <link rel="stylesheet" href="bulma.min.css" type="text/css" />
+        <link rel="stylesheet" href="main.css" type="text/css" />
+        <title><%= @title %>.planet.wikimedia.org</title>
+        <link rel="alternate" type="application/rss+xml" title="Planet <%= scope.lookupvar('planet::languages')[@title]['wikimedia'] %> <%= @title %>" href="https://<%= @title %>.planet.wikimedia.org/rss20.xml" />
+    </head>
+
+    <body>
+        <!-- START NAV -->
+        <nav class="navbar is-fixed-top">
+            <div class="container">
+                <div class="navbar-brand">
+                    <a class="navbar-item" href="./index.html">
+                        <img class="logo" src="Wikimedia_Community_Logo.svg" alt="Wikimedia Community Logo" align="left" height="30" width="30"/>
+                        <%= @title %>.planet.wikimedia
+                    </a>
+                    <span class="navbar-burger burger" data-target="navbarMenu">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </span>
+                </div>
+                <div id="navbarMenu" class="navbar-menu">
+                    <div class="navbar-end">
+                        <a class="navbar-item" id="subscriptions">
+                            <%= scope.lookupvar('planet::languages')[@title]['subscriptions'] %>
+                        </a>
+                        <div class="navbar-item has-dropdown is-hoverable">
+                            <a class="navbar-link">
+                                    <%= scope.lookupvar('planet::languages')[@title]['subscribe'] %>
+                                </a>
+                            <div class="navbar-dropdown is-hidden-mobile">
+                                <a class="navbar-item" href="https://<%= @title %>.planet.wikimedia.org/rss20.xml">
+                                    RSS
+                                </a>
+                            </div>
+                        </div>
+                        <div class="navbar-item has-dropdown is-hoverable">
+                            <a class="navbar-link">
+                                    <%= scope.lookupvar('planet::languages')[@title]['wikimedia'] %>
+                                </a>
+                            <div class="navbar-dropdown is-hidden-mobile">
+                                <a class="navbar-item" href="https://ar.planet.wikimedia.org/">
+                                    ar
+                                </a>
+                                <a class="navbar-item" href="https://cs.planet.wikimedia.org/">
+                                    cs
+                                </a>
+                                <a class="navbar-item" href="https://de.planet.wikimedia.org/">
+                                    de
+                                </a>
+                                <a class="navbar-item" href="https://el.planet.wikimedia.org/">
+                                    el
+                                </a>
+                                <a class="navbar-item" href="https://en.planet.wikimedia.org/">
+                                    en
+                                </a>
+                                <a class="navbar-item" href="https://es.planet.wikimedia.org/">
+                                    es
+                                </a>
+                                <a class="navbar-item" href="https://fr.planet.wikimedia.org/">
+                                    fr
+                                </a>
+                                <a class="navbar-item" href="https://gmq.planet.wikimedia.org/">
+                                    gmq
+                                </a>
+                                <a class="navbar-item" href="https://id.planet.wikimedia.org/">
+                                    id
+                                </a>
+                                <a class="navbar-item" href="https://it.planet.wikimedia.org/">
+                                    it
+                                </a>
+                                <a class="navbar-item" href="https://pl.planet.wikimedia.org/">
+                                    pl
+                                </a>
+                                <a class="navbar-item" href="https://pt.planet.wikimedia.org/">
+                                    pt
+                                </a>
+                                <a class="navbar-item" href="https://ro.planet.wikimedia.org/">
+                                    ro
+                                </a>
+                                <a class="navbar-item" href="https://ru.planet.wikimedia.org/">
+                                    ru
+                                </a>
+                                <a class="navbar-item" href="https://uk.planet.wikimedia.org/">
+                                    uk
+                                </a>
+                                <a class="navbar-item" href="https://zh.planet.wikimedia.org/">
+                                    zh
+                                </a>
+                            </div>
+                        </div>
+                        <div class="navbar-item has-dropdown is-hoverable">
+                            <a class="navbar-link">
+                                    <%= scope.lookupvar('planet::languages')[@title]['planetarium'] %>
+                                </a>
+                            <div class="navbar-dropdown is-hidden-mobile">
+                                <a class="navbar-item" href="http://planet.apache.org/">
+                                    Planet Apache
+                                </a>
+                                <a class="navbar-item" href="https://planet.debian.org/">
+                                    Planet Debian
+                                </a>
+                                <a class="navbar-item" href="https://planet.freedesktop.org/">
+                                    Planet freedesktop.org
+                                </a>
+                                <a class="navbar-item" href="https://planet.gnome.org/">
+                                    Planet GNOME
+                                </a>
+                                <a class="navbar-item" href="http://planet.apache.org/">
+                                    More...
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </nav>
+        <!-- END NAV -->
+
+        <section class="hero is-info is-medium is-bold">
+            <div class="hero-body"></div>
+        </section>
+
+
+        <div class="container">
+            <!-- START ARTICLE FEED -->
+            <section class="articles">
+                <div class="column is-12 is-offset-0">
+                    <!-- START ARTICLE -->
+                    __items__
+                    <!-- END ARTICLE -->
+                </div>
+            </section>
+            <!-- END ARTICLE FEED -->
+        </div>
+
+        <!-- START DIALOG -->
+        <div class="modal" id="peeps">
+            <div class="modal-background"></div>
+            <div class="modal-card">
+                <header class="modal-card-head">
+                    <p class="modal-card-title"><%= scope.lookupvar('planet::languages')[@title]['subscriptions'] %></p>
+                    <button class="delete" aria-label="close"></button>
+                </header>
+                <section class="modal-card-body">
+                    __feeds__
+                </section>
+                <footer class="modal-card-foot">
+                    <button class="dismiss" data-dismiss="modal">Dismiss</button>
+                </footer>
+            </div>
+        </div>
+        <!-- END DIALOG -->
+
+        <footer class="footer">
+            <div class="container">
+                <div class="content has-text-centered">
+                    <p>
+                        Planet Wikimedia is made from the blogs by Wikimedia contributors.
+                        The opinions it contains are those of the contributor.
+                    </p>
+                    <p>
+                        <a href="https://foundation.wikimedia.org/wiki/Non-wiki_privacy_policy">
+                            Privacy Policy
+                        </a>
+                        | This site is powered by <a href="http://offog.org/code/rawdog.html">Rawdog</a>
+                    </p>
+                </div>
+            </div>
+        </footer>
+
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+
+              // Get all "navbar-burger" elements
+              var $navbarBurgers = Array.prototype.slice.call(document.querySelectorAll('.navbar-burger'), 0);
+
+              // Check if there are any navbar burgers
+              if ($navbarBurgers.length > 0) {
+
+                // Add a click event on each of them
+                $navbarBurgers.forEach( function(el) {
+                  el.addEventListener('click', function() {
+
+                    // Get the target from the "data-target" attribute
+                    const target = el.dataset.target;
+                    const $target = document.getElementById(target);
+
+                    // Toggle the "is-active" class on both the "navbar-burger" and the "navbar-menu"
+                    el.classList.toggle('is-active');
+                    $target.classList.toggle('is-active');
+
+                  });
+                });
+              }
+
+            });
+
+            document.querySelector('a#subscriptions').addEventListener('click', function(event) {
+              event.preventDefault();
+              var modal = document.querySelector('.modal');  // assuming you have only 1
+              var html = document.querySelector('html');
+              modal.classList.add('is-active');
+              html.classList.add('is-clipped');
+
+              modal.querySelector('.delete').addEventListener('click', function(e) {
+                e.preventDefault();
+                modal.classList.remove('is-active');
+                html.classList.remove('is-clipped');
+              });
+
+              modal.querySelector('.dismiss').addEventListener('click', function(e) {
+                e.preventDefault();
+                modal.classList.remove('is-active');
+                html.classList.remove('is-clipped');
+              });
+            });
+
+            document.querySelectorAll('.navbar-link').forEach( function(navbarLink) {
+              navbarLink.addEventListener('click', function() {
+                navbarLink.nextElementSibling.classList.toggle('is-hidden-mobile');
+              })
+            });
+
+            function addClass(selector, imgClass) {
+                els = document.querySelectorAll(selector);
+                for (var i = 0; i < els.length; i++) {
+                    els[i].className += imgClass;
+                }
+            }
+
+            addClass('figure', ' img-responsive');
+            addClass('div.wp-video', ' img-responsive');
+            addClass('img', ' img-responsive');
+            addClass('div.wp-caption.alignnone', ' img-responsive');
+        </script>
+    </body>
+</html>

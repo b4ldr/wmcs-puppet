@@ -1,0 +1,62 @@
+# This file is managed by puppet, not the ops/dns repo!
+# This whole file becomes contents of the options stanza of the final
+# production configuration.  The stuff in the operations/dns repo owns the
+# top-level config file which includes this!
+
+# The options in this file should be about the runtime behavior of the daemon;
+# things like listen addresses, thread/socket tuning, debug options, etc.
+# Options that are more in the realm of the interpretation of zone data should
+# be in the main config file's options stanza in the ops/dns repo.
+
+listen = {
+    # Our primary traffic on port 53 comes in here over any of these public
+    # addresses.  Using one thread+socket per physical CPU, per listen address,
+    # makes handling query-rate spikes even easier.
+<%- @service_listeners.each do |lsnr| -%>
+    "<%= lsnr %>" = {
+        udp_threads = <%= @physicalcorecount %>
+        tcp_threads = <%= @physicalcorecount %>
+    }
+<%- end -%>
+
+    # PROXY protocol listener on port 535 of IPv4 localhost for DoTLS forwarded
+    # by a separate TLS reverse proxy daemon.
+    127.0.0.1:535 = {
+        tcp_proxy = true
+        tcp_threads = <%= @physicalcorecount %>
+
+        # idle timeout: default is 37s.  We're raising this to 157s (advertised
+        # to client) which implies a hard 314s server-side limit.  We've heard
+        # from some high traffic clients that they're configuring 120s as a
+        # fixed client-side timeout (and not yet paying attention to our
+        # dynamic adverts), so we need to at least exceed that value.  Larger
+        # values help amortize connection setup costs, at the risk of leaving
+        # so many long-running idle connections that we exceed configured
+        # parallelism limits, which will cause early termination of the
+        # most-idle ones.
+        tcp_timeout = 157
+
+        # clients-per-thread: default is 256, but larger may be better if we're
+        # expecting many lingering idle opportunistic connections, to avoid the
+        # scenario described above.
+        tcp_clients_per_thread = 4096
+    }
+
+    # These are monitor listeners, so they only get one thread per protocol per
+    # listen address, as they're not expecting "real" traffic.
+<%- @monitor_listeners.each do |lsnr| -%>
+    "<%= lsnr %>" = {
+        udp_threads = 1
+        tcp_threads = 1
+    }
+<%- end -%>
+}
+
+# Lock memory against swapout
+lock_mem = true
+
+# NSID for debugging the mapping of functional IPs to real servers
+nsid_ascii = <%= @hostname %>
+
+# Secret master key for cookie generation, shared by all the authdns fleet
+cookie_key_file = /etc/gdnsd/secrets/dnscookies.key

@@ -1,0 +1,9 @@
+# git::systemconfig for '<%= @name %>'
+<% @settings.sort.each do |section, content|      -%>
+[<%= section %>]
+<%   content.sort.each do |key, values|          -%>
+<%     [values].flatten.sort.each do |value|     -%>
+<%= key -%> = <%= value %>
+<%     end
+  end
+end -%>

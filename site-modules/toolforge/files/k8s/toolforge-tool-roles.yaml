@@ -1,0 +1,162 @@
+# Role for the wmcs-k8s-enable-cluster-monitor.sh script
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: tool-observer
+rules:
+  - apiGroups:
+    - ""
+    resources:
+    - bindings
+    - configmaps
+    - endpoints
+    - events
+    - limitranges
+    - namespaces
+    - namespaces/status
+    - nodes
+    - nodes/status
+    - persistentvolumeclaims
+    - pods
+    - pods/status
+    - replicationcontrollers
+    - replicationcontrollers/scale
+    - replicationcontrollers/status
+    - resourcequotas
+    - resourcequotas/status
+    - serviceaccounts
+    - services
+    verbs:
+    - get
+    - list
+    - watch
+  - apiGroups:
+    - apps
+    resources:
+    - controllerrevisions
+    - daemonsets
+    - deployments
+    - deployments/scale
+    - replicasets
+    - replicasets/scale
+    - statefulsets
+    - statefulsets/scale
+    verbs:
+    - get
+    - list
+    - watch
+  - apiGroups:
+    - autoscaling
+    resources:
+    - horizontalpodautoscalers
+    verbs:
+    - get
+    - list
+    - watch
+  - apiGroups:
+    - batch
+    resources:
+    - cronjobs
+    - jobs
+    verbs:
+    - get
+    - list
+    - watch
+  - apiGroups:
+    - extensions
+    resources:
+    - daemonsets
+    - deployments
+    - deployments/scale
+    - ingresses
+    - networkpolicies
+    - replicasets
+    - replicasets/scale
+    - replicationcontrollers/scale
+    verbs:
+    - get
+    - list
+    - watch
+  - apiGroups:
+    - networking.k8s.io
+    resources:
+    - ingresses
+    - networkpolicies
+    verbs:
+    - get
+    - list
+    - watch
+  - apiGroups:
+    - metrics.k8s.io
+    resources:
+    - pods
+    - nodes
+    verbs:
+    - get
+    - list
+    - watch
+  - apiGroups:
+    - policy
+    resources:
+    - poddisruptionbudgets
+    verbs:
+    - get
+    - list
+    - watch
+---
+# Pod Security Policy for buildpack-enabled workflows
+# see: https://gerrit.wikimedia.org/g/cloud/toolforge/buildpacks/+/refs/heads/master
+apiVersion: policy/v1beta1
+kind: PodSecurityPolicy
+metadata:
+  annotations:
+    seccomp.security.alpha.kubernetes.io/allowedProfileNames: runtime/default
+    seccomp.security.alpha.kubernetes.io/defaultProfileName: runtime/default
+  name: toolforge-tfb-psp
+spec:
+  allowPrivilegeEscalation: false
+  allowedHostPaths:
+  - pathPrefix: /public/dumps
+    readOnly: true
+  - pathPrefix: /mnt/nfs
+    readOnly: true
+  - pathPrefix: /etc/wmcs-project
+    readOnly: true
+  - pathPrefix: /etc/ldap.yaml
+    readOnly: true
+  - pathPrefix: /etc/novaobserver.yaml
+    readOnly: true
+  - pathPrefix: /etc/ldap.conf
+    readOnly: true
+  fsGroup:
+    ranges:
+    - max: 61312
+      min: 61312
+    rule: MustRunAs
+  requiredDropCapabilities:
+  - ALL
+  runAsGroup:
+    ranges:
+    - max: 61312
+      min: 61312
+    rule: MustRunAs
+  runAsUser:
+    ranges:
+    - max: 61312
+      min: 61312
+    rule: MustRunAs
+  seLinux:
+    rule: RunAsAny
+  supplementalGroups:
+    ranges:
+    - max: 65535
+      min: 1
+    rule: MustRunAs
+  volumes:
+  - configMap
+  - downwardAPI
+  - emptyDir
+  - projected
+  - secret
+  - hostPath
+  - persistentVolumeClaim

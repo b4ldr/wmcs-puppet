@@ -1,0 +1,43 @@
+# This file is managed by puppet
+
+# top-level project domains
+mediawiki.org
+wikibooks.org
+wikidata.org
+wikimediafoundation.org
+wikimedia.org
+wikinews.org
+wikipedia.org
+wikiquote.org
+wikisource.org
+wikispecies.org
+wikiversity.org
+wikivoyage.org
+wiktionary.org
+wmflabs.org
+wmcloud.org
+w.wiki
+
+# wikivoyage.de -> WMF migration; aliases
+wikivoyage.de
+
+# domains handled by OTRS
+wikilovesmonuments.be
+wikilovesmonuments.cat
+wikilovesmonuments.eu
+wikilovesmonuments.nl
+wikilovesmonuments.org
+wikimedia.community
+wikimedia.com
+wikipedia.com
+
+# routed by special-case routers
+donate.wikimedia.org
+civicrm.wikimedia.org
+rt.wikimedia.org
+phabricator.wikimedia.org
+benefactors.wikimedia.org
+
+# pr.wikimedia.org outbound mail is delegated to MuckRack (https://muckrack.com)
+# with inbound mail handled via aliases - T231387
+pr.wikimedia.org

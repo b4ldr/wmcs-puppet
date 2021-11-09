@@ -1,0 +1,69 @@
+#!/bin/sh
+# This file is managed by puppet. DO NOT EDIT
+
+<% if @xtrabackup -%>
+INNOBACKUPEX="/usr/bin/innobackupex"
+XBSTREAM="/usr/bin/xbstream -x -C <%= @xbstream_dir -%> "
+<% else -%>
+MYSQL=<%= @mysql_binary %>
+MYSQLDUMP=<%= @mysqldump_binary %>
+<% end -%>
+<% if @local_dump_dir -%>
+# localdumpdir has been defined
+TEE="/usr/bin/tee"
+LOCALDUMPDIR=<%= @local_dump_dir %>
+DATE=$(date "+%Y%m%d%H%M")
+<% end -%>
+
+# Let's be polite and not use all available processors
+PIGZ="/usr/bin/pigz -p <%= @processorcount/2 > 1 ? @processorcount/2 : 1 %> "
+PIGZD="/usr/bin/pigz -d"
+<% if @pigz_level -%>
+PIGZ="$PIGZ --<%= @pigz_level -%>"
+<% end -%>
+# this is a local dump, skip TLS and domain verification
+MYSQLDUMP="$MYSQLDUMP --skip-ssl"
+MYSQL="$MYSQL --skip-ssl "
+<% if @password_file -%>
+# This is just for a user with credentials to connect to the database
+MYSQL="$MYSQL --defaults-extra-file=<%= @password_file -%> "
+MYSQLDUMP="$MYSQLDUMP --defaults-extra-file=<%= @password_file -%> "
+<% end -%>
+<% if @mysqldump_innodb_only -%>
+# Provided we only have innodb tables --single-transcation works wonders
+MYSQLDUMP="$MYSQLDUMP --single-transaction"
+<% end -%>
+<% if @is_master -%>
+MYSQLDUMP="$MYSQLDUMP --master-data=2"
+<% end -%>
+<% if @is_slave -%>
+INNOBACKUPEX="$INNOBACKUPEX --slave-info --safe-slave-backup"
+# We probably do not want slave dumps because it forces a STOP SLAVE
+MYSQLDUMP="$MYSQLDUMP --dump-slave=2 --include-master-host-port"
+<% end -%>
+
+<% if @per_database -%>
+for database in `$MYSQL -B -N -e "show databases"`
+do
+<% if @xtrabackup -%>
+echo "bpipe:/XTRABACKUP/$database:$INNOBACKUPEX --stream=xbstream --parallel=<%= @processorcount/2 > 1 ? @processorcount/2 : 1 %> --databases=$database /dev/null | $PIGZ:$PIGZD | $XBSTREAM ; $INNOBACKUPEX --apply-log @xbstream_dir"
+<% else -%>
+<% if @local_dump_dir -%>
+# note the ':' sign separating the export ($MYSQLDUMP) and the import ($MYSQL) actions- it is easy to miss
+echo "bpipe:/MYSQLDUMP/$database.dump:$MYSQLDUMP --create-options -c $database | $TEE $LOCALDUMPDIR/$database-$DATE.dump |  $PIGZ:$PIGZD | $MYSQL $database"
+<% else -%>
+echo "bpipe:/MYSQLDUMP/$database.dump:$MYSQLDUMP --create-options -c $database | $PIGZ:$PIGZD | $MYSQL $database"
+<% end -%>
+<% end -%>
+done
+<% else -%>
+<% if @xtrabackup -%>
+echo "bpipe:/XTRABACKUP/all:$INNOBACKUPEX --stream=xbstream --parallel=<%= @processorcount/2 > 1 ? @processorcount/2 : 1 %> /dev/null | $PIGZ:$PIGZD | $XBSTREAM ; $INNOBACKUPEX --apply-log <%= @xbstream_dir -%>"
+<% else -%>
+<% if @local_dump_dir -%>
+echo "bpipe:/MYSQLDUMP/all:$MYSQLDUMP --all-databases --create-options -c | $TEE $LOCALDUMPDIR/all-$DATE.dump | $PIGZ:$PIGZD | $MYSQL"
+<% else -%>
+echo "bpipe:/MYSQLDUMP/all:$MYSQLDUMP --all-databases --create-options -c | $PIGZ:$PIGZD | $MYSQL"
+<% end -%>
+<% end -%>
+<% end %>

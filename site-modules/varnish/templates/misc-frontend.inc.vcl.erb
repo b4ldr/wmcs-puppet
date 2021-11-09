@@ -1,0 +1,103 @@
+include "geoip.inc.vcl";
+
+sub cluster_fe_vcl_switch {
+// XXX testing whether this works at all - note this duplicates similar code in text-frontend, as apparently request data is re-set on VCL switching.  If this works, next week we'll want to factor this out a little differently...
+	// Rewrite sitemap requests for itwiki into the sitemaps backend.
+	// sitemaps is part of alternate_domains, so this rewrite has to happen
+	// in the frontend before VCL switching.  We'll update the conditional
+	// later if we add more maps for more sites.
+	if ((req.http.Host == "it.wikipedia.org"
+        || req.http.Host == "id.wikipedia.org"
+        || req.http.Host == "pt.wikipedia.org"
+        || req.http.Host == "pa.wikipedia.org"
+        || req.http.Host == "pnb.wikipedia.org"
+        || req.http.Host == "nl.wikipedia.org"
+        || req.http.Host == "ko.wikipedia.org") && req.url ~ "^/sitemap") {
+		set req.url = "/" + req.http.Host + req.url;
+		set req.http.Host = "sitemaps.wikimedia.org";
+	}
+}
+
+sub cluster_fe_recv_pre_purge {
+	if (std.ip(req.http.X-Client-IP, "192.0.2.1") ~ phabricator_abusers && req.http.Host == "phabricator.wikimedia.org") {
+		return (synth(403, "Requests from your IP have been blocked, please contact noc@wikimedia.org"));
+    }
+}
+
+sub cluster_fe_recv {
+    // STS-preload checker doesn't like [45]xx responses, but 3xx is OK, so
+    // re-use the TLS-redirector code and send them to the wikimedia site.
+    if (req.http.Host == "wmfusercontent.org") {
+        set req.http.Location = "https://www.wikimedia.org";
+        return (synth(301, "TLS Redirect"));
+    }
+}
+
+sub cluster_fe_recv_tail {
+    if (req.method != "GET" && req.method != "HEAD") {
+        // We only deal with GET and HEAD
+        return (pass);
+    }
+
+    // don't cache authorized requests
+    if (req.http.Authorization) {
+        return (pass);
+    }
+
+    // Don't cache cookie requests. Cache requests with google analytics cookies and our
+    // own global WMF-Last-Access, WMF-Last-Access-Global GeoIP, and CP cookies.
+    set req.http.NC-Cookie = regsuball(req.http.Cookie, "(?i)(^|;\s*)(_ga[-_a-z]*|_utm[-_a-z]*|_pk_(id|ses)\.[^=]*|WMF-Last-Access(-Global)?|GeoIP|CP)=[^;]*", "");
+    set req.http.NC-Cookie = regsub(req.http.NC-Cookie, "^;?\s*", "");
+    if (req.http.NC-Cookie != "") {
+        unset req.http.NC-Cookie;
+        return (pass);
+    }
+    unset req.http.NC-Cookie;
+}
+
+sub cluster_fe_hash { }
+sub cluster_fe_ratelimit {
+    // Requests in violation of the User-Agent policy
+    if (req.http.User-Agent ~ "^python-requests" && req.http.Host == "query.wikidata.org") {
+        // UA-policy violations: 10/10s (1/s long term, with 10 burst)
+        if (vsthrottle.is_denied("wdqs-ua-policy:" + req.http.X-Client-IP, 10, 10s)) {
+            return (synth(429, "Too many requests. Please comply with the User-Agent policy to get a higher rate limit: https://meta.wikimedia.org/wiki/User-Agent_policy"));
+        }
+    }
+    // vscode-phabricator is too aggressive in caching users https://phabricator.wikimedia.org/T270482 (private task)
+    if (req.http.User-Agent ~ "^vscode-phabricator" && req.http.Host == "phabricator.wikimedia.org") {
+        // UA-policy violations: 30/10s (3/s long term, with 30 burst)
+        if (vsthrottle.is_denied("vscode-phab-ua-policy:" + req.http.X-Client-IP, 30, 10s)) {
+            return (synth(429, "vscode-phabricator fetches users too aggressively: https://phabricator.wikimedia.org/T271528"));
+        }
+    }
+}
+
+sub cluster_fe_miss {
+    call cluster_fe_ratelimit;
+}
+
+sub cluster_fe_pass {
+    call cluster_fe_ratelimit;
+}
+
+sub cluster_fe_backend_fetch {
+    // When we receive NEL reports, attach some GeoIP data as backend request headers.
+	if (bereq.http.Host == "intake-logging.wikimedia.org") {
+		call nel_geoip_bereq;
+	}
+}
+sub cluster_fe_backend_response_early { }
+
+sub cluster_fe_backend_response {
+    // hit_for_pass on objects >= 256K. Do *not* cache objects without CL
+    if (std.integer(beresp.http.Content-Length, 262144) >= 262144 || beresp.http.Content-Length ~ "^[0-9]{9}") {
+        // HFP
+        set beresp.http.X-CDIS = "pass";
+        return(pass(beresp.ttl));
+    }
+}
+
+sub cluster_fe_deliver { }
+
+sub cluster_fe_err_synth { }
