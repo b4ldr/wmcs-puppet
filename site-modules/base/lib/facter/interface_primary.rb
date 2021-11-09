@@ -84,7 +84,7 @@ end
 # copy the networking fact
 networking = Facter.fact(:networking).value
 # Clear the current fact if we dont do this the built in is always prefered
-Facter[:networking].flush
+#Facter[:networking].flush
 Facter.add(:networking) do
   has_weight 100
   setcode do
