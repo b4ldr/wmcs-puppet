@@ -17,7 +17,7 @@ class base::puppet(
 
     # augparse is required to resolve the augeasversion in facter3
     # facter needs virt-what for proper "virtual"/"is_virtual" resolution
-    package { [ 'facter', 'puppet', 'augeas-tools', 'virt-what' ]:
+    package { [ 'facter', 'puppet-agent', 'augeas-tools', 'virt-what' ]:
         ensure => present,
     }
 
