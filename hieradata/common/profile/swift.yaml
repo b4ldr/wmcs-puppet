@@ -1,0 +1,172 @@
+profile::swift::accounts:
+    super_admin:
+        access:       '.admin .reseller_admin'
+        account_name: 'AUTH_admin'
+        auth:         'http://ms-fe.svc.%{::site}.wmnet'
+        user:         'admin:admin'
+    mw_media:
+        access:       '.admin'
+        account_name: 'AUTH_mw'
+        auth:         'http://ms-fe.svc.%{::site}.wmnet'
+        user:         'mw:media'
+    mw_thumbor:
+        access:       ''
+        account_name: 'AUTH_mw'
+        auth:         'http://ms-fe.svc.%{::site}.wmnet'
+        user:         'mw:thumbor'
+        stats_enabled: 'no'
+    mw_thumbor-private:
+        access:       ''
+        account_name: 'AUTH_mw'
+        auth:         'http://ms-fe.svc.%{::site}.wmnet'
+        user:         'mw:thumbor-private'
+        stats_enabled: 'no'
+    dispersion:
+        access:       '.admin'
+        account_name: 'AUTH_dispersion'
+        auth:         'http://ms-fe.svc.%{::site}.wmnet'
+        user:         'swift:dispersion'
+    search_backup:
+        access:       '.admin'
+        account_name: 'AUTH_search'
+        auth:         'http://ms-fe.svc.%{::site}.wmnet'
+        user:         'search:backup'
+    docker_registry:
+        access:       '.admin'
+        account_name: 'AUTH_docker'
+        auth:         'http://swift.svc.%{::site}.wmnet'
+        user:         'docker:registry'
+    pagecompilation_zim:
+        access:       '.admin'
+        account_name: 'AUTH_pagecompilation'
+        auth:         'https://ms-fe.svc.%{::site}.wmnet'
+        user:         'pagecompilation:zim'
+    analytics_admin:
+        access:       '.admin'
+        account_name: 'AUTH_analytics'
+        auth:         'https://ms-fe.svc.%{::site}.wmnet'
+        user:         'analytics:admin'
+    netbox_attachments:
+        access:       '.admin'
+        account_name: 'AUTH_netbox'
+        auth:         'https://ms-fe.svc.%{::site}.wmnet'
+        user:         'netbox:attachments'
+    performance_arclamp: # https://phabricator.wikimedia.org/T244776
+        access:       '.admin'
+        account_name: 'AUTH_performance'
+        auth:         'https://ms-fe.svc.%{::site}.wmnet'
+        user:         'performance:arclamp'
+
+# keys are to be defined in private repo, e.g.:
+#profile::swift::accounts_keys:
+#    super_admin: <key>
+#    mw_media: <key>
+#    dispersion: <key>
+#    search_backup: <key>
+#    ...
+
+# map "realm name" into "key = value" to be written verbatim to
+# container-sync-realms.conf.
+# See also
+# http://docs.openstack.org/developer/swift/overview_container_sync.html
+profile::swift::replication_accounts:
+    docker_registry:
+        cluster_codfw: 'https://swift.svc.codfw.wmnet/v1/'
+        cluster_eqiad: 'https://swift.svc.eqiad.wmnet/v1/'
+    mw_media:
+        cluster_codfw: 'http://ms-fe.svc.codfw.wmnet/v1/'
+
+# the private part looks like this:
+# profile::swift::replication_keys:
+#   mw_media:
+#       key: 'foo'
+#       key2: 'bar'
+# used by ferm
+profile::swift::proxyhosts:
+  - ms-fe1005.eqiad.wmnet
+  - ms-fe1006.eqiad.wmnet
+  - ms-fe1007.eqiad.wmnet
+  - ms-fe1008.eqiad.wmnet
+  - ms-fe2005.codfw.wmnet
+  - ms-fe2006.codfw.wmnet
+  - ms-fe2007.codfw.wmnet
+  - ms-fe2008.codfw.wmnet
+
+profile::swift::storagehosts:
+  - ms-be1028.eqiad.wmnet
+  - ms-be1029.eqiad.wmnet
+  - ms-be1030.eqiad.wmnet
+  - ms-be1031.eqiad.wmnet
+  - ms-be1032.eqiad.wmnet
+  - ms-be1033.eqiad.wmnet
+  - ms-be1035.eqiad.wmnet
+  - ms-be1036.eqiad.wmnet
+  - ms-be1037.eqiad.wmnet
+  - ms-be1038.eqiad.wmnet
+  - ms-be1039.eqiad.wmnet
+  - ms-be1040.eqiad.wmnet
+  - ms-be1041.eqiad.wmnet
+  - ms-be1042.eqiad.wmnet
+  - ms-be1043.eqiad.wmnet
+  - ms-be1044.eqiad.wmnet
+  - ms-be1045.eqiad.wmnet
+  - ms-be1046.eqiad.wmnet
+  - ms-be1047.eqiad.wmnet
+  - ms-be1048.eqiad.wmnet
+  - ms-be1049.eqiad.wmnet
+  - ms-be1050.eqiad.wmnet
+  - ms-be1051.eqiad.wmnet
+  - ms-be1052.eqiad.wmnet
+  - ms-be1053.eqiad.wmnet
+  - ms-be1054.eqiad.wmnet
+  - ms-be1055.eqiad.wmnet
+  - ms-be1056.eqiad.wmnet
+  - ms-be1057.eqiad.wmnet
+  - ms-be1058.eqiad.wmnet
+  - ms-be1059.eqiad.wmnet
+  - ms-be1060.eqiad.wmnet
+  - ms-be1061.eqiad.wmnet
+  - ms-be1062.eqiad.wmnet
+  - ms-be1063.eqiad.wmnet
+  - ms-be1064.eqiad.wmnet
+  - ms-be1065.eqiad.wmnet
+  - ms-be1066.eqiad.wmnet
+  - ms-be1067.eqiad.wmnet
+  - ms-be2028.codfw.wmnet
+  - ms-be2029.codfw.wmnet
+  - ms-be2030.codfw.wmnet
+  - ms-be2031.codfw.wmnet
+  - ms-be2032.codfw.wmnet
+  - ms-be2033.codfw.wmnet
+  - ms-be2034.codfw.wmnet
+  - ms-be2035.codfw.wmnet
+  - ms-be2036.codfw.wmnet
+  - ms-be2037.codfw.wmnet
+  - ms-be2038.codfw.wmnet
+  - ms-be2039.codfw.wmnet
+  - ms-be2040.codfw.wmnet
+  - ms-be2041.codfw.wmnet
+  - ms-be2042.codfw.wmnet
+  - ms-be2043.codfw.wmnet
+  - ms-be2044.codfw.wmnet
+  - ms-be2045.codfw.wmnet
+  - ms-be2046.codfw.wmnet
+  - ms-be2047.codfw.wmnet
+  - ms-be2048.codfw.wmnet
+  - ms-be2049.codfw.wmnet
+  - ms-be2050.codfw.wmnet
+  - ms-be2051.codfw.wmnet
+  - ms-be2052.codfw.wmnet
+  - ms-be2053.codfw.wmnet
+  - ms-be2054.codfw.wmnet
+  - ms-be2055.codfw.wmnet
+  - ms-be2056.codfw.wmnet
+  - ms-be2057.codfw.wmnet
+  - ms-be2058.codfw.wmnet
+  - ms-be2059.codfw.wmnet
+  - ms-be2060.codfw.wmnet
+  - ms-be2061.codfw.wmnet
+  - ms-be2062.codfw.wmnet
+  - ms-be2063.codfw.wmnet
+  - ms-be2064.codfw.wmnet
+  - ms-be2065.codfw.wmnet

@@ -1,0 +1,35 @@
+profile::mail::default_mail_relay::enabled: false
+profile::admin::groups:
+  - phabricator-admin
+  - phabricator-roots
+  - phabricator-bulk-manager
+
+# List of all Phabricator servers.
+# Used in firewall as sources who are allowed to rsync from the
+# active phabricator server. That's it.
+# The definition of the "active server" which enables dumps an opens
+# needed firewall holes is the "phabricator_server" key in common.yaml
+# Switching backend for caching servers needs to be done in DNS.
+phabricator_servers:
+  - phab1001.eqiad.wmnet
+  - phab2001.codfw.wmnet
+  - phab2002.codfw.wmnet
+
+profile::resolving::domain_search:
+  - eqiad.wmnet
+  - codfw.wmnet
+
+profile::phabricator::main::rate_limits:
+# Number of requests per minute for logged out users (per client IP)
+# logged in users are permitted 4x the request rate of logged-out users
+  request: 0
+# This is the number of concurrent connections per client IP:
+  connection: 0
+
+phabricator_phd_taskmasters: 4
+
+profile::tlsproxy::envoy::global_cert_name: "phabricator.discovery.wmnet"
+profile::tlsproxy::envoy::websockets: true
+
+profile::phabricator::main::http_srange: '$DEPLOYMENT_HOSTS'
+profile::base::firewall::block_abuse_nets: true

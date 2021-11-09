@@ -1,0 +1,29 @@
+nagios_group: analytics_eqiad
+cluster: analytics
+profile::admin::groups:
+  - analytics-admins
+
+profile::druid::turnilo::port: 9091
+profile::druid::turnilo::druid_clusters:
+  - name: druid-analytics-eqiad
+    host: 'an-druid1001.eqiad.wmnet:8082'
+    sourceListRefreshInterval: 15000
+    sourceReintrospectInterval: 120000
+    type: druid
+
+profile::druid::turnilo::monitoring_enabled: true
+
+# TLS Terminator settings
+# Please note: the service name is used to pick up the
+# TLS certificate that envoy will use. Since the Analytics
+# team has only one certificate for its UIs, then the service
+# name listed does not reflect how the envoy proxy is set up.
+# turnilo.wikimedia.org and pivot.wikimedia.org are SANs
+# of the yarn.wikimedia.org TLS certificate.
+profile::envoy::ensure: present
+profile::tlsproxy::envoy::services:
+   - server_names: ['*']
+     port: 80
+
+profile::tlsproxy::envoy::global_cert_name: "yarn.wikimedia.org"
+profile::contacts::role_contacts: ['Analytics SREs']

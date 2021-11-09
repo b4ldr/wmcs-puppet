@@ -1,0 +1,51 @@
+profile::wikidough::service_domain: &domain 'wikimedia-dns.org'
+profile::wikidough::service_ipv4: &ipv4 '185.71.138.138'
+
+profile::wikidough::dnsdist::resolver:
+  name: 'resolver-1'
+  host: 127.0.0.1
+  port: 53
+
+profile::wikidough::dnsdist::tls::common:
+  cert_chain_path: '/etc/acmecerts/wikidough/live/ec-prime256v1.alt.chained.crt'
+  cert_privkey_path: '/etc/acmecerts/wikidough/live/ec-prime256v1.alt.chained.crt.key'
+  ocsp_response_path: '/etc/acmecerts/wikidough/live/ec-prime256v1.ocsp'
+
+profile::wikidough::dnsdist::tls::doh:
+  min_tls_version: 'tls1.3'
+  ciphers_tls13:
+    - 'TLS_AES_256_GCM_SHA384'
+    - 'TLS_CHACHA20_POLY1305_SHA256'
+    - 'TLS_AES_128_GCM_SHA256'
+
+profile::wikidough::dnsdist::tls::dot:
+  min_tls_version: 'tls1.2'
+  ciphers:
+    - 'ECDHE-ECDSA-AES256-GCM-SHA384'
+    - 'ECDHE-ECDSA-CHACHA20-POLY1305'
+    - 'ECDHE-ECDSA-AES128-GCM-SHA256'
+  ciphers_tls13:
+    - 'TLS_AES_256_GCM_SHA384'
+    - 'TLS_CHACHA20_POLY1305_SHA256'
+    - 'TLS_AES_128_GCM_SHA256'
+
+# password and api_key are defined in the private repo.
+profile::wikidough::dnsdist::webserver:
+  host: 0.0.0.0
+  port: 8083
+# password:
+# api_key:
+  acl:
+    - '0.0.0.0/0'
+    - '::/0'
+
+profile::bird::advertise_vips:
+  *domain:
+    ensure: present
+    address: *ipv4
+    check_cmd: "/usr/lib/nagios/plugins/check_http -H %{lookup('profile::wikidough::service_domain')} --ssl --sni -I %{lookup('profile::wikidough::service_ipv4')} -u / -t 1"
+    service_type: wikidough
+
+profile::bird::anycasthc_logging:
+  level: 'critical'
+  num_backups: 2

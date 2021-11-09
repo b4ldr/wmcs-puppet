@@ -1,0 +1,7 @@
+profile::openldap::certname: ldap
+
+profile::lvs::realserver::pools:
+  ldap-ro:
+    services:
+      - slapd
+profile::contacts::role_contacts: ['Infrastructure Foundations SREs']

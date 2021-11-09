@@ -1,0 +1,61 @@
+---
+# These groups are supplemented by per-cluster-site groups generated
+# from wikimedia_clusters variable.
+
+monitoring::groups:
+# LVS
+  lvs:
+    description: LVS
+
+# Facilities
+  pdus:
+    description: PDUs
+  mgmt:
+    description: Management Interfaces
+
+# Network
+  network:
+    description: Networking equipment (routers/switches/etc.)
+  asw1-eqsin:
+    description: Equipment with asw1-eqsin as uplink
+  asw1-b12-drmrs.wikimedia.org:
+    description: Equipment with asw1-b12-drmrs as uplink
+  asw1-b13-drmrs.wikimedia.org:
+    description: Equipment with asw1-b13-drmrs as uplink
+  asw2-a-eqiad:
+    description: Equipment with asw2-a-eqiad as uplink
+  asw2-b-eqiad:
+    description: Equipment with asw2-b-eqiad as uplink
+  asw2-c-eqiad:
+    description: Equipment with asw2-c-eqiad as uplink
+  asw2-d-eqiad:
+    description: Equipment with asw2-d-eqiad as uplink
+  cloudsw1-c8-eqiad.mgmt.eqiad.wmnet:
+    description: Equipment with cloudsw1-c8-eqiad as uplink
+  cloudsw2-c8-eqiad.mgmt.eqiad.wmnet:
+    description: Equipment with cloudsw2-c8-eqiad as uplink
+  cloudsw1-d5-eqiad.mgmt.eqiad.wmnet:
+    description: Equipment with cloudsw1-d5-eqiad as uplink
+  cloudsw2-d5-eqiad.mgmt.eqiad.wmnet:
+    description: Equipment with cloudsw2-d5-eqiad as uplink
+  asw2-ulsfo:
+    description: Equipment with asw2-ulsfo as uplink
+  asw-a-codfw:
+    description: Equipment with asw-a-codfw as uplink
+  asw-b-codfw:
+    description: Equipment with asw-b-codfw as uplink
+  asw-c-codfw:
+    description: Equipment with asw-c-codfw as uplink
+  asw-d-codfw:
+    description: Equipment with asw-d-codfw as uplink
+  asw2-esams.mgmt.esams.wmnet:
+    description: Equipment with asw2-esams as uplink
+
+
+monitoring::mgmt_parents:
+  eqiad: msw1-eqiad
+  codfw: msw1-codfw
+  ulsfo: mr1-ulsfo
+  esams: mr1-esams
+  eqsin: mr1-eqsin
+  drmrs: mr1-drmrs

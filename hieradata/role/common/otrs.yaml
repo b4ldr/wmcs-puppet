@@ -1,0 +1,16 @@
+profile::admin::groups:
+  - vrts-roots
+profile::otrs::database_host: m2-master.eqiad.wmnet
+profile::otrs::database_name: otrs
+profile::otrs::database_user: otrs
+profile::otrs::exim_database_name: otrs
+profile::otrs::exim_database_user: exim
+profile::otrs::daemon: true
+# Set up in the private repo
+#profile::otrs::database_pass:
+#profile::otrs::exim_database_pass:
+profile::mail::default_mail_relay::enabled: false
+
+# envoy for TLS termination behind ATS
+profile::tlsproxy::envoy::global_cert_name: "ticket.discovery.wmnet"
+profile::tlsproxy::envoy::tls_port: 1443

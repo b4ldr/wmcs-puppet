@@ -1,0 +1,17 @@
+profile::openldap::hostname: cloudservices2002-dev.wikimedia.org
+profile::openldap::mirror_mode: true
+profile::openldap::backup: false
+profile::openldap::server_id: 1
+profile::openldap::master: cloudservices2002-dev.wikimedia.org
+profile::openldap::hash_passwords: SHA
+profile::openldap::read_only: false
+profile::openldap::certname: ldap-codfw1dev
+profile::openldap::sync_pass: none
+profile::openstack::codfw1dev::horizon::puppet_git_repo_name: instance-puppet-dev
+profile::openstack::codfw1dev::horizon::puppet_git_repo_user: instance-puppet-user
+profile::monitoring::notifications_enabled: false
+profile::admin::groups:
+  - labtest-roots
+# See T224828
+raid::md::cron_ensure: absent
+profile::contacts::role_contacts: ['WMCS SREs']

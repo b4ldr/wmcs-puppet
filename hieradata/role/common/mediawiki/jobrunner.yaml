@@ -1,0 +1,66 @@
+cluster: jobrunner
+has_lvs: true
+profile::admin::groups:
+  - deployment
+  - perf-roots
+
+profile::lvs::realserver::use_safe_restart: true
+profile::lvs::realserver::pools:
+  jobrunner:
+    services:
+      - php7.2-fpm
+      - apache2
+      - mcrouter
+      - nutcracker
+      - envoyproxy
+  videoscaler:
+    services:
+      - php7.2-fpm
+      - apache2
+      - mcrouter
+      - nutcracker
+      - envoyproxy
+
+profile::mediawiki::php::enable_fpm: true
+# Bump the connections per backend to 5 in mcrouter, see T203786
+profile::mediawiki::mcrouter_wancache::num_proxies: 5
+# Use the gutter pool for failover
+profile::mediawiki::mcrouter_wancache::gutter_ttl: 600
+profile::mediawiki::mcrouter_wancache::use_onhost_memcached: true
+profile::mediawiki::mcrouter_wancache::use_onhost_memcached_socket: true
+profile::prometheus::memcached_exporter::arguments: '--memcached.address=/var/run/memcached/memcached.sock'
+profile::mediawiki::php::php_version: "7.2"
+profile::mediawiki::php::monitoring::monitor_page: false
+# we need to allow the scripts to run for 1 day for transcoding.
+profile::mediawiki::php::request_timeout: 86400
+profile::mediawiki::apc_shm_size: 4096M
+profile::mediawiki::php::fpm_config:
+  opcache.interned_strings_buffer: 96
+  opcache.memory_consumption: 1024
+  max_execution_time: 1200
+
+# Configure php-fpm restarts
+profile::mediawiki::php::restarts::ensure: present
+# We set the restart watermark at 200 MB, which is approximately how much
+# opcache one full day of deployments consume.
+profile::mediawiki::php::restarts::opcache_limit: 200
+
+## TLS Termination
+# There is no reason to separate the two sites at this layer.
+profile::tlsproxy::envoy::sni_support: "no"
+# The timeout at this layer should be equal to the highest between videoscaler.*
+# and jobrunners.*.
+# We already set the web timeout one layer below in apache to 20 minutes and 1 day
+# for jobrunner.* and videoscaler.* respectively.
+profile::tlsproxy::envoy::upstream_response_timeout: 86402.5
+profile::tlsproxy::envoy::services:
+  - server_names: ["*"]
+    port: 9006
+# new certificate including both jobrunners and videoscalers.
+profile::tlsproxy::envoy::global_cert_name: "jobrunner.discovery.wmnet"
+profile::tlsproxy::envoy::max_requests: 1000
+profile::tlsproxy::envoy::ferm_srange: "$DOMAIN_NETWORKS"
+profile::services_proxy::envoy::listen_ipv6: true
+# Enable icu63 component - T264991
+profile::mediawiki::php::icu63: true
+profile::contacts::role_contacts: ['ServiceOps SREs']

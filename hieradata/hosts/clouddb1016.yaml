@@ -1,0 +1,4 @@
+# clouddb1016
+profile::wmcs::db::wikireplicas::mariadb_multiinstance::instances:
+  s8: 210G
+  s5: 185G

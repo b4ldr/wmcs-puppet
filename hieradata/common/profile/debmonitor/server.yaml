@@ -1,0 +1,13 @@
+profile::debmonitor::server::settings_module: debmonitor.settings.prod
+profile::debmonitor::server::ssl_certs: cfssl
+profile::debmonitor::server::cfssl_label: debmonitor
+profile::debmonitor::server::django_log_db_queries: false
+profile::debmonitor::server::django_require_login: true
+profile::debmonitor::server::app_deployment: 'scap3'
+profile::debmonitor::server::enable_logback: true
+profile::debmonitor::server::enable_monitoring: true
+profile::debmonitor::server::required_groups:
+    - 'cn=ops,ou=groups,dc=wikimedia,dc=org'
+    - 'cn=wmf,ou=groups,dc=wikimedia,dc=org'
+    - 'cn=nda,ou=groups,dc=wikimedia,dc=org'
+profile::debmonitor::server::trusted_ca_source: 'puppet:///modules/profile/debmonitor/trusted_ca_source.prod.pem'

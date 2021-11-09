@@ -1,0 +1,80 @@
+profile::contacts::role_contacts:
+  - 'Observability SREs'
+
+profile::grafana::domain: "grafana.%{lookup('public_domain')}"
+profile::grafana::domainrw: "grafana-rw.%{lookup('public_domain')}"
+profile::grafana::server_aliases:
+  - "grafana-next.%{lookup('public_domain')}"
+profile::grafana::wpt_graphite_proxy_port: 33333
+profile::grafana::enable_cas: true
+profile::grafana::config:
+  auth.basic:
+    enabled: true # required by ldap_users_sync.py / API access
+  auth.ldap:
+    enabled: false
+  auth.anonymous:
+    enabled: true
+    org_name: Wikimedia
+  auth:
+    disable_signout_menu: true
+    disable_login_form: true
+  auth.proxy:
+    enabled: true
+    header_name: X-CAS-uid
+    auto_sign_up: false
+  security:
+    allow_embedding: true
+  panels:
+    disable_sanitize_html: true
+  dashboards:
+    min_refresh_interval: 30s
+profile::grafana::ldap:
+  servers:
+    eqiad:
+      host: ldap-ro.eqiad.wikimedia.org
+      port: 636
+      use_ssl: true
+      ssl_skip_verify: false
+      search_filter: (cn=%s)
+      search_base_dns: ["ou=people,dc=wikimedia,dc=org"]
+      bind_dn: cn=proxyagent,ou=profile,dc=wikimedia,dc=org
+      bind_password: "%{lookup('profile::grafana::ldap::bind_password')}"
+  servers.attributes:
+    name: givenName
+    surname: sn
+    username: cn
+    member_of: memberOf
+    email:  mail
+  servers.group_mappings:
+    ops:
+      group_dn: cn=ops,ou=groups,dc=wikimedia,dc=org
+      org_role: Admin
+    wmf:
+      group_dn: cn=wmf,ou=groups,dc=wikimedia,dc=org
+      org_role: Editor
+    nda:
+      group_dn: cn=nda,ou=groups,dc=wikimedia,dc=org
+      org_role: Editor
+    grafana-admin:
+      group_dn: cn=grafana-admin,ou=groups,dc=wikimedia,dc=org
+      org_role: Editor
+
+# In private repo
+#profile::grafana::secret_key:
+#profile::grafana::admin_password:
+profile::tlsproxy::envoy::global_cert_name: "grafana.discovery.wmnet"
+rsync::server::wrap_with_stunnel: true
+
+profile::idp::client::httpd::sites:
+  "grafana-rw.%{lookup('public_domain')}":
+    vhost_content: 'profile/idp/client/httpd-grafana.erb'
+    document_root: '/usr/share/grafana/public'
+    required_groups:
+    - 'cn=wmf,ou=groups,dc=wikimedia,dc=org'
+    - 'cn=nda,ou=groups,dc=wikimedia,dc=org'
+    proxied_as_https: true
+    vhost_settings:
+      ro_vhost: "grafana.%{lookup('public_domain')}"
+
+profile::grafana::active_host: 'grafana1002.eqiad.wmnet'
+profile::grafana::standby_host: 'grafana2001.codfw.wmnet'

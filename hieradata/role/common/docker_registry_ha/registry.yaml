@@ -1,0 +1,28 @@
+profile::docker_registry_ha::registry::image_builders:
+  - '10.192.0.99' #deneb.codfw.wmnet
+  - '208.80.154.17' # contint1001
+  - '208.80.153.15' # contint2001
+  - '10.64.48.17' # releases1002.eqiad.wmnet
+  - '10.192.16.180' # releases2002.codfw.wmnet
+#profile::docker_registry_ha::ci_restricted_user_password: defined in the private repo
+#profile::docker_registry_ha::kubernetes_user_password: defined in the private repo
+#profile::docker_registry_ha::ci_build_user_password: defined in the private repo
+#profile::docker_registry_ha::prod_build_user_password: defined in the private repo
+#profile::docker_registry_ha::password_salt: defined in the private repo
+profile::docker_registry_ha::registry::swift_username: "docker"
+#profile::docker_registry_ha::registry::swift_password defined in the private repo
+#profile::docker_registry_ha::registry::swift_container: "docker_registry"
+profile::docker_registry_ha::registry::certname: "docker-registry.discovery.wmnet"
+profile::docker_registry_ha::registry::read_only_mode: false
+
+profile::lvs::realserver::pools:
+  docker-registry:
+    services:
+      - docker-registry
+      - nginx
+# Envoy will be added later, see T215810
+#      - envoyproxy
+
+profile::nginx::variant: 'light'
+profile::nginx::tmpfs_size: '2g'
+profile::contacts::role_contacts: ['ServiceOps SREs']

@@ -1,0 +1,4 @@
+# db1149
+# Future candidate master for s4
+mariadb::shard: 's4'
+mariadb::binlog_format: 'STATEMENT'

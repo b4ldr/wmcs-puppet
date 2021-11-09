@@ -1,0 +1,7 @@
+profile::pybal::config_host: conf1006.eqiad.wmnet
+profile::pybal::etcd_port: 4001
+profile::lvs::tagged_subnets:
+  - public1-esams
+profile::lvs::interface_tweaks:
+  eno1:
+    txqlen: 20000

@@ -1,0 +1,29 @@
+prometheus::haproxy_exporter::endpoint: 'http://localhost:9900/stats;csv'
+
+profile::memcached::version: 'present'
+profile::memcached::growth_factor: 1.05
+profile::memcached::max_seq_reqs: 200
+profile::memcached::threads: ~
+profile::memcached::min_slab_size: 5
+profile::memcached::size: 2000
+profile::memcached::extended_options:
+  - 'slab_reassign'
+profile::memcached::port: 11211
+
+profile::ceph::client::rbd::keyfile_group: 'glance'
+profile::ceph::client::rbd::client_name: 'codfw1dev-glance-images'
+profile::ceph::client::rbd::keyfile_owner: 'glance'
+profile::ceph::client::rbd::pool: 'codfw1dev-glance-images'
+profile::ceph::client::rbd::enable_v2_messenger: false
+
+profile::wmcs::backy2::cluster_name: ceph
+
+profile::ceph::client::rbd::libvirt_rbd_uuid: 'e6500406-304c-4a21-a5d0-8214a827a10d'
+profile::ceph::client::rbd::libvirt_rbd_cinder_uuid: 'f83e2286-bff1-47bf-bf6d-109c427d63c9'
+profile::monitoring::notifications_enabled: false
+profile::admin::groups:
+  - labtest-roots
+raid::md::cron_ensure: absent
+
+profile::openstack::eqiad1::nova::common::is_control_node: true
+profile::contacts::role_contacts: ['WMCS SREs']

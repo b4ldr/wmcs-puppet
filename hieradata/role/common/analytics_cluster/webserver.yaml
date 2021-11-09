@@ -1,0 +1,19 @@
+cluster: analytics
+profile::admin::groups:
+  - analytics-admins
+
+# TLS Terminator settings
+# Please note: the service name is used to pick up the
+# TLS certificate that envoy will use. Since the Analytics
+# team has only one certificate for its UIs, then the service
+# name listed does not reflect how the envoy proxy is set up.
+# analytics.wikimedia.org and stats.wikimedia.org are SANs
+# of the yarn.wikimedia.org TLS certificate.
+profile::envoy::ensure: present
+profile::tlsproxy::envoy::services:
+  - server_names: ["*"]
+    port: 80
+
+profile::tlsproxy::envoy::tls_port: 8443
+profile::tlsproxy::envoy::global_cert_name: "yarn.wikimedia.org"
+profile::contacts::role_contacts: ['Analytics SREs']

@@ -1,0 +1,5 @@
+profile::admin::groups:
+  - swift-roots
+profile::swift::cluster: codfw-prod
+
+profile::swift::storage::replication_limit_memory_percent: 5

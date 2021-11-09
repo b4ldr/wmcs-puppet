@@ -1,0 +1,15 @@
+apereo_cas:
+  production:
+    login_url: 'https://idp.wmcloud.org/login'
+    validate_url: 'https://idp.wmcloud.org/serviceValidate'
+ldap:
+    ro-server: localhost
+    ro-server-fallback: localhost
+    rw-server: localhost
+    rw-server-fallback: localhost
+    proxyagent: 'cn=proxyagent,ou=users,dc=sso,dc=eqiad1,dc=wikimedia,dc=cloud'
+    base-dn: 'dc=sso,dc=eqiad1,dc=wikimedia,dc=cloud'
+puppetmaster::servers:
+    puppetprimary.sso.eqiad1.wikimedia.cloud:
+        - { worker: puppetprimary.sso.eqiad1.wikimedia.cloud, loadfactor: 10 }
+profile::pki::client::ensure: present

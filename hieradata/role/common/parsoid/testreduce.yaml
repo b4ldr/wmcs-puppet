@@ -1,0 +1,34 @@
+cluster: parsoid
+
+profile::admin::groups:
+  - parsoid-roots
+  - parsoid-admin
+  - parsoid-test-admins
+  - parsoid-test-roots
+
+parsoid::testing::parsoid_port: 8142
+profile::parsoid::vd_client::service_ensure: 'stopped'
+profile::parsoid::vd_server::service_ensure: 'stopped'
+profile::parsoid::rt_client::service_ensure: 'running'
+profile::parsoid::rt_server::service_ensure: 'running'
+
+
+parsoid::testing::default_api_proxy_uri: 'http://api-rw.discovery.wmnet'
+
+parsoid::logging_name: parsoid-tests
+parsoid::statsd_prefix: parsoid-tests
+
+# No Icinga monitoring for systemd state because services
+# can often go down during tests. (also T254025)
+profile::monitoring::monitor_systemd: false
+profile::monitoring::notifications_enabled: false
+profile::mediawiki::php::monitoring::monitor_opcache: false
+
+profile::parsoid::testreduce::install_node: true
+
+profile::tlsproxy::envoy::global_cert_name: "testreduce.discovery.wmnet"
+profile::tlsproxy::envoy::services:
+  - server_names: ["*"]
+    port: 8001
+
+profile::nginx::variant: 'light'

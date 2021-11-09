@@ -1,0 +1,28 @@
+cluster: dnsbox
+
+prometheus::node_exporter::collectors_extra:
+  - 'ntp'
+
+prometheus::haproxy_exporter::endpoint: 'http://127.0.0.1:8404/?stats;csv'
+
+profile::bird::advertise_vips:
+  recdns.anycast.wmnet:
+    address: 10.3.0.1 # VIP to advertise (limited to a /32)
+    check_cmd: '/usr/lib/nagios/plugins/check_dns_query -H 10.3.0.1 -l -d www.wikipedia.org -t 1'
+    ensure: present
+    service_type: recdns
+  nsa.wikimedia.org:
+    address: 198.35.27.27 # VIP to advertise (limited to a /32)
+    check_cmd: '/usr/lib/nagios/plugins/check_dns_query -H 198.35.27.27 -a -l -d www.wikipedia.org -t 1'
+    ensure: present
+    service_type: authdns
+
+profile::dns::auth::acmechief_target::acmechief_hosts:
+- acmechief1001.eqiad.wmnet
+- acmechief2001.codfw.wmnet
+- acmechief-test1001.eqiad.wmnet
+- acmechief-test2001.codfw.wmnet
+profile::dns::auth::gitrepo: 'https://gerrit.wikimedia.org/r/operations/dns.git'
+profile::bird::bind_anycast_service: 'pdns-recursor.service'
+
+profile::systemd::timesyncd::ensure: absent

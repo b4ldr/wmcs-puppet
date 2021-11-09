@@ -1,0 +1,81 @@
+# General configs
+cluster: relforge
+profile::admin::groups:
+  - elasticsearch-roots
+
+profile::elasticsearch::cirrus::ferm_srange: '(($CUMIN_MASTERS $ANALYTICS_NETWORKS @resolve((contint1001.wikimedia.org contint2001.wikimedia.org))))'
+profile::elasticsearch::cirrus::expose_http: false
+profile::elasticsearch::cirrus::enable_http2: false
+
+# T130329
+profile::monitoring::nrpe_check_disk_options: -w 15% -c 10% -W 6% -K 3% -l -e -A -i "/srv/sd[a-b][1-3]" --exclude-type=tracefs
+
+profile::elasticsearch::rack: ''
+profile::elasticsearch::row: ''
+profile::elasticsearch::version: '6.5'
+profile::elasticsearch::config_version: '6'
+# Some Kibana settings only exist in certain versions
+profile::kibana::config_version: '6'
+
+profile::elasticsearch::instances:
+    relforge-eqiad:
+        cluster_name: 'relforge-eqiad'
+        short_cluster_name: chi
+        heap_memory: '30G'
+        http_port: 9200
+        tls_port: 9243
+        transport_tcp_port: 9300
+        certificate_name: 'relforge.svc.eqiad.wmnet'
+    relforge-eqiad-small-alpha:
+        cluster_name: 'relforge-eqiad-small-alpha'
+        short_cluster_name: omega
+        heap_memory: '4G'
+        http_port: 9400
+        tls_port: 9443
+        transport_tcp_port: 9500
+        certificate_name: 'relforge.svc.eqiad.wmnet'
+profile::elasticsearch::base_data_dir: /srv/elasticsearch
+profile::elasticsearch::common_settings:
+    awareness_attributes: ''
+    # We should be able to run "OK" with a single server.
+    recover_after_nodes: 1
+    recover_after_time: '1m'
+
+    search_shard_count_limit: 1000
+
+    # Allow reindex from eqiad or codfw to relforge
+    reindex_remote_whitelist: 'search.svc.eqiad.wmnet:9243,search.svc.codfw.wmnet:9243'
+
+    # Make the full cpu resources available for indexing
+    bulk_thread_pool_executors: 32
+    bulk_thread_pool_capacity: 1000,
+
+    # Increase the per-node cache for compiled LTR models from default 10MB
+    ltr_cache_size: '100mb'
+
+    auto_create_index: true
+    plugins_mandatory:
+      - analysis-hebrew
+      - analysis-icu
+      - analysis-smartcn
+      - analysis-stconvert
+      - analysis-stempel
+      - analysis-ukrainian
+      - experimental-highlighter
+      - extra
+      - extra-analysis-esperanto
+      - extra-analysis-serbian
+      - extra-analysis-slovak
+      - ltr
+
+    filter_cache_size: '20%'
+    script_max_compilations_per_minute: 10000
+
+
+profile::elasticsearch::cirrus::enable_remote_search: false
+
+## Kibana configuration
+profile::kibana::enable_phatality: false
+
+profile::tlsproxy::instance::nginx_variant: 'light'
+profile::contacts::role_contacts: ['Search Platform SREs']

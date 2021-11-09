@@ -1,0 +1,3 @@
+cluster: backup
+
+profile::mariadb::wmfmariadbpy::role: 'library'

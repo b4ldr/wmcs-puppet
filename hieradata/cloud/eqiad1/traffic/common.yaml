@@ -1,0 +1,114 @@
+acmechief_host: traffic-acmechief01.traffic.eqiad.wmflabs
+apt::use_experimental: true
+profile::cache::base::varnish_version: 5
+puppetmaster::enable_geoip: true
+shared_acme_certificates:
+  non-canonical-redirect-1:
+    CN: wikipedia.com.traffic.wmflabs.org
+    SNI:
+    - wikipedia.com.traffic.wmflabs.org
+    - '*.wikipedia.com.traffic.wmflabs.org'
+    - '*.en-wp.com.traffic.wmflabs.org'
+    - en-wp.com.traffic.wmflabs.org
+    - '*.en-wp.org.traffic.wmflabs.org'
+    - en-wp.org.traffic.wmflabs.org
+    authorized_hosts:
+    - traffic-ncredir.traffic.eqiad.wmflabs
+    authorized_regexes:
+    - ^traffic-ncredir.*\.traffic\.eqiad\.wmflabs$
+    challenge: dns-01
+    prevalidate: true
+    skip_invalid_snis: true
+    staging_time: 604800
+profile::base::systemd::cpu_accounting: 'yes'
+profile::base::systemd::blockio_accounting: 'yes'
+profile::base::systemd::memory_accounting: 'yes'
+profile::base::systemd::ip_accounting: 'yes'
+profile::prometheus::cadvisor_exporter::port: 4194
+profile::trafficserver::tls::log_formats:
+  - name: wmf-tls
+    format: 'Date:%<cqtd> Time:%<cqtt> Client-IP:%<chi> HTTPVersion:%<cqhv> SSL:%<cqssl> SSLVersion:%<cqssv> SSLCipher:%<cqssc> SSLCurve:%<cqssu> ConnReuse:%<sstc> ReqMethod:%<cqhm> RespStatus:%<pssc> OriginStatus:%<sssc> ReqURL:%<cquuc> ReqHeader:User-Agent:%<{User-agent}cqh> ReqHeader:Host:%<{Host}cqh>'
+  - name: wmf-analytics
+    # Format string for atskafka. Note that the string is tab-separated (TSV)
+    format: "dt:%<cqtd>T%<cqtt>Z	hostname:%{::fqdn}	time_firstbyte:%<{TS_MILESTONE_UA_BEGIN_WRITE-TS_MILESTONE_SM_START}msdms>	ip:%<{X-Client-IP}psh>	cache_status:%<{X-Cache-Status}psh>	http_status:%<pssc>	response_size:%<pscl>	http_method:%<cqhm>	uri_host:%<{Host}cqh>	uri_path:%<cquup>	content_type:%<{Content-Type}psh>	referer:%<{Referer}cqh>	user_agent:%<{User-Agent}cqh>	accept_language:%<{Accept-Language}cqh>	x_analytics:%<{X-Analytics}ssh>	range:%<{Range}cqh>	x_cache:%<{X-Cache}psh>	accept:%<{Accept}cqh>	backend:%<{Server}psh>	tls:%<{X-Analytics-TLS}pqh>"
+profile::trafficserver::tls::logs:
+  - filename: tls
+    format: wmf-tls
+    mode: ascii_pipe
+    ensure: present
+  - filename: analytics
+    format: wmf-analytics
+    mode: ascii_pipe
+    ensure: present
+profile::trafficserver::backend::log_formats:
+  - name: wmf
+    # TTFetchHeaders is the amount of time between the first origin server
+    # connection attempt (or shared session attached in case of connection
+    # reuse) and when the first byte is received from the origin.
+    # ClientTTFB is the time spent between the very beginning of this session
+    # and when the response header write to the client starts.
+    format: 'Date:%<cqtd> Time:%<cqtt> ConnAttempts:%<sca> ConnReuse:%<sstc> TTFetchHeaders:%<{TS_MILESTONE_SERVER_FIRST_READ-TS_MILESTONE_SERVER_FIRST_CONNECT}msdms> ClientTTFB:%<{TS_MILESTONE_UA_BEGIN_WRITE-TS_MILESTONE_SM_START}msdms> CacheReadTime:%<{TS_MILESTONE_CACHE_OPEN_READ_END-TS_MILESTONE_CACHE_OPEN_READ_BEGIN}msdms> CacheWriteTime:%<{TS_MILESTONE_CACHE_OPEN_WRITE_END-TS_MILESTONE_CACHE_OPEN_WRITE_BEGIN}msdms> TotalSMTime:%<{TS_MILESTONE_SM_FINISH-TS_MILESTONE_SM_START}msdms> OriginServer:%<shn> OriginServerTime:%<stms> CacheResultCode:%<crc> CacheWriteResult:%<cwr> ReqMethod:%<cqhm> RespStatus:%<pssc> OriginStatus:%<sssc> ReqURL:%<cquuc> ReqHeader:User-Agent:%<{User-agent}cqh> ReqHeader:Host:%<{Host}cqh> ReqHeader:X-Client-IP:%<{X-Client-IP}cqh> ReqHeader:Cookie:%<{Cookie}cqh> BerespHeader:Set-Cookie:%<{Set-Cookie}ssh[0:16]> BerespHeader:Cache-Control:%<{Cache-Control}ssh> BerespHeader:Connection:%<{Connection}ssh> RespHeader:X-Cache-Int:%<{X-Cache-Int}psh> RespHeader:Backend-Timing:%<{Backend-Timing}psh>'
+profile::trafficserver::backend::log_filters:
+  - name: notpurge
+    action: reject
+    condition: cqhm MATCH PURGE
+  - name: notvarnishcheck
+    action: reject
+    condition: '%<{User-agent}cqh> MATCH Varnish backend check'
+profile::trafficserver::backend::logs:
+  - filename: notpurge
+    format: wmf
+    filters:
+    - notpurge
+    - notvarnishcheck
+    mode: ascii_pipe
+    ensure: present
+abuse_networks:
+  blocked_nets:
+    comment: 'All traffic will be dropped, with a 403 asking them to email noc@wm.o'
+    context:
+      - ferm
+      - varnish
+    networks:
+      - '93.184.216.34/32'
+  bot_blocked_nets:
+    comment: |-
+      "Traffic from common bot-like User-Agents (e.g. 'python-requests/')
+      will be dropped, with a 403 asking them to email noc@wm.o and to read
+      the User-Agent Policy on metawiki.  Browser-like UAs will be allowed.
+      (Note that, as of 2019-10-10, the only disallowed UA is 'python-requests/')"
+    context:
+      - varnish
+    networks:
+      - '93.184.216.34/32'
+  bot_posts_blocked_nets:
+    comment: |-
+      "POST traffic from bot-like User-Agents (e.g. 'PostmanRuntime/')
+      will be dropped, with a 403 asking them to email noc@wm.o and to read
+      the User-Agent policy on metawiki.  Browser-like UAs will be allowed."
+    context:
+      - varnish
+    networks:
+      - '93.184.216.34/32'
+  phabricator_abusers:
+    comment: |-
+      'This is a list of users who have been known to abuse phabricator'
+    context:
+      - phabricator
+      - varnish
+    networks:
+      - '93.184.216.34/32'
+  public_cloud_nets:
+    comment: |-
+      "A couple of ec2 networks"
+    context:
+      - varnish
+    networks:
+      - 3.5.208.0/22
+      - 3.136.0.0/13
+  text_abuse_nets:
+    comment: 'Abuse block list specific to text-frontend'
+    context:
+      - varnish
+    networks:
+      - '93.184.216.34/32'

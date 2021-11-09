@@ -1,0 +1,87 @@
+profile::base::firewall::block_abuse_nets: true
+profile::tlsproxy::envoy::floc_opt_out: true
+profile::tlsproxy::envoy::upstream_addr: 127.0.0.1
+profile::tlsproxy::envoy::use_remote_address: true
+profile::tlsproxy::envoy::listen_ipv6: true
+profile::tlsproxy::envoy::services:
+  - server_names: ['*']
+    port: 8080
+profile::tlsproxy::envoy::ssl_provider: 'acme'
+profile::tlsproxy::envoy::global_cert_name: idp-test
+profile::idp::enable_cors: true
+profile::idp::cors_allow_credentials: true
+profile::idp::cors_allowed_origins:
+  - 'https://alerts.wikimedia.org'
+profile::idp::services:
+  icinga:
+    id: 1
+    service_id: 'https://(cas-)?icinga.wikimedia.org(/.*)?'
+  debmonitor:
+    id: 2
+    service_id: '^https://debmonitor.wikimedia.org(/.*)?'
+    required_groups:
+      - nda
+      - wmf
+  puppetboard:
+    id: 3
+    service_id: 'https://(cas-)?puppetboard.wikimedia.org(/.*)?'
+    required_groups:
+      - ops
+      - sre-admins
+  graphite:
+    id: 4
+    service_id: 'https://(cas-)?graphite.wikimedia.org(/.*)?'
+    required_groups:
+      - ops
+      - nda
+      - wmf
+  tendril:
+    id: 5
+    service_id: '^https://tendril.wikimedia.org(/.*)?'
+    required_groups:
+      - ops
+      - nda
+      - wmf
+  logstash:
+    id: 6
+    service_id: 'https://(cas-)?logstash.wikimedia.org(/.*)?'
+    required_groups:
+      - ops
+      - nda
+      - wmf
+  people:
+    id: 7
+    service_id: 'https://people.wikimedia.org(/.*)?'
+  librenms:
+    id: 8
+    service_id: 'https://librenms.wikimedia.org(/.*)?'
+    required_groups:
+      - ops
+      - sre-admins
+profile::idp::ldap_attributes:
+  - cn
+  - memberOf
+  - mail
+  - mfa-method
+  - uid
+profile::tlsproxy::instance::ssl_compatibility_mode: strong
+profile::idp::actuators:
+  - sso
+  - ssoSessions
+profile::idp::server_name: https://idp-test.wikimedia.org
+profile::idp::idp_nodes:
+  - idp-test1001.wikimedia.org
+  - idp-test2001.wikimedia.org
+profile::idp::is_staging_host: true
+profile::idp::memcached_enable: true
+profile::idp::memcached::mcrouter_cluster: 'idp-test'
+profile::idp::memcached::enable_tls: true
+profile::idp::memcached_transcoder: 'SERIAL'
+profile::idp::u2f_jpa_enable: true
+profile::idp::u2f_jpa_server: m1-master.eqiad.wmnet
+profile::idp::u2f_jpa_db: cas_staging
+profile::prometheus::memcached_exporter::arguments: '--memcached.address=localhost:11000'
+profile::java::hardened_tls: true
+profile::java::egd_source: '/dev/urandom'
+profile::idp::u2f_token_expiry_days: 3650
+profile::contacts::role_contacts: ['Infrastructure Foundations SREs']

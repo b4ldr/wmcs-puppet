@@ -1,0 +1,1890 @@
+## NOTE namespaced keys (i.e. with ::) will NOT be looked up here
+## See also https://phabricator.wikimedia.org/T209265
+lookup_options:
+  "^profile::pki::(.*)::db_pass$":
+    convert_to: 'Sensitive'
+  profile::pki::client::auth_key:
+    convert_to: 'Sensitive'
+  profile::cache::varnish::frontend::runtime_params:
+    merge: deep
+  profile::cache::varnish::frontend::fe_vcl_config:
+    merge: hash
+  profile::docker::engine::settings:
+    merge: hash
+  profile::debdeploy::client::filter_services:
+    merge: hash
+  labsldapconfig:
+    merge: hash
+  profile::statograph::api_key:
+    convert_to: 'Sensitive'
+  profile::statograph::page_id:
+    convert_to: 'Sensitive'
+  profile::ceph::auth::load_all::configuration:
+    merge: deep
+
+# General variables that once would have been in realm.pp
+cluster: misc
+contactgroups: 'admins'
+mgmt_contactgroups: 'admins'
+datacenters:
+  - eqiad
+  - codfw
+  - esams
+  - ulsfo
+  - eqsin
+#  - drmrs # DRMRS-TODO - this apparently turns on a lot of icinga checks that would break config if they're not ready
+
+public_domain: 'wikimedia.org'
+
+# kubernetes clusters by group.
+kubernetes_cluster_groups:
+  main:
+    eqiad:
+      dc: eqiad
+      master: kubemaster.svc.eqiad.wmnet
+    codfw:
+      dc: codfw
+      master: kubemaster.svc.codfw.wmnet
+    # active staging cluster.
+    staging:
+      dc: eqiad
+      master: kubestagemaster.svc.eqiad.wmnet
+    "staging-eqiad":
+      dc: eqiad
+      master: kubestagemaster.svc.eqiad.wmnet
+      add_private: false
+    "staging-codfw":
+      dc: codfw
+      master: kubestagemaster.svc.codfw.wmnet
+      add_private: false
+  "ml-serve":
+    "ml-serve-eqiad":
+      dc: eqiad
+      master: ml-ctrl.svc.eqiad.wmnet
+    "ml-serve-codfw":
+      dc: codfw
+      master: ml-ctrl.svc.codfw.wmnet
+
+
+# Main statsd instance
+statsd: statsd.eqiad.wmnet:8125
+statsd_exporter_port: 9125
+
+# Debmonitor instance
+debmonitor: debmonitor.discovery.wmnet
+
+# Netbox frontend servers
+netbox_frontend:
+  - netbox1001.wikimedia.org
+  - netbox2001.wikimedia.org
+
+# List of all prometheus nodes (ops instance)
+prometheus_all_nodes:
+  - prometheus1003.eqiad.wmnet
+  - prometheus1004.eqiad.wmnet
+  - prometheus2003.codfw.wmnet
+  - prometheus2004.codfw.wmnet
+  - prometheus3001.esams.wmnet
+  - prometheus4001.ulsfo.wmnet
+  - prometheus5001.eqsin.wmnet
+# - prometheus6001.drmrs.wmnet #DRMRS-TODO
+
+alertmanagers:
+  - alert1001.wikimedia.org
+  - alert2001.wikimedia.org
+
+# NOTE: Do *not* add new clusters *per site* anymore,
+# the site name will automatically be appended now,
+# and a different IP prefix will be used.
+wikimedia_clusters:
+  decommissioned:
+    description: "Decommissioned servers"
+    id: 1
+    sites: {}
+  lvs:
+    description: "LVS loadbalancers"
+    id: 2
+    sites:
+      eqiad: []
+      codfw: []
+      esams: []
+      ulsfo: []
+      eqsin: []
+      drmrs: []
+  puppet:
+    description: "Puppetmasters"
+    id: 3
+    sites:
+      eqiad: []
+      codfw: []
+  search:
+    description: "Search"
+    id: 4
+    sites: {}
+  mysql:
+    description: "MySQL"
+    id: 5
+    sites:
+      eqiad: []
+      codfw: []
+  etcd:
+    description: "Etcd"
+    id: 6
+    sites:
+      eqiad: []
+      codfw: []
+  kafka_main:
+    description: "Kafka main cluster"
+    id: 7
+    sites:
+      eqiad: []
+      codfw: []
+  misc:
+    description: "Miscellaneous"
+    id: 8
+    sites:
+      eqiad: []
+      codfw: []
+      esams: []
+      ulsfo: []
+      eqsin: []
+      drmrs: []
+  kubernetes:
+    description: "Kubernetes"
+    id: 9
+    sites:
+      eqiad: []
+      codfw: []
+  appserver:
+    description: "Application servers"
+    id: 11
+    sites:
+      eqiad: []
+      codfw: []
+  api_appserver:
+    description: "API application servers"
+    id: 13
+    sites:
+      eqiad: []
+      codfw: []
+  cache_text:
+    description: "Text caches"
+    id: 20
+    sites:
+      eqiad: []
+      codfw: []
+      esams: []
+      ulsfo: []
+      eqsin: []
+      drmrs: []
+  cache_upload:
+    description: "Upload caches"
+    id: 22
+    sites:
+      eqiad: []
+      codfw: []
+      esams: []
+      ulsfo: []
+      eqsin: []
+      drmrs: []
+  payments:
+    description: "Fundraiser payments"
+    id: 23
+    sites: {}
+  ssl:
+    description: "SSL cluster"
+    id: 26
+    sites: {}
+  swift:
+    description: "Swift"
+    id: 27
+    sites:
+      eqiad: []
+      codfw: []
+      esams: []
+  labvirt:
+    description: "Labs virt hosts"
+    id: 29
+    sites:
+      eqiad: []
+  labs:
+    description: "Labs services"
+    id: 30
+    sites:
+      eqiad: []
+  jobrunner:
+    description: "Jobrunners"
+    id: 31
+    sites:
+      eqiad: []
+      codfw: []
+  analytics:
+    description: "Analytics cluster"
+    id: 32
+    sites:
+      eqiad: []
+  memcached:
+    description: "Memcached"
+    id: 33
+    sites:
+      eqiad: []
+      codfw: []
+  memcached_gutter:
+    description: "Memcached gutter pool"
+    id: 34
+    sites:
+      codfw: []
+      eqiad: []
+  fundraising:
+    description: "Fundraising"
+    id: 35
+    sites:
+      eqiad:
+        - pay-lvs1001.frack.eqiad.wmnet
+        - pay-lvs1002.frack.eqiad.wmnet
+  ceph:           # Not used anymore
+    description: "Ceph"
+    id: 36
+    sites: {}
+  parsoid:
+    description: "Parsoid"
+    id: 37
+    sites:
+      eqiad: []
+      codfw: []
+  redis:
+    description: "Redis"
+    id: 39
+    sites:
+      eqiad: []
+      codfw: []
+  labsnfs:
+    description: "Labs NFS cluster"
+    id: 40
+    sites:
+      eqiad: []
+      codfw: []
+  elasticsearch:
+    description: "Elasticsearch cluster"
+    id: 42
+    sites:
+      eqiad: []
+      codfw: []
+  logstash:
+    description: "Logstash cluster"
+    id: 43
+    sites:
+      eqiad: []
+      codfw: []
+  restbase:
+    description: "Restbase"
+    id: 48
+    sites:
+      eqiad: []
+      codfw: []
+  wdqs:
+    description: "Wikidata Query Service - Public cluster"
+    id: 49
+    sites:
+      eqiad: []
+      codfw: []
+  maps:
+    description: "Maps Cluster"
+    id: 50
+    sites:
+      eqiad: []
+      codfw: []
+  ganeti:
+    description: "Ganeti Virt cluster"
+    id: 52
+    sites:
+      eqiad: []
+      codfw: []
+      ulsfo: []
+      esams: []
+      eqsin: []
+      drmrs: []
+  aqs:
+    description: "Analytics Query Service"
+    id: 54
+    sites:
+      eqiad: []
+  restbase_test:
+    description: "Restbase test"
+    id: 55
+    sites:
+      eqiad: []
+      codfw: []
+  relforge:
+    description: "Elasticsearch relforge cluster"
+    id: 56
+    sites:
+      eqiad: []
+  labtestvirt:
+    description: "Labtest virt hosts"
+    id: 57
+    sites:
+      codfw: []
+  labtest:
+    description: "Labtest services"
+    id: 58
+    sites:
+      codfw: []
+  restbase_dev:
+    description: "Services development test"
+    id: 59
+    sites:
+      eqiad: []
+  thumbor:
+    description: "Thumbor"
+    id: 61
+    sites:
+      codfw: []
+      eqiad: []
+  kafka_jumbo:
+    description: "Kafka Jumbo Cluster"
+    id: 62
+    sites:
+      eqiad: []
+  druid_analytics:
+    description: "Druid Analytics Cluster"
+    id: 63
+    sites:
+      eqiad: []
+  druid_public:
+    description: "Druid Public Cluster"
+    id: 64
+    sites:
+      eqiad: []
+  ores:
+    description: "ORES Cluster"
+    id: 65
+    sites:
+      eqiad: []
+      codfw: []
+  wdqs-internal:
+    description: "Wikidata Query Service - Internal cluster"
+    id: 66
+    sites:
+      eqiad: []
+      codfw: []
+  wdqs-test:
+    description: "Wikidata Query Service - Test cluster"
+    id: 67
+    sites:
+      eqiad: []
+  dnsbox:
+    description: "DNS and NTP Combo Infra Boxes"
+    id: 69
+    sites:
+      eqiad: []
+      codfw: []
+      esams: []
+      ulsfo: []
+      eqsin: []
+      drmrs: []
+  spare:
+    description: "Spare servers"
+    id: 70
+    sites:
+      eqiad: []
+      codfw: []
+      esams: []
+      ulsfo: []
+      eqsin: []
+      drmrs: []
+  prometheus:
+    description: "Prometheus servers"
+    id: 71
+    sites:
+      eqiad: []
+      codfw: []
+      esams: []
+      ulsfo: []
+      eqsin: []
+      drmrs: []
+  graphite:
+    description: "Graphite servers"
+    id: 72
+    sites:
+      eqiad: []
+      codfw: []
+  bastion:
+    description: "Bastion servers"
+    id: 73
+    sites:
+      eqiad: []
+      codfw: []
+      esams: []
+      ulsfo: []
+      eqsin: []
+      drmrs: []
+  alerting:
+    description: "Icinga"
+    id: 75
+    sites:
+      eqiad: []
+      codfw: []
+  ci:
+    description: "Continuous Integration servers"
+    id: 76
+    sites:
+      eqiad: []
+      codfw: []
+  management:
+    description: "Management servers"
+    id: 77
+    sites:
+      eqiad: []
+      codfw: []
+  wmcs:
+    description: "WMCS servers"
+    id: 79
+    sites:
+      eqiad: []
+  webperf:
+    description: "Web Performance servers"
+    id: 80
+    sites:
+      eqiad: []
+      codfw: []
+  poolcounter:
+    description: "Poolcounter servers"
+    id: 81
+    sites:
+      eqiad: []
+      codfw: []
+  dumps:
+    description: "Dumps servers"
+    id: 82
+    sites:
+      eqiad: []
+  syslog:
+    description: "Syslog servers"
+    id: 83
+    sites:
+      eqiad: []
+      codfw: []
+  druid_test_analytics:
+    description: "Druid Analytics Test Cluster"
+    id: 84
+    sites:
+      eqiad: []
+  sessionstore:
+    description: "Sessionstore cluster"
+    id: 85
+    sites:
+      eqiad: []
+      codfw: []
+  cloudelastic:
+    description: "Elasticsearch cloudelastic cluster"
+    id: 86
+    sites:
+      eqiad: []
+  acmechief:
+    description: "acme-chief hosts"
+    id: 87
+    sites:
+      eqiad: []
+      codfw: []
+  eventschemas:
+    description: "Event platform schemas"
+    id: 88
+    sites:
+      eqiad: []
+      codfw: []
+  irc_events:
+    description: "MediaWiki events on IRC"
+    id: 89
+    sites:
+      eqiad: []
+      codfw: []
+  thanos:
+    description: "Prometheus long-term storage"
+    id: 90
+    sites:
+      eqiad: []
+      codfw: []
+  kafka_test:
+    description: "Kafka Test Cluster"
+    id: 91
+    sites:
+      eqiad: []
+  zookeeper_test:
+    description: "Zookeeper Test Cluster"
+    id: 92
+    sites:
+      eqiad: []
+  ml_serve:
+    description: "ML Team serving clusters"
+    id: 93
+    sites:
+      eqiad: []
+      codfw: []
+  ml_etcd:
+    description: "ML Team etcd clusters"
+    id: 94
+    sites:
+      eqiad: []
+      codfw: []
+  pki:
+    description: "PKI (cfssl) infrastructure"
+    id: 95
+    sites:
+      eqiad: []
+      codfw: []
+  ganeti_test:
+    description: "Ganeti Virt cluster test environment"
+    id: 96
+    sites:
+      codfw: []
+  backup:
+    description: "Backup cluster (bacula, databases and media)"
+    id: 97
+    sites:
+      eqiad: []
+      codfw: []
+  wcqs:
+    description: "Wikimedia Commons Query Service - Public cluster"
+    id: 98
+    sites:
+      eqiad: []
+      codfw: []
+
+puppetmaster: "puppet"
+puppet_ca_server: puppetmaster1001.eqiad.wmnet
+puppet_ca_source: puppet:///files/puppet/ca.production.pem
+manage_puppet_ca_file: true
+
+# This list is mostly maintained for rsync hosts_allow.
+# Servers listed here can rsync pull from each other.
+statistics_servers:
+  - stat1004.eqiad.wmnet
+  - stat1005.eqiad.wmnet
+  - stat1006.eqiad.wmnet
+  - stat1007.eqiad.wmnet
+  - stat1008.eqiad.wmnet
+  - labstore1006.wikimedia.org
+  - labstore1007.wikimedia.org
+  - an-launcher1002.eqiad.wmnet
+
+secondary_nfs_servers:
+  - cloudstore1008.wikimedia.org
+  - cloudstore1009.wikimedia.org
+dumps_nfs_clients:
+  snapshots:
+    - snapshot1008.eqiad.wmnet
+    - snapshot1009.eqiad.wmnet
+    - snapshot1010.eqiad.wmnet
+    - snapshot1011.eqiad.wmnet
+    - snapshot1012.eqiad.wmnet
+    - snapshot1013.eqiad.wmnet
+dumps_datadir_mount_type: nfs
+dumps_nfs_server: dumpsdata1003.eqiad.wmnet
+dumps_cron_nfs_server: dumpsdata1002.eqiad.wmnet
+dumps_managed_subdirs: []
+dumps_misc_cronrunner: false
+
+# Dumps distribution servers actively serving NFS traffic
+dumps_dist_nfs_servers: [labstore1006.wikimedia.org, labstore1007.wikimedia.org]
+
+# Dumps distribution server currently serving traffic over NFS to cloud vps instances
+dumps_dist_active_vps: labstore1007.wikimedia.org
+# Dumps distribution server currently serving web and rsync mirror traffic
+# Also serves stat* hosts over nfs
+dumps_dist_active_web: labstore1006.wikimedia.org
+
+# Cloud Services <
+#
+# Cumin
+labs_tld: "wikimedia.cloud"
+
+# /> Cloud Services
+#
+
+# List of all zookeeper clusters in production.
+zookeeper_clusters:
+  main-eqiad:
+    hosts:
+      conf1004.eqiad.wmnet: '1104'
+      conf1005.eqiad.wmnet: '1105'
+      conf1006.eqiad.wmnet: '1106'
+
+  main-codfw:
+    hosts:
+      conf2004.codfw.wmnet: '2001'
+      conf2005.codfw.wmnet: '2002'
+      conf2006.codfw.wmnet: '2003'
+
+  # ZK cluster for Druid analytics-eqiad cluster (non public),
+  # colocated on druid hosts.
+  druid-analytics-eqiad:
+    hosts:
+      an-druid1001.eqiad.wmnet: '1001'
+      an-druid1002.eqiad.wmnet: '1002'
+      an-druid1003.eqiad.wmnet: '1003'
+
+  # ZK cluster for Druid public-eqiad cluster, (for AQS, wikistats, etc.)
+  # colocated on druid hosts.
+  druid-public-eqiad:
+    hosts:
+      druid1004.eqiad.wmnet: '1004'
+      druid1005.eqiad.wmnet: '1005'
+      druid1006.eqiad.wmnet: '1006'
+
+  # ZK cluster for Druid analytics-test-eqiad cluster (non public),
+  # colocated on druid hosts. This is mainly used as testing
+  # environment for the Hadoop Test cluster jobs.
+  # Temporarily removed due to hw refresh of the hadoop test cluster.
+  druid-analytics-test-eqiad:
+    hosts:
+      an-test-druid1001.eqiad.wmnet: '1001'
+
+  # ZK Cluster dedicated to the Hadoop cluster (and its satellite systems)
+  analytics-eqiad:
+    hosts:
+      an-conf1001.eqiad.wmnet: '1001'
+      an-conf1002.eqiad.wmnet: '1002'
+      an-conf1003.eqiad.wmnet: '1003'
+
+  # Test ZK cluster
+  test-eqiad:
+    hosts:
+      zookeeper-test1002.eqiad.wmnet: '1002'
+
+# Used to sync the setting between all Kafka clusters and clients.
+kafka_message_max_bytes: 4194304
+
+kafka_clusters:
+
+  main-eqiad:
+    zookeeper_cluster_name: main-eqiad
+    brokers:
+      kafka-main1001.eqiad.wmnet:
+        id: 1001
+        rack: A
+      kafka-main1002.eqiad.wmnet:
+        id: 1002
+        rack: B
+      kafka-main1003.eqiad.wmnet:
+        id: 1003
+        rack: C
+      kafka-main1004.eqiad.wmnet:
+        id: 1004
+        rack: D
+      kafka-main1005.eqiad.wmnet:
+        id: 1005
+        rack: D
+
+  main-codfw:
+    zookeeper_cluster_name: main-codfw
+    brokers:
+      kafka-main2001.codfw.wmnet:
+        id: 2001
+        rack: A
+      kafka-main2002.codfw.wmnet:
+        id: 2002
+        rack: B
+      kafka-main2003.codfw.wmnet:
+        id: 2003
+        rack: C
+      kafka-main2004.codfw.wmnet:
+        id: 2004
+        rack: D
+      kafka-main2005.codfw.wmnet:
+        id: 2005
+        rack: D
+
+  # NOTE:  The 'rack' here is used by the confluent kafka module
+  # to assign broker.rack for Kafka rack awareness.  We are actually setting
+  # the row letter, not the full row-rack number, since each of these brokers
+  # are in different racks anyway.  We do awareness at the row level.
+  jumbo-eqiad:
+    zookeeper_cluster_name: main-eqiad
+    brokers:
+      kafka-jumbo1001.eqiad.wmnet:
+        id: 1001
+        rack: A
+      kafka-jumbo1002.eqiad.wmnet:
+        id: 1002
+        rack: A
+      kafka-jumbo1003.eqiad.wmnet:
+        id: 1003
+        rack: B
+      kafka-jumbo1004.eqiad.wmnet:
+        id: 1004
+        rack: C
+      kafka-jumbo1005.eqiad.wmnet:
+        id: 1005
+        rack: C
+      kafka-jumbo1006.eqiad.wmnet:
+        id: 1006
+        rack: D
+      kafka-jumbo1007.eqiad.wmnet:
+        id: 1007
+        rack: C
+      kafka-jumbo1008.eqiad.wmnet:
+        id: 1008
+        rack: D
+      kafka-jumbo1009.eqiad.wmnet:
+        id: 1009
+        rack: D
+
+  # Kafka clusters for logs, see also T206454
+  logging-eqiad:
+    zookeeper_cluster_name: main-eqiad
+    brokers:
+      kafka-logging1001.eqiad.wmnet:
+        id: 1004
+        rack: B
+      kafka-logging1002.eqiad.wmnet:
+        id: 1005
+        rack: C
+      kafka-logging1003.eqiad.wmnet:
+        id: 1006
+        rack: D
+
+  logging-codfw:
+    zookeeper_cluster_name: main-codfw
+    brokers:
+      kafka-logging2001.codfw.wmnet:
+        id: 2001
+        rack: A
+      kafka-logging2002.codfw.wmnet:
+        id: 2002
+        rack: C
+      kafka-logging2003.codfw.wmnet:
+        id: 2003
+        rack: D
+
+  test-eqiad:
+    zookeeper_cluster_name: test-eqiad
+    brokers:
+      kafka-test1006.eqiad.wmnet:
+        id: 1006
+      kafka-test1007.eqiad.wmnet:
+        id: 1007
+      kafka-test1008.eqiad.wmnet:
+        id: 1008
+      kafka-test1009.eqiad.wmnet:
+        id: 1009
+      kafka-test1010.eqiad.wmnet:
+        id: 1010
+
+# Oozie base configuration is common to multiple profiles, and must be kept
+# in sync. Instead of having it repated multiple times it is convenient to
+# have a single place in hiera to check/modify.
+oozie_services:
+  analytics-test-oozie:
+    oozie_host: an-test-coord1001.eqiad.wmnet
+
+  analytics-oozie:
+    oozie_host: an-coord1001.eqiad.wmnet
+
+# Hive base configuration is common to multiple profiles, and must be kept
+# in sync. Instead of having it repated multiple times it is convenient to
+# have a single place in hiera to check/modify.
+hive_services:
+  analytics-test-hive:
+    server_host: 'analytics-test-hive.eqiad.wmnet'
+    server_port: 10000
+    # Please note that this value is overridden by the coordinators to force
+    # them to use their local Metastore. Check the coordinators' role for more info.
+    metastore_host: 'analytics-test-hive.eqiad.wmnet'
+    metastore_jdbc_host: 'an-test-coord1001.eqiad.wmnet'
+    metastore_sasl_enabled: true
+    metastore_kerberos_principal: 'hive/analytics-test-hive.eqiad.wmnet@WIKIMEDIA'
+    server_authentication: 'KERBEROS'
+    server_authentication_kerberos_principal: 'hive/analytics-test-hive.eqiad.wmnet@WIKIMEDIA'
+    metastore_kerberos_keytab_file: '/etc/security/keytabs/hive/hive.keytab'
+    server_authentication_kerberos_principal: 'hive/analytics-test-hive.eqiad.wmnet@WIKIMEDIA'
+    server_authentication_kerberos_keytab: '/etc/security/keytabs/hive/hive.keytab'
+    hive_metastore_disallow_incompatible_col_type_changes: false
+    java_home: '/usr/lib/jvm/java-8-openjdk-amd64/jre'
+    metastore_opts: '-Xms4g -Xmx4g -XX:+UseG1GC -XX:+UseStringDeduplication -XX:MaxGCPauseMillis=1000 -Djava.net.preferIPv4Stack=false -javaagent:/usr/share/java/prometheus/jmx_prometheus_javaagent.jar=[::]:9183:/etc/prometheus/hive_metastore_jmx_exporter.yaml'
+    server_opts: '-Xms6g -Xmx6g -XX:+UseG1GC -XX:+UseStringDeduplication -XX:MaxGCPauseMillis=1000 -Djava.net.preferIPv4Stack=false -javaagent:/usr/share/java/prometheus/jmx_prometheus_javaagent.jar=[::]:10100:/etc/prometheus/hive_server_jmx_exporter.yaml'
+
+  analytics-hive:
+    server_host: analytics-hive.eqiad.wmnet
+    server_port: 10000
+    # Please note that this value is overridden by the coordinators to force
+    # them to use their local Metastore. Check the coordinators' role for more info.
+    metastore_host: 'analytics-hive.eqiad.wmnet'
+    metastore_jdbc_host: 'an-coord1001.eqiad.wmnet'
+    metastore_sasl_enabled: true
+    metastore_kerberos_keytab_file: '/etc/security/keytabs/hive/hive.keytab'
+    metastore_kerberos_principal: 'hive/analytics-hive.eqiad.wmnet@WIKIMEDIA'
+    server_authentication: 'KERBEROS'
+    server_authentication_kerberos_principal: 'hive/analytics-hive.eqiad.wmnet@WIKIMEDIA'
+    server_authentication_kerberos_keytab: '/etc/security/keytabs/hive/hive.keytab'
+    hive_metastore_disallow_incompatible_col_type_changes: false
+    java_home: '/usr/lib/jvm/java-8-openjdk-amd64/jre'
+    metastore_opts: '-Xms4g -Xmx4g -XX:+UseG1GC -XX:+UseStringDeduplication -XX:MaxGCPauseMillis=1000 -Djava.net.preferIPv4Stack=false -javaagent:/usr/share/java/prometheus/jmx_prometheus_javaagent.jar=[::]:9183:/etc/prometheus/hive_metastore_jmx_exporter.yaml'
+    server_opts: '-Xms10g -Xmx10g -XX:+UseG1GC -XX:+UseStringDeduplication -XX:MaxGCPauseMillis=1000 -Djava.net.preferIPv4Stack=false -javaagent:/usr/share/java/prometheus/jmx_prometheus_javaagent.jar=[::]:10100:/etc/prometheus/hive_server_jmx_exporter.yaml'
+
+
+
+# Hadoop base configuration is common to multiple profiles, and must be kept
+# in sync. Instead of having it repated multiple times it is convenient to
+# have a single place in hiera to check/modify.
+hadoop_clusters:
+  analytics-test-hadoop:
+    zookeeper_cluster_name: analytics-eqiad
+    resourcemanager_hosts:
+      - an-test-master1001.eqiad.wmnet
+      - an-test-master1002.eqiad.wmnet
+    namenode_hosts:
+      - an-test-master1001.eqiad.wmnet
+      - an-test-master1002.eqiad.wmnet
+    journalnode_hosts:
+      - an-test-worker1001.eqiad.wmnet
+      - an-test-worker1002.eqiad.wmnet
+      - an-test-worker1003.eqiad.wmnet
+    net_topology:
+      an-test-worker1001.eqiad.wmnet: /eqiad/A/5
+      an-test-worker1002.eqiad.wmnet: /eqiad/C/5
+      an-test-worker1003.eqiad.wmnet: /eqiad/D/6
+
+    # https://community.hortonworks.com/articles/43839/scaling-the-hdfs-namenode-part-2.html
+    # 20 * log2(Cluster Size)
+    dfs_namenode_handler_count: 20
+    dfs_namenode_service_port: 8040
+    dfs_namenode_service_handler_count: 10
+    hadoop_var_directory: '/srv/hadoop'
+
+    yarn_scheduler_maximum_allocation_mb: 53248
+    yarn_resourcemanager_zk_state_store_parent_path: '/yarn-rmstore/analytics-test-hadoop'
+    yarn_resourcemanager_max_completed_applications: 1000
+    # yarn_nodemanager_resource_memory_mb is set using the formula:
+    # total-memory - yarn_nodemanager_os_reserved_memory_mb
+    yarn_nodemanager_os_reserved_memory_mb: 12000
+
+    # Requires the Capacity scheduler to work
+    yarn_node_labels_enabled: true
+
+    hadoop_datanode_opts: "-Xms4096m -Xmx4096m -Djava.net.preferIPv4Stack=false -javaagent:/usr/share/java/prometheus/jmx_prometheus_javaagent.jar=[::]:51010:/etc/prometheus/hdfs_datanode_jmx_exporter.yaml"
+    hadoop_journalnode_opts: "-Xms4096m -Xmx4096m -Djava.net.preferIPv4Stack=false -javaagent:/usr/share/java/prometheus/jmx_prometheus_javaagent.jar=[::]:10485:/etc/prometheus/hdfs_journalnode_jmx_exporter.yaml"
+    yarn_nodemanager_opts: "-Xms4096m -Xmx4096m -Djava.net.preferIPv4Stack=false -javaagent:/usr/share/java/prometheus/jmx_prometheus_javaagent.jar=[::]:8141:/etc/prometheus/yarn_nodemanager_jmx_exporter.yaml"
+    hadoop_namenode_opts: "-Xms12288m -Xmx12288m  -XX:+UseG1GC -XX:MaxGCPauseMillis=1000 -Djava.net.preferIPv4Stack=false -javaagent:/usr/share/java/prometheus/jmx_prometheus_javaagent.jar=[::]:10080:/etc/prometheus/hdfs_namenode_jmx_exporter.yaml"
+    yarn_resourcemanager_opts: "-Xms4096m -Xmx4096m -Djava.net.preferIPv4Stack=false -javaagent:/usr/share/java/prometheus/jmx_prometheus_javaagent.jar=[::]:10083:/etc/prometheus/yarn_resourcemanager_jmx_exporter.yaml"
+    mapreduce_history_java_opts: "-Xms4096m -Xmx4096m -Djava.net.preferIPv4Stack=false -javaagent:/usr/share/java/prometheus/jmx_prometheus_javaagent.jar=[::]:10086:/etc/prometheus/mapreduce_history_jmx_exporter.yaml"
+
+    core_site_extra_properties:
+      # User used in the Yarn UI to check job logs/statuses/etc..
+      hadoop.http.staticuser.user: 'yarn'
+
+    yarn_site_extra_properties:
+      yarn.resourcemanager.scheduler.class: 'org.apache.hadoop.yarn.server.resourcemanager.scheduler.capacity.CapacityScheduler'
+      yarn.resourcemanager.scheduler.monitor.enable: true
+      # Note: the extra space at the beginning is needed.
+      # If you enable ACLs the admin list is "everybody" by default, so the rules are not
+      # really respected if we don't set a more specific group.
+      # The 'hadoop.http.staticuser.user' needs to be among the admins to allow various UIs
+      # to see Yarn logs.
+      yarn.admin.acl: 'yarn analytics-admins'
+      yarn.acl.enable: true
+
+    hdfs_site_extra_properties:
+      # Avoid long waits if the Namenodes are not reachable
+      # from clients.
+      dfs.client.failover.max.attempts: 3
+      dfs.namenode.acls.enabled: true
+      # Since we have less space available on the test cluster (due to fewer workers),
+      # better to use a smaller replication factor (3 is the Hadoop's default).
+      dfs.replication: 2
+
+  analytics-hadoop:
+    zookeeper_cluster_name: analytics-eqiad
+    resourcemanager_hosts:
+      - an-master1001.eqiad.wmnet
+      - an-master1002.eqiad.wmnet
+    namenode_hosts:
+      - an-master1001.eqiad.wmnet
+      - an-master1002.eqiad.wmnet
+    journalnode_hosts:
+      - an-worker1080.eqiad.wmnet  # Row A4
+      - an-worker1078.eqiad.wmnet  # Row A2
+      - analytics1072.eqiad.wmnet  # ROW B2
+      - an-worker1090.eqiad.wmnet  # Row C4
+      - analytics1069.eqiad.wmnet  # Row D8
+    net_topology:
+      an-master1001.eqiad.wmnet:  /eqiad/A/5
+      an-master1002.eqiad.wmnet:  /eqiad/B/8
+
+      analytics1058.eqiad.wmnet:  /eqiad/A/1
+      an-worker1078.eqiad.wmnet:  /eqiad/A/2
+      an-worker1079.eqiad.wmnet:  /eqiad/A/2
+      an-worker1096.eqiad.wmnet:  /eqiad/A/2
+      an-worker1118.eqiad.wmnet:  /eqiad/A/2
+      an-worker1119.eqiad.wmnet:  /eqiad/A/2
+      an-worker1129.eqiad.wmnet:  /eqiad/A/2
+      analytics1059.eqiad.wmnet:  /eqiad/A/3
+      analytics1060.eqiad.wmnet:  /eqiad/A/3
+      an-worker1080.eqiad.wmnet:  /eqiad/A/4
+      an-worker1102.eqiad.wmnet:  /eqiad/A/4
+      an-worker1120.eqiad.wmnet:  /eqiad/A/4
+      an-worker1121.eqiad.wmnet:  /eqiad/A/4
+      an-worker1140.eqiad.wmnet:  /eqiad/A/4
+      an-worker1141.eqiad.wmnet:  /eqiad/A/4
+      analytics1070.eqiad.wmnet:  /eqiad/A/5
+      analytics1071.eqiad.wmnet:  /eqiad/A/5
+      an-worker1081.eqiad.wmnet:  /eqiad/A/7
+      an-worker1082.eqiad.wmnet:  /eqiad/A/7
+      an-worker1103.eqiad.wmnet:  /eqiad/A/7
+      an-worker1122.eqiad.wmnet:  /eqiad/A/7
+      an-worker1123.eqiad.wmnet:  /eqiad/A/7
+      an-worker1139.eqiad.wmnet:  /eqiad/A/7
+
+      an-worker1083.eqiad.wmnet:  /eqiad/B/2
+      an-worker1084.eqiad.wmnet:  /eqiad/B/2
+      an-worker1124.eqiad.wmnet:  /eqiad/B/2
+      an-worker1125.eqiad.wmnet:  /eqiad/B/2
+      an-worker1126.eqiad.wmnet:  /eqiad/B/2
+      analytics1072.eqiad.wmnet:  /eqiad/B/3
+      an-worker1085.eqiad.wmnet:  /eqiad/B/4
+      an-worker1097.eqiad.wmnet:  /eqiad/B/4
+      an-worker1117.eqiad.wmnet:  /eqiad/B/4
+      an-worker1127.eqiad.wmnet:  /eqiad/B/4
+      an-worker1128.eqiad.wmnet:  /eqiad/B/4
+      analytics1073.eqiad.wmnet:  /eqiad/B/7
+      an-worker1086.eqiad.wmnet:  /eqiad/B/7
+      an-worker1087.eqiad.wmnet:  /eqiad/B/7
+      an-worker1098.eqiad.wmnet:  /eqiad/B/7
+      an-worker1130.eqiad.wmnet:  /eqiad/B/7
+      analytics1061.eqiad.wmnet:  /eqiad/B/8
+      analytics1062.eqiad.wmnet:  /eqiad/B/8
+      analytics1063.eqiad.wmnet:  /eqiad/B/8
+
+      an-worker1088.eqiad.wmnet:  /eqiad/C/2
+      an-worker1099.eqiad.wmnet:  /eqiad/C/2
+      an-worker1104.eqiad.wmnet:  /eqiad/C/2
+      an-worker1131.eqiad.wmnet:  /eqiad/C/2
+      an-worker1132.eqiad.wmnet:  /eqiad/C/2
+      analytics1064.eqiad.wmnet:  /eqiad/C/3
+      analytics1065.eqiad.wmnet:  /eqiad/C/3
+      analytics1066.eqiad.wmnet:  /eqiad/C/3
+      analytics1074.eqiad.wmnet:  /eqiad/C/3
+      an-worker1089.eqiad.wmnet:  /eqiad/C/4
+      an-worker1090.eqiad.wmnet:  /eqiad/C/4
+      an-worker1100.eqiad.wmnet:  /eqiad/C/4
+      an-worker1105.eqiad.wmnet:  /eqiad/C/4
+      an-worker1106.eqiad.wmnet:  /eqiad/C/4
+      an-worker1107.eqiad.wmnet:  /eqiad/C/4
+      an-worker1108.eqiad.wmnet:  /eqiad/C/4
+      analytics1075.eqiad.wmnet:  /eqiad/C/7
+      an-worker1091.eqiad.wmnet:  /eqiad/C/7
+      an-worker1109.eqiad.wmnet:  /eqiad/C/7
+      an-worker1110.eqiad.wmnet:  /eqiad/C/7
+      an-worker1133.eqiad.wmnet:  /eqiad/C/7
+      an-worker1111.eqiad.wmnet:  /eqiad/C/8
+
+      analytics1067.eqiad.wmnet:  /eqiad/D/2
+      analytics1068.eqiad.wmnet:  /eqiad/D/2
+      analytics1076.eqiad.wmnet:  /eqiad/D/2
+      an-worker1092.eqiad.wmnet:  /eqiad/D/2
+      an-worker1093.eqiad.wmnet:  /eqiad/D/2
+      an-worker1112.eqiad.wmnet:  /eqiad/D/2
+      an-worker1134.eqiad.wmnet:  /eqiad/D/4
+      an-worker1135.eqiad.wmnet:  /eqiad/D/4
+      an-worker1136.eqiad.wmnet:  /eqiad/D/4
+      an-worker1137.eqiad.wmnet:  /eqiad/D/4
+      an-worker1138.eqiad.wmnet:  /eqiad/D/4
+      an-worker1113.eqiad.wmnet:  /eqiad/D/5
+      an-worker1114.eqiad.wmnet:  /eqiad/D/5
+      analytics1077.eqiad.wmnet:  /eqiad/D/7
+      an-worker1094.eqiad.wmnet:  /eqiad/D/7
+      an-worker1095.eqiad.wmnet:  /eqiad/D/7
+      an-worker1101.eqiad.wmnet:  /eqiad/D/7
+      an-worker1115.eqiad.wmnet:  /eqiad/D/7
+      an-worker1116.eqiad.wmnet:  /eqiad/D/7
+      analytics1069.eqiad.wmnet:  /eqiad/D/8
+
+    core_site_extra_properties:
+      # User used in the Yarn UI to check job logs/statuses/etc..
+      hadoop.http.staticuser.user: 'yarn'
+
+    # Requires the Capacity scheduler to work
+    yarn_node_labels_enabled: true
+
+    yarn_site_extra_properties:
+      yarn.resourcemanager.scheduler.class: 'org.apache.hadoop.yarn.server.resourcemanager.scheduler.capacity.CapacityScheduler'
+      yarn.resourcemanager.scheduler.monitor.enable: true
+      # Note: the extra space at the beginning is needed.
+      # If you enable ACLs the admin list is "everybody" by default, so the rules are not
+      # really respected if we don't set a more specific group.
+      # The 'hadoop.http.staticuser.user' needs to be among the admins to allow various UIs
+      # to see Yarn logs.
+      yarn.admin.acl: 'yarn analytics-admins'
+      yarn.acl.enable: true
+
+    # The datanode daemon by default begins the shutdown procedure as soon as
+    # on volume/disk failure is registered. In our use case we want to keep the
+    # datanode working in case of one/two (two is very unlikey on the same host)
+    # disk failures.
+    datanode_volumes_failed_tolerated: 2
+
+    # https://community.hortonworks.com/articles/43839/scaling-the-hdfs-namenode-part-2.html
+    # 20 * log2(Cluster Size)
+    dfs_namenode_handler_count: 127
+
+    # We have experienced some issues with hdfs saveNamespace with a number of handler
+    # threads lower than the number of total datanodes running in the cluster.
+    # More specifically, during saveNamespace it seemed as if all service handler
+    # threads got blocked on a read lock, apparently held by the thread saving the fsimage
+    # file. The idea is to keep the number of threads a little more than the number
+    # of datanodes, to allow room for other threads responding to the ZKFC health probes.
+    # More info: T283733
+    dfs_namenode_service_port: 8040
+    dfs_namenode_service_handler_count: 100
+
+    # Allow a job to request up to the smallest value of yarn_nodemanager_resource_memory_mb
+    # in the cluster. The smallest value is 52G on the R720s (analytics1069 and below).
+    yarn_scheduler_maximum_allocation_mb: 49152
+    yarn_resourcemanager_zk_state_store_parent_path: '/yarn-rmstore/analytics-hadoop'
+
+    # yarn_nodemanager_resource_memory_mb is set using the formula:
+    # total-memory - yarn_nodemanager_os_reserved_memory_mb
+    # Used memory is: datanode + nodemanager + journalnode on some
+    #                   8G     +     8G      +        4G
+    yarn_nodemanager_os_reserved_memory_mb: 20000
+
+    hadoop_datanode_opts: "-Xms8192m -Xmx8192m -Djava.net.preferIPv4Stack=false -javaagent:/usr/share/java/prometheus/jmx_prometheus_javaagent.jar=[::]:51010:/etc/prometheus/hdfs_datanode_jmx_exporter.yaml"
+    hadoop_journalnode_opts: "-Xms4096m -Xmx4096m -Djava.net.preferIPv4Stack=false -javaagent:/usr/share/java/prometheus/jmx_prometheus_javaagent.jar=[::]:10485:/etc/prometheus/hdfs_journalnode_jmx_exporter.yaml"
+    yarn_nodemanager_opts: "-Xms8192m -Xmx8192m -Djava.net.preferIPv4Stack=false -XX:+UseG1GC -XX:+UseStringDeduplication -XX:MaxGCPauseMillis=1000 -javaagent:/usr/share/java/prometheus/jmx_prometheus_javaagent.jar=[::]:8141:/etc/prometheus/yarn_nodemanager_jmx_exporter.yaml"
+    # Following https://docs.cloudera.com/HDPDocuments/HDP2/HDP-2.6.3/bk_command-line-installation/content/configuring-namenode-heap-size.html
+    # and https://docs.cloudera.com/HDPDocuments/HDP2/HDP-2.6.2/bk_hdfs-administration/content/ch_g1gc_garbage_collector_tech_preview.html
+    # Xmx calculated adding +20% to what listed in the first link.
+    hadoop_namenode_opts: "-Xms44266m -Xmx44266m -Djava.net.preferIPv4Stack=false -XX:+UseG1GC -XX:MaxGCPauseMillis=4000 -XX:ParallelGCThreads=20 -javaagent:/usr/share/java/prometheus/jmx_prometheus_javaagent.jar=[::]:10080:/etc/prometheus/hdfs_namenode_jmx_exporter.yaml"
+    yarn_resourcemanager_opts: "-Xms4096m -Xmx4096m -Djava.net.preferIPv4Stack=false -javaagent:/usr/share/java/prometheus/jmx_prometheus_javaagent.jar=[::]:10083:/etc/prometheus/yarn_resourcemanager_jmx_exporter.yaml"
+
+deployment_server: deploy1002.eqiad.wmnet
+
+aptrepo_server: apt1001.wikimedia.org
+aptrepo_servers_failover:
+    - 'apt2001.wikimedia.org'
+
+netmon_server: netmon1002.wikimedia.org
+netmon_server_failover: netmon2001.wikimedia.org
+
+releases_server: releases1002.eqiad.wmnet
+releases_servers_failover:
+    - 'releases2002.codfw.wmnet'
+
+# Defines which Phabricator server is the active
+# one to open needed firewall holes and decide where
+# dumps are created.
+# Note there is an additional list of all Phabricator
+# servers in the role specific Hiera.
+phabricator_server: phab1001.eqiad.wmnet
+
+kerberos_realm_name: WIKIMEDIA
+kerberos_kadmin_server_primary: 'krb1001.eqiad.wmnet'
+kerberos_kadmin_keytabs_repo: 'puppetmaster1001.eqiad.wmnet'
+kerberos_kdc_servers:
+    - 'krb1001.eqiad.wmnet'
+    - 'krb2001.codfw.wmnet'
+
+# Etcd client global configuration
+etcd_client_srv_domain: "conftool.%{::site}.wmnet"
+etcd_host: ~
+etcd_port: ~
+
+# Conftool global prefix (will be per-dc)
+conftool_prefix: "/conftool/v1"
+
+
+# Logging: logstash, udp2log
+logstash_host: "logstash.svc.eqiad.wmnet"
+logstash_syslog_port: 10514
+logstash_gelf_port: 12201
+# TCP json_lines input
+logstash_json_lines_port: 11514
+# UDP logback/json input
+logstash_logback_port: 11514
+udp2log_aggregator: "udplog:8420"
+
+tcpircbot_host: 'icinga.wikimedia.org'
+tcpircbot_port: 9200
+
+# User for jenkins master-slave connections
+jenkins_agent_username: 'jenkins-slave'
+
+# HTTP proxy.
+# Provide these as seperate host and ports.
+http_proxy_host: webproxy.%{::site}.wmnet
+http_proxy_port: 8080
+# And as a url (can be used as an env variable).
+http_proxy: "http://%{lookup('http_proxy_host')}:%{lookup('http_proxy_port')}"
+
+# This is the "live" authdns server set, which feeds into any other tooling
+# that needs to operate on them (including themselves).  It includes redundant
+# IP address information so that authdns tooling can operate in the face of
+# recdns issues.
+authdns_servers:
+  'authdns1001.wikimedia.org': 208.80.154.134
+  'authdns2001.wikimedia.org': 208.80.153.17
+  'dns1001.wikimedia.org': 208.80.154.10
+  'dns1002.wikimedia.org': 208.80.155.108
+  'dns2001.wikimedia.org': 208.80.153.77
+  'dns2002.wikimedia.org': 208.80.153.111
+  'dns3001.wikimedia.org': 91.198.174.61
+  'dns3002.wikimedia.org': 91.198.174.62
+  'dns4001.wikimedia.org': 198.35.26.7
+  'dns4002.wikimedia.org': 198.35.26.8
+  'dns5001.wikimedia.org': 103.102.166.8
+  'dns5002.wikimedia.org': 103.102.166.9
+#  'dns6001.wikimedia.org': 185.15.58.5  #DRMRS-TODO
+#  'dns6002.wikimedia.org': 185.15.58.37 #DRMRS-TODO
+
+# .. and this is the set of public IPs they provide service on, which is
+# consumed by both authdns servers and the icinga monitoring of them.
+# XXX - probably a better way to do this without common.yaml, and some
+# restructuring to do in general, all of which may fall out when monitoring is
+# redone anyways...
+authdns_addrs:
+  ns0-v4:
+    address: '208.80.154.238'
+  ns1-v4:
+    address: '208.80.153.231'
+  ns2-v4:
+    address: '91.198.174.239'
+  nsa-v4:
+    address: '198.35.27.27'
+    skip_loopback: true # bird::anycast takes care of this one
+
+# acme-chief active host
+acmechief_host: 'acmechief1001.eqiad.wmnet'
+
+mail_smarthost:
+- 'mx1001.wikimedia.org'
+- 'mx2001.wikimedia.org'
+
+wikimail_smarthost:
+- 'wiki-mail-eqiad.wikimedia.org'
+- 'wiki-mail-codfw.wikimedia.org'
+# These are our servers - they all peer to each other and sync to upstream NTP
+# pool servers.
+ntp_peers:
+    eqiad:
+    - 'dns1001.wikimedia.org'
+    - 'dns1002.wikimedia.org'
+    codfw:
+    - 'dns2001.wikimedia.org'
+    - 'dns2002.wikimedia.org'
+    esams:
+    - 'dns3001.wikimedia.org'
+    - 'dns3002.wikimedia.org'
+    ulsfo:
+    - 'dns4001.wikimedia.org'
+    - 'dns4002.wikimedia.org'
+    eqsin:
+    - 'dns5001.wikimedia.org'
+    - 'dns5002.wikimedia.org'
+    drmrs:
+    - 'dns6001.wikimedia.org'
+    - 'dns6002.wikimedia.org'
+
+# Url to use for reaching graphite
+
+graphite_host: 'graphite-in.eqiad.wmnet'
+graphite_url: "http://%{lookup('graphite_host')}"
+
+cumin_masters:
+- 10.64.32.25                 # cumin1001.eqiad.wmnet
+- 2620:0:861:103:10:64:32:25  # cumin1001.eqiad.wmnet
+- 10.192.48.16                # cumin2001.codfw.wmnet
+- 2620:0:860:104:10:192:48:16 # cumin2001.codfw.wmnet
+- 10.192.32.49                # cumin2002.codfw.wmnet
+- 2620:0:860:103:10:192:32:49 # cumin2002.codfw.wmnet
+
+unpriv_cumin_masters:
+- 10.64.48.57                 # cuminunpriv1001.eqiad.wmnet
+- 2620:0:861:107:10:64:48:57  # cuminunpriv1001.eqiad.wmnet
+
+maintenance_hosts:
+- 10.64.16.77                 # mwmaint1002.eqiad.wmnet
+- 2620:0:861:102:10:64:16:77  # mwmaint1002.eqiad.wmnet
+- 10.192.32.34                # mwmaint2002.codfw.wmnet
+- 2620:0:860:103:10:192:32:34 # mwmaint2002.codfw.wmnet
+
+bastion_hosts:
+- 208.80.155.110                # bast1003.wikimedia.org
+- 2620:0:861:4:208:80:155:110   # bast1003.wikimedia.org
+- 208.80.153.54                 # bast2002.wikimedia.org
+- 2620:0:860:2:208:80:153:54    # bast2002.wikimedia.org
+- 91.198.174.6                  # bast3005.wikimedia.org
+- 2620:0:862:1:91:198:174:6     # bast3005.wikimedia.org
+- 198.35.26.13                  # bast4003.wikimedia.org
+- 2620:0:863:1:198:35:26:13     # bast4003.wikimedia.org
+- 103.102.166.6                 # bast5002.wikimedia.org
+- 2001:df2:e500:1:103:102:166:6 # bast5002.wikimedia.org
+# bast6002.wikimedia.org #DRMRS-TODO
+
+cache_hosts:
+- 10.64.0.130                    # cp1075.eqiad.wmnet
+- 2620:0:861:101:10:64:0:130     # cp1075.eqiad.wmnet
+- 10.64.0.131                    # cp1076.eqiad.wmnet
+- 2620:0:861:101:10:64:0:131     # cp1076.eqiad.wmnet
+- 10.64.0.132                    # cp1077.eqiad.wmnet
+- 2620:0:861:101:10:64:0:132     # cp1077.eqiad.wmnet
+- 10.64.0.133                    # cp1078.eqiad.wmnet
+- 2620:0:861:101:10:64:0:133     # cp1078.eqiad.wmnet
+- 10.64.16.22                    # cp1079.eqiad.wmnet
+- 2620:0:861:102:10:64:16:22     # cp1079.eqiad.wmnet
+- 10.64.16.23                    # cp1080.eqiad.wmnet
+- 2620:0:861:102:10:64:16:23     # cp1080.eqiad.wmnet
+- 10.64.16.24                    # cp1081.eqiad.wmnet
+- 2620:0:861:102:10:64:16:24     # cp1081.eqiad.wmnet
+- 10.64.16.25                    # cp1082.eqiad.wmnet
+- 2620:0:861:102:10:64:16:25     # cp1082.eqiad.wmnet
+- 10.64.32.67                    # cp1083.eqiad.wmnet
+- 2620:0:861:103:10:64:32:67     # cp1083.eqiad.wmnet
+- 10.64.32.68                    # cp1084.eqiad.wmnet
+- 2620:0:861:103:10:64:32:68     # cp1084.eqiad.wmnet
+- 10.64.32.69                    # cp1085.eqiad.wmnet
+- 2620:0:861:103:10:64:32:69     # cp1085.eqiad.wmnet
+- 10.64.32.70                    # cp1086.eqiad.wmnet
+- 2620:0:861:103:10:64:32:70     # cp1086.eqiad.wmnet
+- 10.64.48.101                   # cp1087.eqiad.wmnet
+- 2620:0:861:107:10:64:48:101    # cp1087.eqiad.wmnet
+- 10.64.48.102                   # cp1088.eqiad.wmnet
+- 2620:0:861:107:10:64:48:102    # cp1088.eqiad.wmnet
+- 10.64.48.103                   # cp1089.eqiad.wmnet
+- 2620:0:861:107:10:64:48:103    # cp1089.eqiad.wmnet
+- 10.64.48.104                   # cp1090.eqiad.wmnet
+- 2620:0:861:107:10:64:48:104    # cp1090.eqiad.wmnet
+- 10.192.0.23                    # cp2027.codfw.wmnet
+- 2620:0:860:101:10:192:0:23     # cp2027.codfw.wmnet
+- 10.192.0.24                    # cp2028.codfw.wmnet
+- 2620:0:860:101:10:192:0:24     # cp2028.codfw.wmnet
+- 10.192.0.30                    # cp2029.codfw.wmnet
+- 2620:0:860:101:10:192:0:30     # cp2029.codfw.wmnet
+- 10.192.0.32                    # cp2030.codfw.wmnet
+- 2620:0:860:101:10:192:0:32     # cp2030.codfw.wmnet
+- 10.192.16.32                   # cp2031.codfw.wmnet
+- 2620:0:860:102:10:192:16:32    # cp2031.codfw.wmnet
+- 10.192.16.33                   # cp2032.codfw.wmnet
+- 2620:0:860:102:10:192:16:33    # cp2032.codfw.wmnet
+- 10.192.16.182                  # cp2033.codfw.wmnet
+- 2620:0:860:102:10:192:16:182   # cp2033.codfw.wmnet
+- 10.192.16.184                  # cp2034.codfw.wmnet
+- 2620:0:860:102:10:192:16:184   # cp2034.codfw.wmnet
+- 10.192.32.18                   # cp2035.codfw.wmnet
+- 2620:0:860:103:10:192:32:18    # cp2035.codfw.wmnet
+- 10.192.32.19                   # cp2036.codfw.wmnet
+- 2620:0:860:103:10:192:32:19    # cp2036.codfw.wmnet
+- 10.192.32.103                  # cp2037.codfw.wmnet
+- 2620:0:860:103:10:192:32:103   # cp2037.codfw.wmnet
+- 10.192.32.104                  # cp2038.codfw.wmnet
+- 2620:0:860:103:10:192:32:104   # cp2038.codfw.wmnet
+- 10.192.48.154                  # cp2039.codfw.wmnet
+- 2620:0:860:104:10:192:48:154   # cp2039.codfw.wmnet
+- 10.192.48.155                  # cp2040.codfw.wmnet
+- 2620:0:860:104:10:192:48:155   # cp2040.codfw.wmnet
+- 10.192.48.156                  # cp2041.codfw.wmnet
+- 2620:0:860:104:10:192:48:156   # cp2041.codfw.wmnet
+- 10.192.48.157                  # cp2042.codfw.wmnet
+- 2620:0:860:104:10:192:48:157   # cp2042.codfw.wmnet
+- 10.20.0.50                     # cp3050.esams.wmnet
+- 2620:0:862:102:10:20:0:50      # cp3050.esams.wmnet
+- 10.20.0.51                     # cp3051.esams.wmnet
+- 2620:0:862:102:10:20:0:51      # cp3051.esams.wmnet
+- 10.20.0.52                     # cp3052.esams.wmnet
+- 2620:0:862:102:10:20:0:52      # cp3052.esams.wmnet
+- 10.20.0.53                     # cp3053.esams.wmnet
+- 2620:0:862:102:10:20:0:53      # cp3053.esams.wmnet
+- 10.20.0.54                     # cp3054.esams.wmnet
+- 2620:0:862:102:10:20:0:54      # cp3054.esams.wmnet
+- 10.20.0.55                     # cp3055.esams.wmnet
+- 2620:0:862:102:10:20:0:55      # cp3055.esams.wmnet
+- 10.20.0.56                     # cp3056.esams.wmnet
+- 2620:0:862:102:10:20:0:56      # cp3056.esams.wmnet
+- 10.20.0.57                     # cp3057.esams.wmnet
+- 2620:0:862:102:10:20:0:57      # cp3057.esams.wmnet
+- 10.20.0.58                     # cp3058.esams.wmnet
+- 2620:0:862:102:10:20:0:58      # cp3058.esams.wmnet
+- 10.20.0.59                     # cp3059.esams.wmnet
+- 2620:0:862:102:10:20:0:59      # cp3059.esams.wmnet
+- 10.20.0.60                     # cp3060.esams.wmnet
+- 2620:0:862:102:10:20:0:60      # cp3060.esams.wmnet
+- 10.20.0.61                     # cp3061.esams.wmnet
+- 2620:0:862:102:10:20:0:61      # cp3061.esams.wmnet
+- 10.20.0.62                     # cp3062.esams.wmnet
+- 2620:0:862:102:10:20:0:62      # cp3062.esams.wmnet
+- 10.20.0.63                     # cp3063.esams.wmnet
+- 2620:0:862:102:10:20:0:63      # cp3063.esams.wmnet
+- 10.20.0.64                     # cp3064.esams.wmnet
+- 2620:0:862:102:10:20:0:64      # cp3064.esams.wmnet
+- 10.20.0.65                     # cp3065.esams.wmnet
+- 2620:0:862:102:10:20:0:65      # cp3065.esams.wmnet
+- 10.128.0.121                   # cp4021.ulsfo.wmnet
+- 2620:0:863:101:10:128:0:121    # cp4021.ulsfo.wmnet
+- 10.128.0.122                   # cp4022.ulsfo.wmnet
+- 2620:0:863:101:10:128:0:122    # cp4022.ulsfo.wmnet
+- 10.128.0.123                   # cp4023.ulsfo.wmnet
+- 2620:0:863:101:10:128:0:123    # cp4023.ulsfo.wmnet
+- 10.128.0.124                   # cp4024.ulsfo.wmnet
+- 2620:0:863:101:10:128:0:124    # cp4024.ulsfo.wmnet
+- 10.128.0.125                   # cp4025.ulsfo.wmnet
+- 2620:0:863:101:10:128:0:125    # cp4025.ulsfo.wmnet
+- 10.128.0.126                   # cp4026.ulsfo.wmnet
+- 2620:0:863:101:10:128:0:126    # cp4026.ulsfo.wmnet
+- 10.128.0.127                   # cp4027.ulsfo.wmnet
+- 2620:0:863:101:10:128:0:127    # cp4027.ulsfo.wmnet
+- 10.128.0.128                   # cp4028.ulsfo.wmnet
+- 2620:0:863:101:10:128:0:128    # cp4028.ulsfo.wmnet
+- 10.128.0.129                   # cp4029.ulsfo.wmnet
+- 2620:0:863:101:10:128:0:129    # cp4029.ulsfo.wmnet
+- 10.128.0.130                   # cp4030.ulsfo.wmnet
+- 2620:0:863:101:10:128:0:130    # cp4030.ulsfo.wmnet
+- 10.128.0.131                   # cp4031.ulsfo.wmnet
+- 2620:0:863:101:10:128:0:131    # cp4031.ulsfo.wmnet
+- 10.128.0.132                   # cp4032.ulsfo.wmnet
+- 2620:0:863:101:10:128:0:132    # cp4032.ulsfo.wmnet
+- 10.128.0.9                     # cp4033.ulsfo.wmnet
+- 2620:0:863:101:10:128:0:9      # cp4033.ulsfo.wmnet
+- 10.128.0.10                    # cp4034.ulsfo.wmnet
+- 2620:0:863:101:10:128:0:10     # cp4034.ulsfo.wmnet
+- 10.128.0.11                    # cp4035.ulsfo.wmnet
+- 2620:0:863:101:10:128:0:11     # cp4035.ulsfo.wmnet
+- 10.128.0.12                    # cp4036.ulsfo.wmnet
+- 2620:0:863:101:10:128:0:12     # cp4036.ulsfo.wmnet
+- 10.132.0.101                   # cp5001.eqsin.wmnet
+- 2001:df2:e500:101:10:132:0:101 # cp5001.eqsin.wmnet
+- 10.132.0.102                   # cp5002.eqsin.wmnet
+- 2001:df2:e500:101:10:132:0:102 # cp5002.eqsin.wmnet
+- 10.132.0.103                   # cp5003.eqsin.wmnet
+- 2001:df2:e500:101:10:132:0:103 # cp5003.eqsin.wmnet
+- 10.132.0.104                   # cp5004.eqsin.wmnet
+- 2001:df2:e500:101:10:132:0:104 # cp5004.eqsin.wmnet
+- 10.132.0.105                   # cp5005.eqsin.wmnet
+- 2001:df2:e500:101:10:132:0:105 # cp5005.eqsin.wmnet
+- 10.132.0.107                   # cp5007.eqsin.wmnet
+- 2001:df2:e500:101:10:132:0:107 # cp5007.eqsin.wmnet
+- 10.132.0.108                   # cp5008.eqsin.wmnet
+- 2001:df2:e500:101:10:132:0:108 # cp5008.eqsin.wmnet
+- 10.132.0.109                   # cp5009.eqsin.wmnet
+- 2001:df2:e500:101:10:132:0:109 # cp5009.eqsin.wmnet
+- 10.132.0.110                   # cp5010.eqsin.wmnet
+- 2001:df2:e500:101:10:132:0:110 # cp5010.eqsin.wmnet
+- 10.132.0.111                   # cp5011.eqsin.wmnet
+- 2001:df2:e500:101:10:132:0:111 # cp5011.eqsin.wmnet
+- 10.132.0.112                   # cp5012.eqsin.wmnet
+- 2001:df2:e500:101:10:132:0:112 # cp5012.eqsin.wmnet
+- 10.132.0.106                   # cp5006.eqsin.wmnet
+- 2001:df2:e500:101:10:132:0:106 # cp5006.eqsin.wmnet
+- 10.132.0.6                     # cp5013.eqsin.wmnet
+- 2001:df2:e500:101:10:132:0:6   # cp5013.eqsin.wmnet
+- 10.132.0.7                     # cp5014.eqsin.wmnet
+- 2001:df2:e500:101:10:132:0:7   # cp5014.eqsin.wmnet
+- 10.132.0.8                     # cp5015.eqsin.wmnet
+- 2001:df2:e500:101:10:132:0:8   # cp5015.eqsin.wmnet
+- 10.132.0.9                     # cp5016.eqsin.wmnet
+- 2001:df2:e500:101:10:132:0:9   # cp5016.eqsin.wmnet
+- 10.136.0.6                     # cp6001.drmrs.wmnet
+- 2a02:ec80:600:101:10:136:0:6   # cp6001.drmrs.wmnet
+- 10.136.1.6                     # cp6002.drmrs.wmnet
+- 2a02:ec80:600:102:10:136:1:6   # cp6002.drmrs.wmnet
+- 10.136.0.7                     # cp6003.drmrs.wmnet
+- 2a02:ec80:600:101:10:136:0:7   # cp6003.drmrs.wmnet
+- 10.136.1.7                     # cp6004.drmrs.wmnet
+- 2a02:ec80:600:102:10:136:1:7   # cp6004.drmrs.wmnet
+- 10.136.0.8                     # cp6005.drmrs.wmnet
+- 2a02:ec80:600:101:10:136:0:8   # cp6005.drmrs.wmnet
+- 10.136.1.8                     # cp6006.drmrs.wmnet
+- 2a02:ec80:600:102:10:136:1:8   # cp6006.drmrs.wmnet
+- 10.136.0.9                     # cp6007.drmrs.wmnet
+- 2a02:ec80:600:101:10:136:0:9   # cp6007.drmrs.wmnet
+- 10.136.1.9                     # cp6008.drmrs.wmnet
+- 2a02:ec80:600:102:10:136:1:9   # cp6008.drmrs.wmnet
+- 10.136.0.10                    # cp6009.drmrs.wmnet
+- 2a02:ec80:600:101:10:136:0:10  # cp6009.drmrs.wmnet
+- 10.136.1.10                    # cp6010.drmrs.wmnet
+- 2a02:ec80:600:102:10:136:1:10  # cp6010.drmrs.wmnet
+- 10.136.0.11                    # cp6011.drmrs.wmnet
+- 2a02:ec80:600:101:10:136:0:11  # cp6011.drmrs.wmnet
+- 10.136.1.11                    # cp6012.drmrs.wmnet
+- 2a02:ec80:600:102:10:136:1:11  # cp6012.drmrs.wmnet
+- 10.136.0.12                    # cp6013.drmrs.wmnet
+- 2a02:ec80:600:101:10:136:0:12  # cp6013.drmrs.wmnet
+- 10.136.1.12                    # cp6014.drmrs.wmnet
+- 2a02:ec80:600:102:10:136:1:12  # cp6014.drmrs.wmnet
+- 10.136.0.13                    # cp6015.drmrs.wmnet
+- 2a02:ec80:600:101:10:136:0:13  # cp6015.drmrs.wmnet
+- 10.136.1.13                    # cp6016.drmrs.wmnet
+- 2a02:ec80:600:102:10:136:1:13  # cp6016.drmrs.wmnet
+
+kafka_brokers_main:
+- 10.64.0.200                  # kafka-main1001.eqiad.wmnet
+- 2620:0:861:101:10:64:0:200   # kafka-main1001.eqiad.wmnet
+- 10.64.16.37                  # kafka-main1002.eqiad.wmnet
+- 2620:0:861:102:10:64:16:37   # kafka-main1002.eqiad.wmnet
+- 10.64.32.90                  # kafka-main1003.eqiad.wmnet
+- 2620:0:861:103:10:64:32:90   # kafka-main1003.eqiad.wmnet
+- 10.64.48.30                  # kafka-main1004.eqiad.wmnet
+- 2620:0:861:107:10:64:48:30   # kafka-main1004.eqiad.wmnet
+- 10.64.48.31                  # kafka-main1005.eqiad.wmnet
+- 2620:0:861:107:10:64:48:31   # kafka-main1005.eqiad.wmnet
+- 10.192.0.17                  # kafka-main2001.codfw.wmnet
+- 2620:0:860:101:10:192:0:17   # kafka-main2001.codfw.wmnet
+- 10.192.16.8                  # kafka-main2002.codfw.wmnet
+- 2620:0:860:102:10:192:16:8   # kafka-main2002.codfw.wmnet
+- 10.192.32.136                # kafka-main2003.codfw.wmnet
+- 2620:0:860:103:10:192:32:136 # kafka-main2003.codfw.wmnet
+- 10.192.48.38                 # kafka-main2004.codfw.wmnet
+- 2620:0:860:104:10:192:48:38  # kafka-main2004.codfw.wmnet
+- 10.192.48.46                 # kafka-main2005.codfw.wmnet
+- 2620:0:860:104:10:192:48:46  # kafka-main2005.codfw.wmnet
+kafka_brokers_jumbo:
+- 10.64.0.175                 # kafka-jumbo1001.eqiad.wmnet
+- 2620:0:861:101:10:64:0:175  # kafka-jumbo1001.eqiad.wmnet
+- 10.64.0.176                 # kafka-jumbo1002.eqiad.wmnet
+- 2620:0:861:101:10:64:0:176  # kafka-jumbo1002.eqiad.wmnet
+- 10.64.16.99                 # kafka-jumbo1003.eqiad.wmnet
+- 2620:0:861:102:10:64:16:99  # kafka-jumbo1003.eqiad.wmnet
+- 10.64.32.159                # kafka-jumbo1004.eqiad.wmnet
+- 2620:0:861:103:10:64:32:159 # kafka-jumbo1004.eqiad.wmnet
+- 10.64.32.160                # kafka-jumbo1005.eqiad.wmnet
+- 2620:0:861:103:10:64:32:160 # kafka-jumbo1005.eqiad.wmnet
+- 10.64.48.117                # kafka-jumbo1006.eqiad.wmnet
+- 2620:0:861:107:10:64:48:117 # kafka-jumbo1006.eqiad.wmnet
+- 10.64.32.106                # kafka-jumbo1007.eqiad.wmnet
+- 2620:0:861:103:10:64:32:106 # kafka-jumbo1007.eqiad.wmnet
+- 10.64.48.121                # kafka-jumbo1008.eqiad.wmnet
+- 2620:0:861:107:10:64:48:121 # kafka-jumbo1008.eqiad.wmnet
+- 10.64.48.140                # kafka-jumbo1009.eqiad.wmnet
+- 2620:0:861:107:10:64:48:140 # kafka-jumbo1009.eqiad.wmnet
+kafka_brokers_logging:
+- 10.64.16.205                 # kafka-logging1001.eqiad.wmnet
+- 2620:0:861:102:10:64:16:205  # kafka-logging1001.eqiad.wmnet
+- 10.64.32.142                 # kafka-logging1002.eqiad.wmnet
+- 2620:0:861:103:10:64:32:142  # kafka-logging1002.eqiad.wmnet
+- 10.64.48.66                  # kafka-logging1003.eqiad.wmnet
+- 2620:0:861:107:10:64:48:66   # kafka-logging1003.eqiad.wmnet
+- 10.192.0.94                  # kafka-logging2001.codfw.wmnet
+- 2620:0:860:101:10:192:0:94   # kafka-logging2001.codfw.wmnet
+- 10.192.16.50                 # kafka-logging2002.codfw.wmnet
+- 2620:0:860:102:10:192:16:50  # kafka-logging2002.codfw.wmnet
+- 10.192.32.24                 # kafka-logging2003.codfw.wmnet
+- 2620:0:860:103:10:192:32:24  # kafka-logging2003.codfw.wmnet
+- 10.192.0.112                 # logstash2001.codfw.wmnet
+- 2620:0:860:101:10:192:0:112  # logstash2001.codfw.wmnet
+- 10.192.32.180                # logstash2002.codfw.wmnet
+- 2620:0:860:103:10:192:32:180 # logstash2002.codfw.wmnet
+- 10.192.48.131                # logstash2003.codfw.wmnet
+- 2620:0:860:104:10:192:48:131 # logstash2003.codfw.wmnet
+zookeeper_hosts_main:
+- 10.64.0.23                   # conf1004.eqiad.wmnet
+- 2620:0:861:101:10:64:0:23    # conf1004.eqiad.wmnet
+- 10.64.16.29                  # conf1005.eqiad.wmnet
+- 2620:0:861:102:10:64:16:29   # conf1005.eqiad.wmnet
+- 10.64.48.167                 # conf1006.eqiad.wmnet
+- 2620:0:861:107:10:64:48:167  # conf1006.eqiad.wmnet
+- 10.192.16.45                 # conf2004.codfw.wmnet
+- 2620:0:860:102:10:192:16:45  # conf2004.codfw.wmnet
+- 10.192.32.52                 # conf2005.codfw.wmnet
+- 2620:0:860:103:10:192:32:52  # conf2005.codfw.wmnet
+- 10.192.48.59                 # conf2006.codfw.wmnet
+- 2620:0:860:104:10:192:48:59  # conf2006.codfw.wmnet
+druid_public_hosts:
+- 10.64.0.35                  # druid1004.eqiad.wmnet
+- 2620:0:861:101:10:64:0:35   # druid1004.eqiad.wmnet
+- 10.64.16.172                # druid1005.eqiad.wmnet
+- 2620:0:861:102:10:64:16:172 # druid1005.eqiad.wmnet
+- 10.64.48.171                # druid1006.eqiad.wmnet
+- 2620:0:861:107:10:64:48:171 # druid1006.eqiad.wmnet
+- 10.64.16.171                # druid1007.eqiad.wmnet
+- 2620:0:861:102:10:64:16:171 # druid1007.eqiad.wmnet
+- 10.64.48.227                # druid1008.eqiad.wmnet
+- 2620:0:861:107:10:64:48:227 # druid1008.eqiad.wmnet
+
+labstore_hosts:
+- 208.80.154.7                # labstore1006.wikimedia.org
+- 2620:0:861:1:208:80:154:7   # labstore1006.wikimedia.org
+- 208.80.155.106              # labstore1007.wikimedia.org
+- 2620:0:861:4:208:80:155:106 # labstore1007.wikimedia.org
+
+mysql_root_clients:
+# ipv6 interfaces are not yet allowed due to mysql grants
+# do not put dns names or hostnames here, only ipv4
+- 10.64.0.122    # db1115.eqiad.wmnet
+- 10.192.48.91   # db2093.codfw.wmnet
+- 10.64.32.25    # cumin1001.eqiad.wmnet
+- 10.192.48.16   # cumin2001.codfw.wmnet
+- 10.192.32.49   # cumin2002.codfw.wmnet
+- 208.80.155.103 # dborch1001.wikimedia.org
+
+monitoring_hosts:
+- 208.80.154.88              # alert1001.wikimedia.org
+- 2620:0:861:3:208:80:154:88 # alert1001.wikimedia.org
+- 208.80.153.84              # alert2001.wikimedia.org
+- 2620:0:860:3:208:80:153:84 # alert2001.wikimedia.org
+
+deployment_hosts:
+- 10.64.32.28                 # deploy1002.eqiad.wmnet
+- 2620:0:861:103:10:64:32:28  # deploy1002.eqiad.wmnet
+- 10.192.32.7                 # deploy2002.codfw.wmnet
+- 2620:0:860:103:10:192:32:7  # deploy2002.codfw.wmnet
+
+# shared certificates needed by acme-chief and other puppet modules like the ncredir one
+# this is only required when a puppet module besides acme-chief needs access to certificate details
+# like the list of SNIs
+shared_acme_certificates:
+  non-canonical-redirect-1:
+    CN: 'wikipedia.com'
+    SNI:
+    - 'wikipedia.com'
+    - '*.wikipedia.com'
+    - '*.en-wp.com'
+    - 'en-wp.com'
+    - '*.en-wp.org'
+    - 'en-wp.org'
+    - '*.mediawiki.com'
+    - 'mediawiki.com'
+    - '*.voyagewiki.com'
+    - 'voyagewiki.com'
+    - '*.voyagewiki.org'
+    - 'voyagewiki.org'
+    - '*.wiikipedia.com'
+    - 'wiikipedia.com'
+    - '*.wikibook.com'
+    - 'wikibook.com'
+    - '*.wikibooks.com'
+    - 'wikibooks.com'
+    - '*.wikiepdia.com'
+    - 'wikiepdia.com'
+    - '*.wikiepdia.org'
+    - 'wikiepdia.org'
+    - '*.wikiipedia.org'
+    - 'wikiipedia.org'
+    - '*.wikijunior.com'
+    - 'wikijunior.com'
+    - '*.wikijunior.net'
+    - 'wikijunior.net'
+    - '*.wikijunior.org'
+    - 'wikijunior.org'
+    staging_time: 604800
+    challenge: dns-01
+    authorized_regexes:
+    - '^ncredir100[12]\.eqiad\.wmnet$'
+    - '^ncredir200[12]\.codfw\.wmnet$'
+    - '^ncredir300[12]\.esams\.wmnet$'
+    - '^ncredir400[12]\.ulsfo\.wmnet$'
+    - '^ncredir500[12]\.eqsin\.wmnet$'
+    - '^ncredir600[12]\.drmrs\.wmnet$'
+    prevalidate: true
+    skip_invalid_snis: true
+  non-canonical-redirect-2:
+    CN: '*.wikimania.com'
+    SNI:
+    - '*.wikimania.com'
+    - 'wikimania.com'
+    - '*.wikimania.org'
+    - 'wikimania.org'
+    - '*.wikimediacommons.co.uk'
+    - 'wikimediacommons.co.uk'
+    - '*.wikimediacommons.info'
+    - 'wikimediacommons.info'
+    - '*.wikimediacommons.jp.net'
+    - 'wikimediacommons.jp.net'
+    - '*.wikimediacommons.mobi'
+    - 'wikimediacommons.mobi'
+    - '*.wikimediacommons.net'
+    - 'wikimediacommons.net'
+    - '*.wikimediacommons.org'
+    - 'wikimediacommons.org'
+    - '*.wikimedia.community'
+    - 'wikimedia.community'
+    - '*.wikimania.asia'
+    - 'wikimania.asia'
+    - '*.wikimediafoundation.com'
+    - 'wikimediafoundation.com'
+    - '*.wikimediafoundation.info'
+    - 'wikimediafoundation.info'
+    - '*.wikimediafoundation.net'
+    - 'wikimediafoundation.net'
+    - '*.wikimedia.jp.net'
+    - 'wikimedia.jp.net'
+    - '*.wikimedia.lt'
+    - 'wikimedia.lt'
+    - '*.wikimedia.us'
+    - 'wikimedia.us'
+    - '*.wikinews.com'
+    - 'wikinews.com'
+    - '*.wikinews.de'
+    - 'wikinews.de'
+    staging_time: 604800
+    challenge: dns-01
+    authorized_regexes:
+    - '^ncredir100[12]\.eqiad\.wmnet$'
+    - '^ncredir200[12]\.codfw\.wmnet$'
+    - '^ncredir300[12]\.esams\.wmnet$'
+    - '^ncredir400[12]\.ulsfo\.wmnet$'
+    - '^ncredir500[12]\.eqsin\.wmnet$'
+    - '^ncredir600[12]\.drmrs\.wmnet$'
+    prevalidate: true
+    skip_invalid_snis: true
+  non-canonical-redirect-3:
+    CN: '*.wikipedia.bg'
+    SNI:
+    - '*.wikipedia.bg'
+    - 'wikipedia.bg'
+    - '*.wikipedia.co.il'
+    - 'wikipedia.co.il'
+    - '*.wikipedia.co.za'
+    - 'wikipedia.co.za'
+    - '*.wikipedia.ee'
+    - 'wikipedia.ee'
+    - '*.wikipedia.gr'
+    - 'wikipedia.gr'
+    - '*.wikipedia.in'
+    - 'wikipedia.in'
+    - '*.wikipedia.info'
+    - 'wikipedia.info'
+    - '*.wikipedia.is'
+    - 'wikipedia.is'
+    - '*.wikipedia.lt'
+    - 'wikipedia.lt'
+    - '*.wikipedia.net'
+    - 'wikipedia.net'
+    - '*.wiki-pedia.org'
+    - 'wiki-pedia.org'
+    - '*.wikipedia.org.il'
+    - 'wikipedia.org.il'
+    - '*.wikipediazero.org'
+    - 'wikipediazero.org'
+    - '*.wikiquote.com'
+    - 'wikiquote.com'
+    - '*.wikiquote.net'
+    - 'wikiquote.net'
+    - '*.wikisource.com'
+    - 'wikisource.com'
+    - '*.wikisource.pl'
+    - 'wikisource.pl'
+    - '*.wikispecies.com'
+    - 'wikispecies.com'
+    staging_time: 604800
+    challenge: dns-01
+    authorized_regexes:
+    - '^ncredir100[12]\.eqiad\.wmnet$'
+    - '^ncredir200[12]\.codfw\.wmnet$'
+    - '^ncredir300[12]\.esams\.wmnet$'
+    - '^ncredir400[12]\.ulsfo\.wmnet$'
+    - '^ncredir500[12]\.eqsin\.wmnet$'
+    - '^ncredir600[12]\.drmrs\.wmnet$'
+    prevalidate: true
+    skip_invalid_snis: true
+  non-canonical-redirect-4:
+    CN: '*.wikispecies.net'
+    SNI:
+    - '*.wikispecies.net'
+    - 'wikispecies.net'
+    - '*.wikispecies.org'
+    - 'wikispecies.org'
+    - '*.wikiversity.com'
+    - 'wikiversity.com'
+    - '*.wikivoyage.com'
+    - 'wikivoyage.com'
+    - '*.wikivoyage.de'
+    - 'wikivoyage.de'
+    - '*.wikivoyage.eu'
+    - 'wikivoyage.eu'
+    - '*.wikivoyage.net'
+    - 'wikivoyage.net'
+    - '*.wikivoyager.de'
+    - 'wikivoyager.de'
+    - '*.wikivoyager.org'
+    - 'wikivoyager.org'
+    - '*.wikpedia.org'
+    - 'wikpedia.org'
+    - '*.wiktionary.com'
+    - 'wiktionary.com'
+    - '*.wiktionary.eu'
+    - 'wiktionary.eu'
+    - 'pywikibot.org'
+    - '*.pywikibot.org'
+    staging_time: 604800
+    challenge: dns-01
+    authorized_regexes:
+    - '^ncredir100[12]\.eqiad\.wmnet$'
+    - '^ncredir200[12]\.codfw\.wmnet$'
+    - '^ncredir300[12]\.esams\.wmnet$'
+    - '^ncredir400[12]\.ulsfo\.wmnet$'
+    - '^ncredir500[12]\.eqsin\.wmnet$'
+    - '^ncredir600[12]\.drmrs\.wmnet$'
+    prevalidate: true
+    skip_invalid_snis: true
+  non-canonical-redirect-5:
+    CN: 'wikimedia.is'
+    SNI:
+    - 'wikimedia.is'
+    - '*.wikimedia.is'
+    - 'wikimedia.com.pt'
+    - '*.wikimedia.com.pt'
+    - 'indianwikimedia.com'
+    - '*.indianwikimedia.com'
+    - 'wikimedia.biz'
+    - '*.wikimedia.biz'
+    - 'wikimedia.xyz'
+    - '*.wikimedia.xyz'
+    - 'wwwwikimedia.com'
+    - '*.wwwwikimedia.com'
+    - 'wikipedia.es'
+    - '*.wikipedia.es'
+    - 'wkipedia.org'
+    - '*.wkipedia.org'
+    - 'wikkipedia.com'
+    - '*.wikkipedia.com'
+    - 'wilkipedia.org'
+    - '*.wilkipedia.org'
+    - 'wilipedia.com'
+    - '*.wilipedia.com'
+    - 'wikipediya.com'
+    - '*.wikipediya.com'
+    - 'wikipdia.org'
+    - '*.wikipdia.org'
+    - 'wikipedia.co.uk'
+    - '*.wikipedia.co.uk'
+    - 'wikipedia.uk'
+    - '*.wikipedia.uk'
+    - 'wikipedoa.org'
+    - '*.wikipedoa.org'
+    - 'wikipeedia.org'
+    - '*.wikipeedia.org'
+    - 'wiktionary.pl'
+    - '*.wiktionary.pl'
+    - 'wikipedia.com.ar'
+    - '*.wikipedia.com.ar'
+    - 'wikipedia.sk'
+    - '*.wikipedia.sk'
+    staging_time: 604800
+    challenge: dns-01
+    authorized_regexes:
+    - '^ncredir100[12]\.eqiad\.wmnet$'
+    - '^ncredir200[12]\.codfw\.wmnet$'
+    - '^ncredir300[12]\.esams\.wmnet$'
+    - '^ncredir400[12]\.ulsfo\.wmnet$'
+    - '^ncredir500[12]\.eqsin\.wmnet$'
+    - '^ncredir600[12]\.drmrs\.wmnet$'
+    prevalidate: true
+    skip_invalid_snis: true
+  non-canonical-redirect-6:
+    CN: 'wikipedia.fi'
+    SNI:
+    - 'wikipedia.fi'
+    - '*.wikipedia.fi'
+    - 'wikisource.pt'
+    - '*.wikisource.pt'
+    - 'wiktionary.pt'
+    - '*.wiktionary.pt'
+    - 'wiki.voyage'
+    - '*.wiki.voyage'
+    - 'wikiversity.pt'
+    - '*.wikiversity.pt'
+    - 'wikiquote.pt'
+    - '*.wikiquote.pt'
+    - 'wikiquotes.info'
+    - '*.wikiquotes.info'
+    - 'wikinews.pt'
+    - '*.wikinews.pt'
+    - 'wikibooks.pt'
+    - '*.wikibooks.pt'
+    - 'wikipedia.id'
+    - '*.wikipedia.id'
+    - 'wikjpedia.org'
+    - '*.wikjpedia.org'
+    - 'wikipedial.org'
+    - '*.wikipedial.org'
+    - 'wikidata.es'
+    - '*.wikidata.es'
+    - 'wikidata.pt'
+    - '*.wikidata.pt'
+    - 'wikidata.us'
+    - '*.wikidata.us'
+    - 'wikipediafoundation.org'
+    - '*.wikipediafoundation.org'
+    - 'wikidpedia.org'
+    - '*.wikidpedia.org'
+    - 'wekipedia.com'
+    - '*.wekipedia.com'
+    - 'wikipaedia.net'
+    - '*.wikipaedia.net'
+    - 'wikepedia.org'
+    - '*.wikepedia.org'
+    staging_time: 604800
+    challenge: dns-01
+    authorized_regexes:
+    - '^ncredir100[12]\.eqiad\.wmnet$'
+    - '^ncredir200[12]\.codfw\.wmnet$'
+    - '^ncredir300[12]\.esams\.wmnet$'
+    - '^ncredir400[12]\.ulsfo\.wmnet$'
+    - '^ncredir500[12]\.eqsin\.wmnet$'
+    - '^ncredir600[12]\.drmrs\.wmnet$'
+    prevalidate: true
+    skip_invalid_snis: true
+labsldapconfig: {}
+ldap:
+  base-dn: 'dc=wikimedia,dc=org'
+  groups_cn: 'ou=groups'
+  users_cn: 'ou=people'
+  proxyagent: 'cn=proxyagent,ou=profile,dc=wikimedia,dc=org'
+apereo_cas:
+  production:
+    base_url: 'https://idp.wikimedia.org/'
+    login_url: 'https://idp.wikimedia.org/login'
+    validate_url: 'https://idp.wikimedia.org/serviceValidate'
+  staging:
+    base_url: 'https://idp-test.wikimedia.org/'
+    login_url: 'https://idp-test.wikimedia.org/login'
+    validate_url: 'https://idp-test.wikimedia.org/serviceValidate'
+
+ripeatlas_measurements:
+  eqiad:
+    ipv4: '1790945'
+    ipv6: '1790947'
+  codfw:
+    ipv4: '32390538'
+    ipv6: '32390541'
+  esams:
+    ipv4: '23449935'
+    ipv6: '23449938'
+  ulsfo:
+    ipv4: '1791307'
+    ipv6: '1791309'
+  eqsin:
+    ipv4: '11645085'
+    ipv6: '11645088'
+
+asns:
+  eqiad: 65001
+  codfw: 65002
+  esams: 65003
+  ulsfo: 65004
+  eqsin: 65005
+  drmrs: 65006
+  eqord: 65020
+
+swift_storage_drives:
+  - '/dev/sdc'
+  - '/dev/sdd'
+  - '/dev/sde'
+  - '/dev/sdf'
+  - '/dev/sdg'
+  - '/dev/sdh'
+  - '/dev/sdi'
+  - '/dev/sdj'
+  - '/dev/sdk'
+  - '/dev/sdl'
+  - '/dev/sdm'
+  - '/dev/sdn'
+
+swift_aux_partitions:
+  - '/dev/sda3'
+  - '/dev/sda4'
+  - '/dev/sdb3'
+  - '/dev/sdb4'
+
+mediabackup:
+  batchsize: 1000
+  storage_path: '/srv/objectstorage'
+  storage_port: 9000

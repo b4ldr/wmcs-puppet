@@ -1,0 +1,53 @@
+profile::query_service::blazegraph_main_ns: wdq
+profile::query_service::package_dir: '/srv/deployment/wdqs/wdqs'
+profile::query_service::data_dir: '/srv/wdqs'
+profile::query_service::log_dir: '/var/log/wdqs'
+profile::query_service::deploy_name: 'wdqs'
+profile::query_service::endpoint: 'https://query.wikidata.org'
+profile::query_service::updater_options: '-n wdq'
+profile::query_service::deploy_mode: 'scap3'
+profile::query_service::max_query_time_millis: 30000
+profile::query_service::blazegraph_extra_jvm_opts:
+  # throttling configuration (see https://gerrit.wikimedia.org/r/plugins/gitiles/wikidata/query/rdf/+/refs/heads/master/blazegraph/src/main/java/org/wikidata/query/rdf/blazegraph/throttling/ThrottlingFilter.java for details)
+  - '-Dwdqs.throttling-filter.time-bucket-capacity-in-seconds=240'
+  - '-Dwdqs.throttling-filter.time-bucket-refill-amount-in-seconds=120'
+  - '-Dwdqs.throttling-filter.ban-duration-in-minutes=60'
+profile::query_service::sparql_query_stream: 'wdqs-internal.sparql-query'
+profile::query_service::event_service_endpoint: 'https://eventgate-analytics.discovery.wmnet:4592/v1/events?hasty=true'
+profile::query_service::nodes:
+  - 'wdqs1003.eqiad.wmnet'
+  - 'wdqs1008.eqiad.wmnet'
+  - 'wdqs1011.eqiad.wmnet'
+  - 'wdqs2004.codfw.wmnet'
+  - 'wdqs2005.codfw.wmnet'
+  - 'wdqs2006.codfw.wmnet'
+  - 'wdqs2008.codfw.wmnet'
+profile::admin::groups:
+  - wdqs-roots
+  - wdqs-admins
+cluster: wdqs-internal
+contactgroups: admins,wdqs-admins
+profile::lvs::realserver::pools:
+  wdqs-internal:
+    services:
+      - wdqs-blazegraph
+      - nginx
+profile::query_service::use_revisions: true
+
+profile::tlsproxy::envoy::global_cert_name: "wdqs-internal.discovery.wmnet"
+
+profile::query_service::blazegraph::monitoring_enabled: true
+profile::query_service::oauth: false
+profile::query_service::federation_user_agent: 'Wikidata Query Service (internal); https://query.wikidata.org/'
+
+# Includes module for connection limits
+profile::nginx::variant: 'full'
+
+profile::query_service::updater_type: 'regular'
+profile::query_service::streaming_updater::kafka_cluster: main
+# enable by defaults when switching to the streaming_updater
+# profile::query_service::blazegraph_extra_jvm_opts: ["-DwikibaseSomeValueMode=skolem"]
+
+# Proxy non-blazegraph requests to the microsites
+profile::query_service::gui_url: https://webserver-misc-apps.discovery.wmnet
+profile::contacts::role_contacts: ['Search Platform SREs']

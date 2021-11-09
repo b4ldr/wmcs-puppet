@@ -1,0 +1,4 @@
+profile::contacts::role_contacts:
+  - 'Observability SREs'
+
+cluster: graphite

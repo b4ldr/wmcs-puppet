@@ -1,0 +1,3 @@
+# Analytics Query Service - rack3 instances
+
+profile::cassandra::rack: 'rack3'

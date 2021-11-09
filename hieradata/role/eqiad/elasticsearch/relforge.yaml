@@ -1,0 +1,16 @@
+profile::elasticsearch::dc_settings:
+    # ES-specific: Not default
+    unicast_hosts:
+      - relforge1003.eqiad.wmnet
+
+    cluster_hosts:
+      - relforge1003.eqiad.wmnet
+      - relforge1004.eqiad.wmnet
+
+    expected_nodes: 2
+    minimum_master_nodes: 1
+
+has_lvs: false
+
+profile::elasticsearch::cirrus::storage_device: md1
+profile::kibana::package_name: kibana-oss

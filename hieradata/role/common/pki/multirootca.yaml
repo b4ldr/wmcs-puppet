@@ -1,0 +1,24 @@
+cluster: pki
+profile::base::puppet::dns_alt_names:
+  - pki.discovery.wmnet
+# in this file all _cert parameteres are passed to the file function
+# and all _key paramtetes are passed to the secret function
+profile::pki::multirootca::intermediates:
+  debmonitor:
+    ocsp_port: 10001
+  discovery:
+    ocsp_port: 10002
+    default_usages:
+      - 'digital signature'
+      - 'key encipherment'
+      - 'server auth'
+  kafka:
+    ocsp_port: 10003
+profile::pki::multirootca::root_ca_cn: 'Wikimedia_Internal_Root_CA'
+profile::pki::multirootca::root_ca_cert: 'profile/pki/ROOT/Wikimedia_Internal_Root_CA.pem'
+profile::pki::multirootca::root_ocsp_cert: 'profile/pki/ROOT/Wikimedia_Internal_Root_CA_ocsp_signing_cert.pem'
+profile::pki::multirootca::root_ocsp_key: 'pki/ROOT/Wikimedia_Internal_Root_CA_ocsp_signing_cert.pem'
+# This is the vhost used for the ocsp/crl responder
+profile::pki::multirootca::vhost: 'pki.discovery.wmnet'
+profile::pki::multirootca::db_host: 'm1-master.eqiad.wmnet'
+profile::contacts::role_contacts: ['Infrastructure Foundations SREs']

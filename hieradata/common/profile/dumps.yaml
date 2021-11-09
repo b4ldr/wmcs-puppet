@@ -1,0 +1,34 @@
+profile::dumps::stats_hosts: 'stat1006.eqiad.wmnet stat1007.eqiad.wmnet'
+profile::dumps::peer_hosts: 'dumpsdata1001.eqiad.wmnet dumpsdata1002.eqiad.wmnet dumpsdata1003.eqiad.wmnet labstore1006.wikimedia.org labstore1007.wikimedia.org'
+profile::dumps::phab_hosts: 'phab1001.eqiad.wmnet'
+profile::dumps::rsync_internal_clients:
+  ipv4:
+    - mwlog1002.eqiad.wmnet
+    - mwlog2002.codfw.wmnet
+    - phab1001.eqiad.wmnet
+    - dumpsdata1001.eqiad.wmnet
+    - dumpsdata1002.eqiad.wmnet
+    - dumpsdata1003.eqiad.wmnet
+    - labstore1006.wikimedia.org
+    - labstore1007.wikimedia.org
+    - stat1006.eqiad.wmnet
+    - stat1007.eqiad.wmnet
+  ipv6: []
+
+profile::dumps::generation_worker_cron_php: /usr/bin/php7.2
+profile::dumps::single_backend: false
+
+# the servers below maintain copies of either xml or misc dumps
+# 'public' ones are public-facing, the 'internal' ones
+# are for generation fallback use
+profile::dumps::public:
+    - labstore1006.wikimedia.org
+    - labstore1007.wikimedia.org
+profile::dumps::internal:
+    - dumpsdata1001.eqiad.wmnet
+# root of xml/sql dumps tree we want to rsync (public contents only)
+profile::dumps::xmldumpsdir: '/data/xmldatadumps/public'
+# root of misc dumps we want to rsync
+profile::dumps::miscdumpsdir: '/data/otherdumps'
+# subdirectories of misc dumps we want to rsync to fallback generation servers
+profile::dumps::miscsubdirs: 'incr,categoriesrdf'

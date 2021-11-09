@@ -1,0 +1,84 @@
+---
+profile::admin::groups:
+  - wmcs-roots
+  - deployment
+
+striker::apache::server_name: labtesttoolsadmin.wikimedia.org
+striker::apache::docroot: /srv/deployment/striker/deploy/public_html
+striker::apache::servers:
+  - http://127.0.0.1:8081
+striker::apache::port: 80
+
+striker::uwsgi::port: 8081
+striker::uwsgi::config:
+  debug:
+    DEBUG: false
+  ldap:
+    SERVER_URI: ldap://cloudservices2002-dev.wikimedia.org:389
+    BIND_USER: uid=novaadmin,ou=people,dc=wikimedia,dc=org
+    TLS: true
+  oauth:
+    CONSUMER_KEY: 3f0e3e91f2cba000c7d81932f59d615a
+  phabricator:
+    USER: StrikerBot
+  db:
+    ENGINE: django.db.backends.mysql
+    NAME: striker
+    USER: striker
+    HOST: labcontrol2001.wikimedia.org
+    PORT: 3306
+  cache:
+    LOCATION: 127.0.0.1:11212
+  xff:
+    USE_XFF_HEADER: true
+    # CIDR not supported, but substring/prefix match is
+    # Should match IPs presented by the misc cache servers + 127.0.0.1
+    TRUSTED_PROXY_LIST: "127.0.0.1 10. 208.80.152. 208.80.153. 208.80.154. 208.80.155. 91.198.174. 198.35.26."
+  https:
+    REQUIRE_HTTPS: true
+  logging:
+    HANDLERS: file logstash
+    FILE_FILENAME: /srv/log/striker/striker.log
+    LOGSTASH_HOST: logstash.svc.eqiad.wmnet
+    LOGSTASH_PORT: 11514
+  static:
+    STATIC_ROOT: /srv/deployment/striker/deploy/public_html/static
+  openstack:
+    URL: https://cloudcontrol2004-dev.wikimedia.org:25000/v3
+
+# striker::uwsgi::secret_config: exists in private repo
+
+
+# Currently unused:
+profile::openstack::base::nutcracker::memcached::size: 6000
+
+profile::openstack::codfw1dev::cloudweb_memcached_size: 6000
+profile::openstack::codfw1dev::cloudweb::mcrouter_port: 11213
+
+profile::openstack::base::nutcracker::redis::shards:
+  jobqueue:
+    eqiad:
+      cloudweb2001-dev:
+        host: 208.80.153.60
+        port: 6378
+  sessions:
+    eqiad:
+      cloudweb2001-dev:
+        host: 208.80.153.60
+        port: 6378
+
+
+# Wikitech things:
+
+profile::mediawiki::php::enable_fpm: true
+profile::openstack::codfw1dev::wikitech::web::osm_host: 'labtestwikitech.wikimedia.org'
+profile::openstack::codfw1dev::wikitech::web::webserver_hostname_aliases: ''
+profile::openstack::codfw1dev::wikitech::web::db_name: 'labtestwiki'
+
+profile::mediawiki::php::php_version: "7.2"
+profile::mediawiki::apc_shm_size: 128M
+
+lvs::realserver::realserver_ips:
+    - '208.80.153.60' # cloudweb2001-dev.wikimedia.org
+profile::base::firewall::block_abuse_nets: true
+profile::contacts::role_contacts: ['WMCS SREs']

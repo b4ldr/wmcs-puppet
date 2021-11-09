@@ -1,0 +1,3 @@
+profile::admin::groups:
+    - wmcs-roots
+role::osm::slave::osm_master: 'osmdb.eqiad.wmnet'

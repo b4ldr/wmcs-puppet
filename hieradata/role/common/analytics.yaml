@@ -1,0 +1,4 @@
+profile::admin::groups:
+  - analytics-admins
+cluster: analytics
+nagios_group: analytics_eqiad

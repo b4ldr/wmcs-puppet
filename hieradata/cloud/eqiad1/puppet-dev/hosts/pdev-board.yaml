@@ -1,0 +1,59 @@
+apereo_cas:
+  production:
+    login_url: 'https://idp.wmcloud.org/login'
+    validate_url: 'https://idp.wmcloud.org/serviceValidate'
+profile::puppetboard::ng::vhost: 'pdev-puppetboard.wmcloud.org'
+profile::puppetboard::ng::puppetdb_host: 'pdev-pdb.puppet-dev.eqiad1.wikimedia.cloud'
+profile::puppetboard::ng::puppetdb_port: 443
+profile::puppetboard::ng::puppetdb_proto: 'https'
+profile::puppetboard::ng::vhost: pdev-puppetboard.wmcloud.org
+profile::puppetboard::ng:page_title: 'WMF Puppetboard (development)'
+profile::puppetboard::ng::localise_timestamp: true
+profile::puppetboard::ng::graph_type: 'donut'
+profile::puppetboard::ng::graph_facts_override:
+- architecture
+- augeasversion
+- bios_vendor
+- bios_version
+- boardmanufacturer
+- domain
+- facterversion
+- has_ipmi
+- initsystem
+- interface_primary
+- is_pe
+- is_virtual
+- kernelmajversion
+- kernelrelease
+- kernelversion
+- lldp_parent
+- lsbdistcodename
+- lsbdistid
+- lsbdistrelease
+- lsbmajdistrelease
+- lsbminordistrelease
+- lvm_support
+- manufacturer
+- netmask
+- operatingsystem
+- operatingsystemmajrelease
+- operatingsystemrelease
+- osfamily
+- package_provider
+- physicalcorecount
+- physicalprocessorcount
+- processor0
+- processorcount
+- productname
+- puppetversion
+- rubyversion
+- selinux
+- service_provider
+- type
+- virtual
+profile::puppetboard::ng::query_endpoints_override:
+- facts
+- factsets
+- fact-contents
+- fact-paths
+- nodes

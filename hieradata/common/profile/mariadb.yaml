@@ -1,0 +1,59 @@
+profile::mariadb::section_ports:
+  s1: 3311
+  s2: 3312
+  s3: 3313
+  s4: 3314
+  s5: 3315
+  s6: 3316
+  s7: 3317
+  s8: 3318
+  s9: 3319
+  x1: 3320
+  x2: 3330
+  m1: 3321
+  m2: 3322
+  m3: 3323
+  m4: 3324
+  m5: 3325
+  m6: 3326
+  m7: 3327
+  m8: 3328
+  m9: 3329
+  staging: 3350
+  matomo: 3351
+  analytics_meta: 3352
+  mediabackupstemp: 3353
+profile::mariadb::section_params:
+  _defaults_:
+    writeable_dc: 'mwprimary'
+    replication_type: 'unidir'
+  x2:
+    writeable_dc: 'both'
+    replication_type: 'bidir'
+  es1:
+    writeable_dc: 'none'
+    replication_type: 'none'
+  es2:
+    writeable_dc: 'none'
+    replication_type: 'none'
+  es3:
+    writeable_dc: 'none'
+    replication_type: 'none'
+  m1:
+    writeable_dc: 'eqiad'
+    replication_type: 'unidir'
+  m2:
+    writeable_dc: 'eqiad'
+    replication_type: 'unidir'
+  m3:
+    writeable_dc: 'eqiad'
+    replication_type: 'unidir'
+  m5:
+    writeable_dc: 'eqiad'
+    replication_type: 'unidir'
+  tendril:
+    writeable_dc: 'eqiad'
+    replication_type: 'unidir'
+  mediabackupstemp:
+    writeable_dc: 'both'
+    replication_type: 'none'

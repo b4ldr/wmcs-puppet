@@ -1,0 +1,17 @@
+# prometheus-node-exporter by prod servers
+# prometheus-openstack-exporter by cloud servers
+prometheus_nodes:
+    - cloudmetrics1001.eqiad.wmnet
+    - cloudmetrics1002.eqiad.wmnet
+    - prometheus1003.eqiad.wmnet
+    - prometheus1004.eqiad.wmnet
+
+profile::openstack::eqiad1::fernet_key_rotate_time: '18:00:00'
+profile::openstack::eqiad1::fernet_key_sync_time: '19:00:00'
+
+profile::openstack::eqiad1::galera::server_id: 3
+
+profile::openstack::eqiad1::puppetmaster::web_hostname: puppetmaster.cloudinfra.wmflabs.org
+
+profile::wmcs::backy2::backup_time: '*-*-* 17:00:00'
+profile::wmcs::backy2::backup_glance_images::enabled: true

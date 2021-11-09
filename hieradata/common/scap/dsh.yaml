@@ -1,0 +1,153 @@
+# Scap proxy list
+#
+scap::dsh::scap_proxies:
+  - "mw1420.eqiad.wmnet" # A3 eqiad
+  - "mw1306.eqiad.wmnet" # B6 eqiad
+  - "mw1313.eqiad.wmnet" # B7 eqiad
+  - "mw1319.eqiad.wmnet" # C6 eqiad
+  - "mw1366.eqiad.wmnet" # D6 eqiad
+  - "mw2254.codfw.wmnet" # B3 codfw
+  - "mw2300.codfw.wmnet" # A3 codfw
+  - "mw2289.codfw.wmnet" # D4 codfw
+
+scap::dsh::scap_masters:
+  - "deploy1002.eqiad.wmnet"
+  - "deploy2002.codfw.wmnet"
+
+scap::dsh::groups:
+  jobrunner:
+    conftool:
+      - {'cluster': 'jobrunner', 'service': 'apache2'}
+  appserver:
+    conftool:
+      - {'cluster': 'appserver', 'service': 'apache2'}
+  api_appserver:
+    conftool:
+      - {'cluster': 'api_appserver', 'service': 'apache2'}
+  testserver:
+    conftool:
+      - {'cluster': 'testserver', 'service': 'apache2'}
+  mediawiki-installation:
+    conftool:
+      - {'cluster': 'appserver', 'service': 'apache2'}
+      - {'cluster': 'api_appserver', 'service': 'apache2'}
+      - {'cluster': 'jobrunner', 'service': 'apache2'}
+      - {'cluster': 'testserver', 'service': 'apache2'}
+      - {'cluster': 'parsoid', 'service': 'parsoid-php'}
+    hosts:
+      - cloudweb2001-dev.wikimedia.org
+      - deploy1002.eqiad.wmnet
+      - deploy2002.codfw.wmnet
+      - labweb1001.wikimedia.org
+      - labweb1002.wikimedia.org
+      - mwmaint1002.eqiad.wmnet
+      - mwmaint2002.codfw.wmnet
+      - scandium.eqiad.wmnet
+      - snapshot1008.eqiad.wmnet
+      - snapshot1009.eqiad.wmnet
+      - snapshot1010.eqiad.wmnet
+      - snapshot1011.eqiad.wmnet
+      - snapshot1012.eqiad.wmnet
+      - snapshot1013.eqiad.wmnet
+  parsoid:
+    conftool:
+      - {'cluster': 'parsoid', 'service': 'parsoid'}
+  parsoid-canaries:
+    # Also update $wgLinterSubmitterWhitelist in operations/mediawiki-config
+    hosts:
+      - wtp1025.eqiad.wmnet
+      - wtp1026.eqiad.wmnet
+      - parse2001.codfw.wmnet
+      - parse2002.codfw.wmnet
+  parsoid_php:
+    conftool:
+      - {'cluster': 'parsoid', 'service': 'parsoid-php'}
+  # The mediawiki canary lists change dynamically depending on the active dc
+  cassandra:
+    conftool:
+      - {'cluster': 'aqs', 'service': 'cassandra', 'datacenters': ['eqiad']}
+      - {'cluster': 'maps', 'service': 'cassandra', 'datacenters': ['codfw']}
+      - {'cluster': 'restbase', 'service': 'cassandra'}
+    hosts:
+      - restbase-dev1001.eqiad.wmnet
+      - restbase-dev1002.eqiad.wmnet
+      - restbase-dev1003.eqiad.wmnet
+  cirrus:
+    conftool:
+        - {'cluster': 'elasticsearch', 'service': 'elasticsearch', 'datacenters': ['eqiad', 'codfw']}
+  discovery-analytics:
+    hosts:
+      - stat1007.eqiad.wmnet
+  search-airflow:
+    hosts:
+      - an-airflow1001.eqiad.wmnet
+  wcqs:
+    conftool:
+      - {'cluster': 'wcqs', 'service': 'wcqs'}
+  wdqs:
+    conftool:
+      - {'cluster': 'wdqs', 'service': 'wdqs'}
+      - {'cluster': 'wdqs-internal', 'service': 'wdqs'}
+    hosts:
+      - wdqs1009.eqiad.wmnet
+      - wdqs1010.eqiad.wmnet
+  librenms:
+    hosts:
+      - netmon1002.wikimedia.org
+      - netmon2001.wikimedia.org
+  logstash:
+    conftool:
+      - {'cluster': 'logstash', 'service': 'kibana'}
+  relforge:
+    hosts:
+      - relforge1003.eqiad.wmnet
+      - relforge1004.eqiad.wmnet
+  webperf:
+    hosts:
+      - webperf1001.eqiad.wmnet
+      - webperf2001.codfw.wmnet
+  arclamp:
+    hosts:
+      - webperf1002.eqiad.wmnet
+      - webperf2002.codfw.wmnet
+  maps:
+    conftool:
+      - {'cluster': 'maps', 'service': 'kartotherian'}
+  maps-canaries:
+    hosts:
+      - maps2009.codfw.wmnet
+  netbox:
+    hosts:
+      - netbox-dev2001.wikimedia.org
+      - netbox1001.wikimedia.org
+      - netbox2001.wikimedia.org
+  ores:
+    conftool:
+      - {'cluster': 'ores', 'service': 'ores'}
+  ores-canaries:
+    hosts:
+      - ores1001.eqiad.wmnet
+      - ores2001.codfw.wmnet
+  phatality:
+    conftool:
+      - {'cluster': 'kibana7', 'service': 'kibana7'}
+  puppetboard:
+    hosts:
+      - puppetboard1001.eqiad.wmnet
+      - puppetboard2001.codfw.wmnet
+  debmonitor:
+    hosts:
+      - debmonitor1002.eqiad.wmnet
+      - debmonitor2002.codfw.wmnet
+  homer:
+    hosts:
+      - cumin1001.eqiad.wmnet
+  ci-docroot:
+    hosts:
+      - contint1001.wikimedia.org
+      - contint2001.wikimedia.org
+      - doc1001.eqiad.wmnet
+  zuul:
+    hosts:
+      - contint1001.wikimedia.org
+      - contint2001.wikimedia.org

@@ -1,0 +1,19 @@
+profile::elasticsearch::dc_settings:
+        # ES-specific: Not default
+        unicast_hosts: # this is also the list of master eligible nodes
+          - cloudelastic1001.wikimedia.org
+          - cloudelastic1002.wikimedia.org
+          - cloudelastic1004.wikimedia.org
+
+        cluster_hosts:
+          - cloudelastic1001.wikimedia.org
+          - cloudelastic1002.wikimedia.org
+          - cloudelastic1003.wikimedia.org
+          - cloudelastic1004.wikimedia.org
+          - cloudelastic1005.wikimedia.org
+          - cloudelastic1006.wikimedia.org
+
+        expected_nodes: 6
+
+        # We should be able to run "OK" with 3 servers (half of the cluster).
+        recover_after_nodes: 3

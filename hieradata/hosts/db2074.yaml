@@ -1,0 +1,3 @@
+# db2074
+# sanitarium master for s3
+mariadb::shard: 's3'

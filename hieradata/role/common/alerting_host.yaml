@@ -1,0 +1,152 @@
+profile::contacts::role_contacts:
+  - 'Observability SREs'
+
+cluster: alerting
+profile::resolving::domain_search:
+  - wikimedia.org
+  - eqiad.wmnet
+  - codfw.wmnet
+  - esams.wmnet
+  - ulsfo.wmnet
+  - eqsin.wmnet
+  - drmrs.wmnet
+
+profile::icinga::ircbot::ensure: present
+profile::icinga::ircbot::ircecho_nick: icinga-wm
+profile::icinga::ircbot::ircecho_server: 'irc.libera.chat +6697'
+
+profile::tcpircbot::irc::host: 'irc.libera.chat'
+profile::tcpircbot::irc::port: 6697
+
+# NOTE: update the senders whitelist on our paging infrastructure (AQL as of 20190211) when modifying Icinga hostnames
+profile::icinga::virtual_host: ldap-icinga.wikimedia.org
+profile::icinga::active_host: alert1001.wikimedia.org
+profile::icinga::partners:
+  - 'alert2001.wikimedia.org'
+
+profile::alertmanager::active_host: alert1001.wikimedia.org
+profile::alertmanager::partners:
+  - 'alert1001.wikimedia.org'
+  - 'alert2001.wikimedia.org'
+profile::alertmanager::grafana_hosts:
+  - 'grafana1002.eqiad.wmnet'
+  - 'grafana2001.codfw.wmnet'
+profile::alertmanager::thanos_query_hosts:
+  - 'thanos-fe1001.eqiad.wmnet'
+  - 'thanos-fe1002.eqiad.wmnet'
+  - 'thanos-fe1003.eqiad.wmnet'
+  - 'thanos-fe2001.codfw.wmnet'
+  - 'thanos-fe2002.codfw.wmnet'
+  - 'thanos-fe2003.codfw.wmnet'
+profile::alertmanager::web::vhost: 'alerts.%{facts.domain}'
+
+profile::mariadb::wmfmariadbpy::role: 'library'
+profile::dbbackups::check::backups:
+  s1:
+    dump:
+    - eqiad
+    - codfw
+    snapshot:
+    - eqiad
+    - codfw
+  s2:
+    dump:
+    - eqiad
+    - codfw
+    snapshot:
+    - eqiad
+    - codfw
+  s3:
+    dump:
+    - eqiad
+    - codfw
+    snapshot:
+    - eqiad
+    - codfw
+  s4:
+    dump:
+    - eqiad
+    - codfw
+    snapshot:
+    - eqiad
+    - codfw
+  s5:
+    dump:
+    - eqiad
+    - codfw
+    snapshot:
+    - eqiad
+    - codfw
+  s6:
+    dump:
+    - eqiad
+    - codfw
+    snapshot:
+    - eqiad
+    - codfw
+  s7:
+    dump:
+    - eqiad
+    - codfw
+    snapshot:
+    - eqiad
+    - codfw
+  s8:
+    dump:
+    - eqiad
+    - codfw
+    snapshot:
+    - eqiad
+    - codfw
+  x1:
+    dump:
+    - eqiad
+    - codfw
+    snapshot:
+    - eqiad
+    - codfw
+  es4:
+    dump:
+    - eqiad
+    - codfw
+  es5:
+    dump:
+    - eqiad
+    - codfw
+  m1:
+    dump:
+    - eqiad
+    - codfw
+  m2:
+    dump:
+    - eqiad
+    - codfw
+  m3:
+    dump:
+    - eqiad
+    - codfw
+  m5:
+    dump:
+    - eqiad
+    - codfw
+  zarcillo:
+    dump:
+    - eqiad
+    - codfw
+  matomo:
+    dump:
+    - eqiad
+  analytics_meta:
+    dump:
+    - eqiad
+profile::dbbackups::check::freshness:
+  dump: 691200
+  snapshot: 259200
+profile::dbbackups::check::db_host: db1159.eqiad.wmnet
+profile::dbbackups::check::db_user: backupcheck
+profile::dbbackups::check::db_database: dbbackups
+profile::dbbackups::check::warn_size_percentage: 5
+profile::dbbackups::check::crit_size_percentage: 15
+
+profile::klaxon::klaxon_config:
+  admin_contact_email: root@wikimedia.org

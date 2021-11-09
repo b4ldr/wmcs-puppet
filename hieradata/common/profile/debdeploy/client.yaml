@@ -1,0 +1,19 @@
+profile::debdeploy::client::ensure: present
+profile::debdeploy::client::exclude_mounts: []
+profile::debdeploy::client::exclude_filesystems: []
+profile::debdeploy::client::filter_services:
+  bacula-fd:
+    - '*'
+  agetty:
+    - '*'
+  nginx:
+    - libtiff
+    - libpng16
+  systemd:
+    - '*'
+  dbus-daemon:
+    - '*'
+  (sd-pam:
+    - '*'
+  (sd-pam):
+    - '*'

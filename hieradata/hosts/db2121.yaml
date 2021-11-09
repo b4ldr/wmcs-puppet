@@ -1,0 +1,4 @@
+# db2121
+mariadb::shard: 's7'
+profile::mariadb::mysql_role: 'master'
+mariadb::binlog_format: 'STATEMENT'

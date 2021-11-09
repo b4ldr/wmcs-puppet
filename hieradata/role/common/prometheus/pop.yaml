@@ -1,0 +1,14 @@
+profile::contacts::role_contacts:
+  - 'Observability SREs'
+
+cluster: prometheus
+profile::prometheus::ops::enable_thanos_upload: true
+profile::resolving::domain_search:
+  - wikimedia.org
+  - eqiad.wmnet
+  - codfw.wmnet
+  - esams.wmnet
+  - ulsfo.wmnet
+  - eqsin.wmnet
+  - drmrs.wmnet
+prometheus::server::storage_retention_size: 80GB

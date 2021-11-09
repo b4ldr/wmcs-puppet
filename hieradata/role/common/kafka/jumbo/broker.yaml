@@ -1,0 +1,117 @@
+cluster: kafka_jumbo
+
+
+profile::kafka::broker::kafka_cluster_name: jumbo
+
+# Enable SSL/TLS for Kafka.  This requires
+# that keystore and truststore files, and
+# profile::kafka::broker::ssl_password, are committed in
+# the expected location in ops/puppet/private.
+profile::kafka::broker::ssl_enabled: true
+
+# Enable basic ACL handling via Zookeeper stored rules
+# More info https://phabricator.wikimedia.org/T167304#3478277
+profile::kafka::broker::auth_acls_enabled: true
+
+# Enable Monitoring (via Prometheus) and icinga alerts
+profile::kafka::broker::monitoring_enabled: true
+profile::kafka::broker::monitoring::is_critical: true
+
+# (12 disks in the broker HW RAID array)
+# Bump this up to get a little more parallelism between replicas.
+profile::kafka::broker::num_replica_fetchers: 12
+profile::kafka::broker::num_recovery_threads_per_data_dir: 12
+profile::kafka::broker::num_io_threads: 12
+
+
+# To be changed during Kafka broker version upgrades
+profile::kafka::broker::inter_broker_protocol_version: 1.1.0
+
+
+# Mirror all topics from main-eqiad to jumbo-eqiad.
+# We explictliy use the fully qualified kafka cluster name with DC suffix
+# here as we don't intend to ever mirror from main-codfw to jumbo.
+profile::kafka::mirror::source_cluster_name: main-eqiad
+profile::kafka::mirror::destination_cluster_name: jumbo-eqiad
+profile::kafka::mirror::monitoring_enabled: true
+profile::kafka::mirror::properties:
+  # Blacklist change-prop topics.  We don't need them in jumbo.
+  # Also blacklist cirrusSearch related jobs.  These have unexplained HUGE messages.
+  whitelist: '^(?!.*change-prop\.|.*changeprop\.|.*cpjobqueue\.|.*mediawiki\.job\.cirrus).+$'
+  num_streams: 12
+  offset_commit_interval_ms: 5000
+  heap_opts: '-Xmx2G -Xms2G'
+  producer_properties:
+    "batch.size": 65536
+
+# Enable TLS consumer/producer
+profile::kafka::mirror::consumer_ssl_enabled: true
+profile::kafka::mirror::producer_ssl_enabled: true
+
+profile::kafka::broker::max_heap_size: '2g'
+
+# List of clients allowed to pull data from Kafka Jumbo:
+# - Kafka Jumbo brokers (as part of cluster maintenance)
+# - Fundraising (kafkatee via TLS)
+# - Analytics networks (various clients)
+# - eventlog1003 (not in the Analytics vlan)
+# - netflow* hosts (pmacct via TLS)
+# - weblog/centrallog hosts (kafkatee via TLS)
+# - cp cache hosts (varnishkafka via TLS, soon atskafka via TLS
+# - eventgate/eventstreams kubernetes pods
+#   (via egress filtering, so not all the pods can contact Jumbo with the following settings)
+# - search-loader[12]001 - mjolnir (Search team)
+# - kafkamon hosts (1001/1002 and 2002 in case of failover to codfw)
+# - webperf hosts (due to coal's processors)
+profile::kafka::broker::custom_ferm_srange_components:
+  - '$ANALYTICS_NETWORKS'
+  - '$KAFKA_BROKERS_JUMBO'
+  - '$FRACK_NETWORKS'
+  - '$CACHES'
+  - '$SERVICES_KUBEPODS_NETWORKS'
+  - '$STAGING_KUBEPODS_NETWORKS'
+  - '(@resolve((centrallog1001.eqiad.wmnet)) 2620:0:861:107:10:64:48:113)' # FIXME: the raw IPv6 IP is added since there is no AAAA record yet (it is not trivial to be added).
+  - '(@resolve((centrallog2001.codfw.wmnet)) 2620:0:860:104:10:192:48:64)' # FIXME: the raw IPv6 IP is added since there is no AAAA record yet (it is not trivial to be added).
+  - '(@resolve((centrallog2002.codfw.wmnet)) @resolve((centrallog2002.codfw.wmnet), AAAA))'
+  - '(@resolve((search-loader1001.eqiad.wmnet)) @resolve((search-loader1001.eqiad.wmnet), AAAA))'
+  - '(@resolve((search-loader2001.codfw.wmnet)) @resolve((search-loader2001.codfw.wmnet), AAAA))'
+  - '(@resolve((eventlog1003.eqiad.wmnet)) @resolve((eventlog1003.eqiad.wmnet), AAAA))'
+  - '(@resolve((netflow1001.eqiad.wmnet)) @resolve((netflow1001.eqiad.wmnet), AAAA))'
+  - '(@resolve((netflow2001.codfw.wmnet)) @resolve((netflow2001.codfw.wmnet), AAAA))'
+  - '(@resolve((netflow3001.esams.wmnet)) @resolve((netflow3001.esams.wmnet), AAAA))'
+  - '(@resolve((netflow4001.ulsfo.wmnet)) @resolve((netflow4001.ulsfo.wmnet), AAAA))'
+  - '(@resolve((netflow5001.eqsin.wmnet)) @resolve((netflow5001.eqsin.wmnet), AAAA))'
+  - '(@resolve((kafkamon1002.eqiad.wmnet)) @resolve((kafkamon1002.eqiad.wmnet), AAAA))'
+  - '(@resolve((webperf2001.codfw.wmnet)) @resolve((webperf2001.codfw.wmnet), AAAA))'
+  - '(@resolve((webperf2002.codfw.wmnet)) @resolve((webperf2002.codfw.wmnet), AAAA))'
+  - '(@resolve((webperf1001.eqiad.wmnet)) @resolve((webperf1001.eqiad.wmnet), AAAA))'
+  - '(@resolve((webperf1002.eqiad.wmnet)) @resolve((webperf1002.eqiad.wmnet), AAAA))'
+  - '(@resolve((logstash1007.eqiad.wmnet)) @resolve((logstash1007.eqiad.wmnet), AAAA))'
+  - '(@resolve((logstash1008.eqiad.wmnet)) @resolve((logstash1008.eqiad.wmnet), AAAA))'
+  - '(@resolve((logstash1009.eqiad.wmnet)) @resolve((logstash1009.eqiad.wmnet), AAAA))'
+  - '(@resolve((logstash1023.eqiad.wmnet)) @resolve((logstash1023.eqiad.wmnet), AAAA))'
+  - '(@resolve((logstash1024.eqiad.wmnet)) @resolve((logstash1024.eqiad.wmnet), AAAA))'
+  - '(@resolve((logstash1025.eqiad.wmnet)) @resolve((logstash1025.eqiad.wmnet), AAAA))'
+  - '(@resolve((logstash1030.eqiad.wmnet)) @resolve((logstash1030.eqiad.wmnet), AAAA))'
+  - '(@resolve((logstash1031.eqiad.wmnet)) @resolve((logstash1031.eqiad.wmnet), AAAA))'
+  - '(@resolve((logstash2004.codfw.wmnet)) @resolve((logstash2004.codfw.wmnet), AAAA))'
+  - '(@resolve((logstash2005.codfw.wmnet)) @resolve((logstash2005.codfw.wmnet), AAAA))'
+  - '(@resolve((logstash2006.codfw.wmnet)) @resolve((logstash2006.codfw.wmnet), AAAA))'
+  - '(@resolve((logstash2023.codfw.wmnet)) @resolve((logstash2023.codfw.wmnet), AAAA))'
+  - '(@resolve((logstash2024.codfw.wmnet)) @resolve((logstash2024.codfw.wmnet), AAAA))'
+  - '(@resolve((logstash2025.codfw.wmnet)) @resolve((logstash2025.codfw.wmnet), AAAA))'
+  - '(@resolve((logstash2030.codfw.wmnet)) @resolve((logstash2030.codfw.wmnet), AAAA))'
+  - '(@resolve((logstash2031.codfw.wmnet)) @resolve((logstash2031.codfw.wmnet), AAAA))'
+  - '(@resolve((kafka-test1006.eqiad.wmnet)) @resolve((kafka-test1006.eqiad.wmnet), AAAA))'
+  - '(@resolve((kafka-test1007.eqiad.wmnet)) @resolve((kafka-test1007.eqiad.wmnet), AAAA))'
+  - '(@resolve((kafka-test1008.eqiad.wmnet)) @resolve((kafka-test1008.eqiad.wmnet), AAAA))'
+  - '(@resolve((kafka-test1009.eqiad.wmnet)) @resolve((kafka-test1009.eqiad.wmnet), AAAA))'
+  - '(@resolve((kafka-test1010.eqiad.wmnet)) @resolve((kafka-test1010.eqiad.wmnet), AAAA))'
+
+# Kafka doesn't support Java 11 for versions
+# lower than 2.1
+# https://issues.apache.org/jira/browse/KAFKA-7264
+profile::java::java_packages:
+  - version: '8'
+    variant: 'jdk'
+profile::contacts::role_contacts: ['Analytics SREs']

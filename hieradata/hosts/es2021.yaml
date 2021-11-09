@@ -1,0 +1,4 @@
+# es2021
+mariadb::shard: 'es4'
+profile::mariadb::mysql_role: 'master'
+mariadb::binlog_format: 'ROW'

@@ -1,0 +1,105 @@
+---
+profile::admin::groups:
+  - wmcs-roots
+  - deployment
+  - ldap-admins
+
+striker::apache::server_name: toolsadmin.wikimedia.org
+striker::apache::docroot: /srv/deployment/striker/deploy/public_html
+striker::apache::servers:
+  - http://127.0.0.1:8081
+striker::apache::port: 80
+
+striker::uwsgi::port: 8081
+striker::uwsgi::config:
+  debug:
+    DEBUG: false
+  ldap:
+    SERVER_URI: ldaps://ldap-labs.eqiad.wikimedia.org:636
+    BIND_USER: uid=novaadmin,ou=people,dc=wikimedia,dc=org
+    TLS: false
+  oauth:
+    CONSUMER_KEY: 3f0e3e91f2cba000c7d81932f59d615a
+  phabricator:
+    USER: StrikerBot
+  db:
+    ENGINE: django.db.backends.mysql
+    NAME: striker
+    USER: striker
+    HOST: m5-master.eqiad.wmnet
+    PORT: 3306
+  cache:
+    LOCATION: 127.0.0.1:11212
+  xff:
+    USE_XFF_HEADER: true
+    # CIDR not supported, but substring/prefix match is
+    # Should match IPs presented by the misc cache servers + 127.0.0.1
+    TRUSTED_PROXY_LIST: "127.0.0.1 10. 208.80.152. 208.80.153. 208.80.154. 208.80.155. 91.198.174. 198.35.26."
+  https:
+    REQUIRE_HTTPS: true
+  logging:
+    HANDLERS: cee
+  static:
+    STATIC_ROOT: /srv/deployment/striker/deploy/public_html/static
+  openstack:
+    URL: https://openstack.eqiad1.wikimediacloud.org:25000/v3
+  features:
+    ACCOUNT_CREATE: true
+
+# striker::uwsgi::secret_config: exists in private repo
+
+
+#lvs::realserver::realserver_ips:
+#    - '10.2.2.40' # labweb.svc.eqiad.wmnet
+
+profile::lvs::realserver::pools:
+  labweb:
+    services:
+      - apache2
+      - php7.2-fpm
+      - nutcracker
+      - nginx
+
+# Currently unused:
+profile::openstack::base::nutcracker::memcached::size: 6000
+
+profile::openstack::eqiad1::cloudweb_memcached_size: 6000
+profile::openstack::eqiad1::cloudweb::mcrouter_port: 11213
+
+profile::openstack::base::nutcracker::redis::shards:
+  jobqueue:
+    eqiad:
+      labweb1001: #rdb1001
+        host: 208.80.154.160
+        port: 6378
+      labweb1002:
+        host: 208.80.155.109
+        port: 6379
+  sessions:
+    eqiad:
+      labweb1001: #rdb1001
+        host: 208.80.154.160
+        port: 6378
+      labweb1002:
+        host: 208.80.155.109
+        port: 6379
+
+
+# Wikitech things:
+profile::openstack::eqiad1::wikitech::web::osm_host: 'wikitech.wikimedia.org'
+profile::openstack::eqiad1::wikitech::web::webserver_hostname_aliases: 'wikitech.m.wikimedia.org wmflabs.org www.wmflabs.org'
+profile::openstack::eqiad1::wikitech::web::db_name: 'labswiki'
+
+# Horizon things:
+profile::openstack::eqiad1::horizon::maintenance_mode: false
+profile::openstack::eqiad1::horizon::puppet_git_repo_name: instance-puppet
+profile::openstack::eqiad1::horizon::puppet_git_repo_user: instance-puppet-user
+
+
+profile::mediawiki::php::enable_fpm: true
+# Leaving this because of wikitech
+profile::monitoring::is_critical: true
+profile::mediawiki::php::php_version: "7.2"
+profile::mediawiki::apc_shm_size: 128M
+# Enable icu63 component - T264991
+profile::mediawiki::php::icu63: true

@@ -1,0 +1,342 @@
+# General variables that once would have been in realm.pp
+cluster: misc
+datacenters: [eqiad]
+has_nrpe: false
+# dns
+labsdnsconfig:
+  recursor: 'ns-recursor0.openstack.eqiad1.wikimediacloud.org'
+  recursor_secondary: 'ns-recursor1.openstack.eqiad1.wikimediacloud.org'
+
+ldap:
+  ro-server: ldap-ro.eqiad.wikimedia.org
+  ro-server-fallback: ldap-ro.codfw.wikimedia.org
+  rw-server: ldap-labs.eqiad.wikimedia.org
+  rw-server-fallback: ldap-labs.codfw.wikimedia.org
+profile::base::overlayfs: true
+profile::monitoring::raid_check: false
+
+profile::resolving::domain_search:
+  - "%{facts.networking.domain}"
+  - "%{::labsproject}.eqiad1.wikimedia.cloud"
+  - "%{::labsproject}.eqiad.wmflabs"
+  - 'eqiad.wmflabs'
+
+profile::openstack::eqiad1::version: 'victoria'
+profile::openstack::base::region: "eqiad1-r"
+profile::openstack::eqiad1::nova_controller: 'openstack.eqiad1.wikimediacloud.org'
+profile::openstack::eqiad1::keystone_host: 'openstack.eqiad1.wikimediacloud.org'
+profile::openstack::eqiad1::keystone_api_fqdn: 'openstack.eqiad1.wikimediacloud.org'
+profile::openstack::base::observer_user: 'novaobserver'
+profile::openstack::base::observer_project: 'observer'
+profile::openstack::eqiad1::region: 'eqiad1-r'
+# publicly available read-only credentials
+profile::openstack::eqiad1::observer_password: 'Fs6Dq2RtG8KwmM2Z'
+
+profile::prometheus::varnishkafka_exporter::stats_default:
+    kafka: # https://github.com/edenhill/librdkafka/blob/master/STATISTICS.md
+      'metadata_cache_cnt':
+        'type': 'GaugeMetricFamily'
+        'name': 'rdkafka_producer_metadata_cache_cnt'
+        'description': 'Number of topics in the metadata cache.'
+        'labels': ['client_id']
+
+# Additional base overrides
+profile::base::remote_syslog: []
+
+# Labs statsd instance
+statsd: cloudmetrics1001.eqiad.wmnet:8125
+
+# Other overrides
+elasticsearch::version: 2
+elasticsearch::minimum_master_nodes: 1
+elasticsearch::recover_after_time: "1m"
+elasticsearch::heap_memory: '2G'
+elasticsearch::expected_nodes: 1
+elasticsearch::recover_after_nodes: 1
+archiva::proxy::ssl_enabled: false
+archiva::proxy::certificate_name: ssl-cert-snakeoil
+graphite_host: 'cloudmetrics1001.eqiad.wmnet'
+profile::puppetdb::jvm_opts: '-Xmx4G'
+profile::puppetdb::elk_logging: false
+profile::puppetdb::ca_path: '/etc/ssl/certs/Puppet_Internal_CA.pem'
+profile::puppetdb::puppetboard_hosts: []
+profile::puppetdb::ssldir: ~
+profile::puppetdb::microservice::enabled: false
+profile::puppetdb::microservice::port: 8090
+profile::puppetdb::microservice::uwsgi_port: 8091
+profile::puppetdb::microservice::allowed_hosts: []
+puppetmaster::servers:
+  "%{lookup('puppetmaster')}":
+    - { worker: "%{lookup('puppetmaster')}", loadfactor: 10 }
+
+# Default to Dummy authenticator in JupyterHubs in labs
+jupyterhub::authenticator: dummy
+
+# Cache-layer stuff
+profile::cache::base::performance_tweaks: false
+profile::cache::purge::kafka_topics:
+  - eqiad.resource-purge
+profile::cache::varnish::cache_be_opts:
+    port: 3128
+    connect_timeout: '3s'
+    first_byte_timeout: '65s'
+    between_bytes_timeout: '33s'
+    max_connections: 5000
+    probe: 'varnish'
+profile::cache::varnish::frontend::backends_in_etcd: false
+profile::cache::varnish::frontend::runtime_params:
+    - default_ttl=3600
+profile::cache::varnish::frontend::fe_vcl_config:
+    allowed_methods: '^(GET|HEAD|OPTIONS|PATCH|POST|PURGE|PUT|DELETE)$'
+    purge_host_regex: '^(?!(upload|upload\.wikimedia|maps)\.beta\.wmflabs\.org)'
+    static_host: 'en.wikipedia.beta.wmflabs.org'
+    top_domain: 'beta.wmflabs.org'
+    shortener_domain: 'w-beta.wmflabs.org'
+    upload_domain: 'upload.wikimedia.beta.wmflabs.org'
+    upload_webp_hits_threshold: 1000
+    maps_domain: 'maps.beta.wmflabs.org'
+    varnish_probe_ms: 100
+    keep: '1d'
+    public_clouds_shutdown: false
+    large_objects_cutoff: 262144
+profile::cache::varnish::frontend::fe_jemalloc_conf: 'lg_dirty_mult:8,lg_chunk:17'
+
+profile::netconsole::client::ensure: absent
+profile::trafficserver::backend::storage_elements:
+  - devname: vdb
+  - pathname: /var/cache/trafficserver
+    size: 256M
+profile::trafficserver::backend::outbound_tls_settings:
+  cacert_dirpath: /etc/ssl/certs
+  cacert_filename: Puppet_Internal_CA.pem
+  common:
+    cipher_suite: -ALL:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384
+    enable_tlsv1: 0
+    enable_tlsv1_1: 0
+    enable_tlsv1_2: 1
+    enable_tlsv1_3: 0
+  verify_origin: true
+profile::trafficserver::tls::inbound_tls_settings:
+  cert_path: /etc/acmecerts
+  certificates:
+  - cert_files:
+    - unified/live/ec-prime256v1.chained.crt
+    - unified/live/rsa-2048.chained.crt
+    default: true
+    ocsp_stapling_files:
+    - unified/live/ec-prime256v1.client.ocsp
+    - unified/live/rsa-2048.client.ocsp
+    private_key_files:
+    - unified/live/ec-prime256v1.key
+    - unified/live/rsa-2048.key
+  common:
+    cipher_suite: -ALL:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-CHACHA20-POLY1305:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES128-SHA:ECDHE-RSA-AES128-SHA:DHE-RSA-AES128-SHA
+    enable_tlsv1: 1
+    enable_tlsv1_1: 1
+    enable_tlsv1_2: 1
+    enable_tlsv1_3: 0
+  dhparams_file: /etc/ssl/dhparam.pem
+  do_ocsp: 1
+  load_elevated: 1
+  max_record_size: 16383
+  ocsp_stapling_path: /etc/acmecerts
+  private_key_path: /etc/acmecerts
+  session_cache: 2
+  session_cache_auto_clear: 1
+  session_cache_buckets: 256
+  session_cache_size: 102400
+  session_ticket_enable: 0
+profile::trafficserver::tls::parent_rules:
+  - dest_domain: '.'
+    parent:
+    - "%{::ipaddress}:3120"
+    - "%{::ipaddress}:3121"
+    - "%{::ipaddress}:3122"
+    - "%{::ipaddress}:3123"
+    - "%{::ipaddress}:3124"
+    - "%{::ipaddress}:3125"
+    - "%{::ipaddress}:3126"
+    - "%{::ipaddress}:3127"
+    parent_is_proxy: 'false'
+    round_robin: 'strict'
+profile::trafficserver::tls::mapping_rules:
+  - type: map
+    target: /
+    replacement: "http://%{::ipaddress}:3120"
+profile::trafficserver::backend::log_formats:
+  - name: wmf
+    format: 'Date:%<cqtd> Time:%<cqtt> ConnAttempts:%<sca> ConnReuse:%<sstc> TTFetchHeaders:%<{TS_MILESTONE_SERVER_READ_HEADER_DONE-TS_MILESTONE_SM_START}msdms> OriginServer:%<shn> OriginServerTime:%<stms> CacheResultCode:%<crc> CacheWriteResult:%<cwr> ReqMethod:%<cqhm> RespStatus:%<pssc> OriginStatus:%<sssc> ReqURL:%<cquuc> BereqURL:%<cqtx> ReqHeader:User-Agent:%<{User-agent}cqh> ReqHeader:Host:%<{Host}cqh> ReqHeader:X-Client-IP:%<{X-Client-IP}cqh> ReqHeader:Cookie:%<{Cookie}cqh> RespHeader:X-Cache-Int:%<{X-Cache-Int}psh> RespHeader:Backend-Timing:%<{Backend-Timing}psh>'
+profile::trafficserver::backend::log_filters:
+  - name: notpurge
+    action: reject
+    condition: cqhm MATCH PURGE
+  - name: notvarnishcheck
+    action: reject
+    condition: '%<{User-agent}cqh> MATCH Varnish backend check'
+profile::trafficserver::backend::logs:
+  - filename: notpurge
+    format: wmf
+    filters:
+    - notpurge
+    - notvarnishcheck
+    mode: ascii_pipe
+    ensure: present
+profile::trafficserver::backend::default_lua_script: 'default'
+
+zookeeper_clusters:
+  "%{::labsproject}":
+    hosts:
+      "%{::fqdn}": 1
+
+profile::base::ssh_server_settings:
+  disable_agent_forwarding: false
+  challenge_response_auth: false
+
+labs_puppet_master: "puppetmaster.cloudinfra.wmflabs.org"
+puppetmaster: "puppetmaster.cloudinfra.wmflabs.org"
+puppet_ca_source: puppet:///files/puppet/ca.labs.pem
+
+keystone_public_port: '25000'
+
+# By default, nag project admins about puppet breakage
+send_puppet_failure_emails: true
+
+# Oident proxy via default gateway
+profile::wmcs::services::oidentd::client::proxy: 172.16.0.1
+
+# For any Analytics Cluster in labs:
+bigtop::hadoop::datanode_mounts:
+    - /var/lib/hadoop/data/a
+    - /var/lib/hadoop/data/b
+
+# Default to creating home directories for all
+# users in the current Labs Project.
+bigtop::hadoop::users::groups: project-%{::labsproject}
+
+sudo_flavor: 'sudoldap'
+labsldapconfig:
+  hostname: ldap-ro.eqiad.wikimedia.org
+
+profile::openldap::hostname: ldap-labs.eqiad.wikimedia.org
+
+profile::diffscan::ipranges:
+  - 185.15.58.0/23
+  - 91.198.174.0/24
+  - 198.35.26.0/23
+  - 208.80.152.0/22
+  - 103.102.166.0/24
+  - 185.71.138.0/24 # Wikidough
+profile::diffscan::emailto: root@wikimedia.org
+profile::diffscan::groupname: Labs-to-public-v4
+
+# User for jenkins master-slave connections
+jenkins_agent_username: 'jenkins-deploy'
+
+mail_smarthost:
+- 'mx-out03.wmcloud.org'
+- 'mx-out04.wmcloud.org'
+
+wikimail_smarthost:
+- 'mx-out03.wmcloud.org'
+- 'mx-out04.wmcloud.org'
+
+profile::systemd::timesyncd::ntp_servers:
+    - 'ntp-01.cloudinfra.wmflabs.org'
+    - 'ntp-02.cloudinfra.wmflabs.org'
+ntp_peers:
+    eqiad:
+    - 'ntp-01.cloudinfra.wmflabs.org'
+    - 'ntp-02.cloudinfra.wmflabs.org'
+    codfw: []
+    ulsfo: []
+    eqsin: []
+    drmrs: []
+    esams: []
+
+scap::version: present
+
+profile::base::systemd::cpu_accounting: 'no'
+profile::base::systemd::blockio_accounting: 'no'
+profile::base::systemd::memory_accounting: 'no'
+profile::base::systemd::ip_accounting: 'no'
+
+# Cumin
+profile::openstack::eqiad1::cumin::project_masters: []
+profile::openstack::eqiad1::cumin::project_pub_key: undef
+profile::openstack::base::keystone::auth_protocol: https
+profile::openstack::base::keystone::public_port: 25000
+profile::openstack::eqiad1::nova::dhcp_domain: 'eqiad1.wikimedia.cloud'
+cumin_masters:
+  - 172.16.4.46  # cloud-cumin-01.cloudinfra.eqiad1.wikimedia.cloud
+  - 172.16.6.133 # cloud-cumin-02.cloudinfra.eqiad1.wikimedia.cloud
+  - 172.16.4.160 # cloud-cumin-03.cloudinfra.eqiad1.wikimedia.cloud
+
+# Url to use for reaching graphite
+graphite_url: 'https://graphite-labs.wikimedia.org'
+profile::base::puppet::dns_alt_names: []
+
+bastion_hosts:
+- 172.16.1.136 # bastion-eqiad1-01.bastion.eqiad1.wikimedia.cloud
+- 172.16.3.155 # bastion-eqiad1-02.bastion.eqiad1.wikimedia.cloud
+- 172.16.5.8   # bastion-restricted-eqiad1-02.bastion.eqiad1.wikimedia.cloud
+
+cache_hosts:
+- 172.16.0.164 # proxy-01.project-proxy.eqiad1.wikimedia.cloud
+- 172.16.0.165 # proxy-02.project-proxy.eqiad1.wikimedia.cloud
+- 172.16.1.181 # deployment-cache-text06.deployment-prep.eqiad1.wikimedia.cloud
+# use aliases to provide for backwards compatibility
+# perhaps this doesn't work with our current version of puppet
+# profile::base::puppet::puppetmaster: "%{alias('puppetmaster')}"
+profile::idp::key_password: changeit
+profile::idp::keystore_password: changeit
+
+monitoring_hosts:
+- 172.16.7.178 # was once shinken but has been deleted
+
+# We do not have support for LVS systems in Cloud VPS
+has_lvs: false
+service::catalog: {}
+
+# WMCS clusters are squashed into 'misc'
+wikimedia_clusters:
+  misc:
+    description: "Miscellaneous"
+    id: 8
+    sites:
+      eqiad: []
+      codfw: []
+  cache_text:
+    description: "Text caches"
+    id: 20
+    sites:
+      eqiad: []
+      codfw: []
+      esams: []
+      ulsfo: []
+      eqsin: []
+      drmrs: []
+  cache_upload:
+    description: "Upload caches"
+    id: 22
+    sites:
+      eqiad: []
+      codfw: []
+      esams: []
+      ulsfo: []
+      eqsin: []
+      drmrs: []
+  parsoid:
+    description: "Parsoid"
+    id: 37
+    sites:
+      eqiad: []
+      codfw: []
+
+profile::mariadb::cloudinfra::puppetmasters:
+- cloud-puppetmaster-03.cloudinfra.eqiad.wmflabs
+- cloud-puppetmaster-04.cloudinfra.eqiad.wmflabs
+profile::mariadb::cloudinfra::cloudinfra_dbs:
+- cloudinfra-db01.cloudinfra.eqiad.wmflabs
+- cloudinfra-db02.cloudinfra.eqiad.wmflabs
+
+labs_site: "eqiad1"

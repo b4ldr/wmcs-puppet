@@ -1,0 +1,3 @@
+# db2128
+# sanitarium master for s5
+mariadb::shard: 's5'

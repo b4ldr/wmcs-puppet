@@ -1,0 +1,4 @@
+# db1128
+mariadb::shard: 'm5'
+profile::mariadb::mysql_role: 'master'
+mariadb::binlog_format: 'ROW'

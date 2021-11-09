@@ -1,0 +1,15 @@
+profile::puppetdb::jvm_opts: '-Xmx4G'
+profile::puppetdb::elk_logging: true
+profile::puppetdb::ca_path: '/etc/ssl/certs/Puppet_Internal_CA.pem'
+profile::puppetdb::puppetboard_hosts: []
+profile::puppetdb::ssldir: ~
+profile::puppetdb::slaves: []
+profile::puppetdb::log_level: info
+profile::puppetdb::tmpfs_stockpile_queue: false
+profile::puppetdb::clean_stockpile: false
+profile::puppetdb::facts_blacklist: []
+profile::puppetdb::facts_blacklist_type: 'literal'
+profile::puppetdb::gc_interval: 20
+profile::puppetdb::node_ttl: '7d'
+profile::puppetdb::node_purge_ttl: '14d'
+profile::puppetdb::report_ttl: '1d'

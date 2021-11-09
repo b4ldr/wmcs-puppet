@@ -1,0 +1,237 @@
+profile::resolving::domain_search:
+  - wikimedia.org
+  - eqiad.wmnet
+  - codfw.wmnet
+cluster: misc
+profile::admin::groups:
+  - deployment
+  - deploy-service
+  - deploy-ml-service
+  - parsoid-admin
+  - wdqs-admins
+  - eventlogging-admins
+  - aqs-admins
+  - deploy-aqs
+  - deploy-design
+  - deploy-phabricator
+  - analytics-deployers
+  - gerrit-deployers
+  - zuul-deployers
+  - contint-admins
+
+# We still don't enable fpm here
+profile::mediawiki::php::enable_fpm: false
+
+# Default scap server configuration.  This is used in production.
+# If you are setting up a scap server in labs, these will be used
+# unless you override them for your labs project.
+# See the overrides in hieradata/labs/deployment-prep/common.yaml
+# for an example.
+
+# keyholder::agent declarations.  These are created
+# by the profile::keyholder::server class.  Each agent listed here
+# will be present and useable by scap on the scap deploy server.
+# NOTE: since labs
+profile::keyholder::server::agents:
+  mwdeploy:
+    trusted_groups:
+      - wikidev
+      - mwdeploy
+
+  phabricator:
+    trusted_groups:
+      - deploy-phabricator
+
+  gerrit:
+    trusted_groups:
+      - gerrit-deployers
+
+  eventlogging:
+    trusted_groups:
+      - eventlogging-admins
+
+  deploy-service:
+    trusted_groups:
+      - deploy-service
+      - aqs-admins
+      - deploy-aqs
+      - deployment
+
+  dumpsdeploy:
+    trusted_groups:
+      - ops
+
+  analytics_deploy:
+    trusted_groups:
+      - analytics-deployers
+
+  deploy-librenms:
+    trusted_groups:
+      - ops
+
+  deploy-puppetboard:
+    trusted_groups:
+      - ops
+
+  deploy-debmonitor:
+    trusted_groups:
+      - ops
+
+  apache2modsec:
+    trusted_groups:
+      - ops
+      - gerrit-admin
+
+  netbox:
+    trusted_groups:
+      - ops
+
+  deploy-homer:
+    trusted_groups:
+      - ops
+
+  deploy-ci-docroot:
+    trusted_groups:
+      - contint-admins
+
+  deploy-zuul:
+    trusted_groups:
+      - zuul-deployers
+
+  deploy-design:
+    trusted_groups:
+      - deploy-design
+
+# scap::source declarations.  These are created
+# by the scap::server class.  Each source listed here
+# will be cloned on the scap deploy server.
+scap::sources:
+  3d2png/deploy: {}
+  analytics/refinery:
+    scap_repository: analytics/refinery/scap
+  analytics/hdfs-tools/deploy: {}
+  dumps/dumps:
+    repository: operations/dumps
+    scap_repository: operations/dumps/scap
+  eventlogging/analytics:
+    repository: eventlogging
+    scap_repository: eventlogging/scap/analytics
+  # Public EventStreams service
+  eventstreams/deploy:
+    repository: mediawiki/services/eventstreams/deploy
+  # Superset
+  analytics/superset/deploy: {}
+  gerrit/gerrit:
+    repository: operations/software/gerrit
+  gervert/deploy:
+    repository: operations/software/gerrit/tools/gervert/deploy
+  iegreview/iegreview:
+    repository: iegreview
+    origin: phabricator
+  integration/docroot: {}
+  kartotherian/deploy:
+    repository: maps/kartotherian/deploy
+  #    lvs_service: kartotherian
+  logstash/plugins:
+    repository: operations/software/logstash/plugins
+  analytics/turnilo/deploy: {}
+  ores/deploy:
+    repository: mediawiki/services/ores/deploy
+  #    lvs_service: ores
+  parsoid/deploy:
+    repository: mediawiki/services/parsoid/deploy
+  #    lvs_service: parsoid
+  phabricator/deployment: {}
+  restbase/deploy:
+    repository: mediawiki/services/restbase/deploy
+  striker/deploy:
+    repository: labs/striker/deploy
+  horizon/deploy:
+    repository: openstack/horizon/deploy
+  tilerator/deploy:
+    repository: maps/tilerator/deploy
+  #    lvs_service: tilerator
+  # Wikimania scholarships app
+  scholarships/scholarships:
+    repository: wikimedia/wikimania-scholarships
+  wikimedia/discovery/analytics:
+    repository: wikimedia/discovery/analytics
+  wdqs/wdqs:
+    repository: wikidata/query/deploy
+  #    lvs_service: wdqs
+  # Cassandra logback encoder for Logstash
+  cassandra/logstash-logback-encoder:
+    repository: operations/software/logstash-logback-encoder
+  # Time-window compaction strategy for Cassandra
+  cassandra/twcs:
+    repository: operations/software/cassandra-twcs
+  homer/deploy:
+    repository: operations/software/homer/deploy
+  zuul/deploy:
+    repository: integration/zuul/deploy
+  # Librenms software
+  librenms/librenms:
+    repository: operations/software/librenms
+  # Netbox software
+  netbox/deploy:
+    repository: operations/software/netbox-deploy
+  search/mjolnir/deploy:
+    repository: search/MjoLniR/deploy
+  statsv/statsv:
+    repository: analytics/statsv
+  performance/arc-lamp: {}
+  performance/asoranking: {}
+  performance/coal: {}
+  performance/navtiming: {}
+  docker-pkg/deploy:
+    repository: operations/docker-images/docker-pkg/deploy
+  puppetboard/deploy:
+    repository: operations/software/puppetboard/deploy
+  debmonitor/deploy:
+    repository: operations/software/debmonitor/deploy
+  releng/phatality: {}
+  design/style-guide: {}
+  search/airflow: {}
+
+profile::kubernetes::deployment_server::git_owner: trebuchet
+profile::kubernetes::deployment_server::git_group: wikidev
+profile::kubernetes::deployment_server::packages_from_future: true
+profile::kubernetes::deployment_server::include_admin: true
+# Default and environment specific generic values go here.
+# default:
+#   ..
+# eqiad:
+#   ..
+profile::kubernetes::deployment_server::general:
+  default:
+    # envoy
+    tls:
+      image_version: 1.15.4-1
+    # prometheus-statsd-exporter
+    monitoring:
+      image_version: 0.0.9
+    # This can be used to override standard environment
+    # variables pointing to k8s apiserver so that TLS
+    # certs can be validated.
+    kubernetesApi:
+      host: kubernetes.default.svc.cluster.local
+      port: 443
+    helmBinary: helm2
+    # common sidecar images versions
+    # TODO: autogenerate this from the registry.
+    common_images:
+      mcrouter:
+        mcrouter: mcrouter:0.41.0-4-20211010
+        exporter: prometheus-mcrouter-exporter:0.0.1-2-20211010
+      nutcracker:
+        nutcracker: nutcracker:0.0.4-20211010
+        exporter: prometheus-nutcracker-exporter:0.0.2-20211010
+      envoy: 1.15.5-1-20211010
+      rsyslogd: rsyslog:8.2102.0-1-20211010
+  staging:
+    helmBinary: helm3
+# Enable icu63 component - T264991
+profile::mediawiki::php::icu63: true
+profile::mediawiki::php::php_version: "7.2"
+profile::mediawiki::deployment::server::rsync_host: "deployment.%{::site}.wmnet"
+profile::mediawiki::apc_shm_size: 128M

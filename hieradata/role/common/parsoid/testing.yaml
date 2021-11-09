@@ -1,0 +1,53 @@
+cluster: parsoid
+parsoid::testing::parsoid_port: 8142
+parsoid::testing::default_api_proxy_uri: 'http://api-rw.discovery.wmnet'
+
+profile::admin::groups:
+  - parsoid-roots
+  - parsoid-admin
+  - parsoid-test-admins
+  - parsoid-test-roots
+
+parsoid::logging_name: parsoid-tests
+parsoid::statsd_prefix: parsoid-tests
+
+profile::monitoring::notifications_enabled: false
+
+profile::mediawiki::php::php_version: "7.2"
+profile::mediawiki::webserver::has_tls: false
+has_lvs: false
+
+# Bump the connections per backend to 5 in mcrouter, see T203786
+profile::mediawiki::mcrouter_wancache::num_proxies: 5
+profile::mediawiki::httpd::logrotate_retention: 12
+# bail out in case a long-lasting C function is called and
+# excimer can't throw its exception
+profile::mediawiki::php::request_timeout: 201
+profile::mediawiki::apc_shm_size: 4096M
+profile::mediawiki::php::enable_fpm: true
+profile::mediawiki::php::fpm_config:
+  opcache.interned_strings_buffer: 96
+  opcache.memory_consumption: 1024
+  apc.ttl: 10
+# Configure php-fpm restarts
+profile::mediawiki::php::restarts::ensure: present
+# We set the restart watermark at 200 MB, which is approximately how much
+# opcache one full day of deployments consume.
+profile::mediawiki::php::restarts::opcache_limit: 200
+
+# No Icinga monitoring for systemd state because services
+# can often go down during tests.
+profile::monitoring::monitor_systemd: false
+# T254025
+profile::mediawiki::php::monitoring::monitor_opcache: false
+
+profile::parsoid::vd_client::service_ensure: 'running'
+profile::parsoid::vd_server::service_ensure: 'running'
+profile::parsoid::rt_client::service_ensure: 'running'
+profile::parsoid::rt_server::service_ensure: 'running'
+
+profile::parsoid::testreduce::install_node: false
+profile::nginx::variant: 'light'
+
+# T294378
+profile::mediawiki::webserver::install_fonts: false

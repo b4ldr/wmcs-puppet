@@ -1,0 +1,62 @@
+## NOTE namespaced keys (i.e. with ::) will NOT be looked up here
+## See also https://phabricator.wikimedia.org/T209265
+
+#
+# infra
+#
+puppetdb_host: puppetdb1002.eqiad.wmnet
+
+# Cloud Services <
+#
+labs_puppet_master: &labspuppetmaster "puppetmaster.cloudinfra.wmflabs.org"
+
+# These are the up-and-coming, better dns servers:
+# used in manifests/realm.pp
+labsdnsconfig:
+  host: 'ns0.openstack.eqiad1.wikimediacloud.org'
+  host_secondary: 'ns1.openstack.eqiad1.wikimediacloud.org'
+  dbserver: 'localhost'
+  recursor: 'ns-recursor0.openstack.eqiad1.wikimediacloud.org'
+  recursor_secondary: 'ns-recursor1.openstack.eqiad1.wikimediacloud.org'
+
+labsldapconfig:
+  hostname: ldap-labs.eqiad.wikimedia.org
+
+# /> Cloud Services
+#
+
+prometheus_nodes:
+    - prometheus1003.eqiad.wmnet
+    - prometheus1004.eqiad.wmnet
+
+# webperf
+arclamp_host: webperf1002.eqiad.wmnet
+
+# Which of our redundant unified cert vendors to use in each DC
+public_tls_unified_cert_vendor: "lets-encrypt"
+
+ldap:
+  ro-server: ldap-ro.eqiad.wikimedia.org
+  ro-server-fallback: ldap-ro.codfw.wikimedia.org
+  rw-server: ldap-labs.eqiad.wikimedia.org
+  rw-server-fallback: ldap-labs.codfw.wikimedia.org
+
+mediabackup:
+  mw_db_host: 'db1140.eqiad.wmnet'
+  mw_db_port: 3316
+  mw_db_user: 'mediabackup'
+  # please note mw_db_password is setup on the secret puppet repo
+  wiki: 'frwiki'
+  db_host: 'db1176.eqiad.wmnet'
+  db_port: 3306
+  db_user: 'mediabackup'
+  # please note db_password is setup on the secret puppet repo
+  db_schema: 'mediabackups'
+  worker_hosts:
+    - ms-backup1001.eqiad.wmnet
+    - ms-backup1002.eqiad.wmnet
+  storage_hosts:
+    - backup1004.eqiad.wmnet
+    - backup1005.eqiad.wmnet
+    - backup1006.eqiad.wmnet
+    - backup1007.eqiad.wmnet

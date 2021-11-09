@@ -1,0 +1,10 @@
+profile::icinga::status_file: '/var/icinga-tmpfs/status.dat'
+profile::icinga::temp_file: '/var/icinga-tmpfs/icinga.tmp'
+profile::icinga::temp_path: '/var/icinga-tmpfs'
+profile::icinga::check_result_path: '/var/icinga-tmpfs'
+profile::icinga::max_concurrent_checks: 0
+profile::icinga::retention_file: '/var/lib/icinga/retention.dat'
+profile::icinga::icinga_group: 'nagios'
+profile::icinga::icinga_user: 'nagios'
+profile::icinga::ensure_service: 'running'
+profile::icinga::logs_keep_days: 780

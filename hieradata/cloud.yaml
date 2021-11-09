@@ -1,0 +1,536 @@
+lookup_options:
+  classes:
+    merge: unique
+ldap:
+  base-dn: dc=wikimedia,dc=org
+  users_cn: ou=people
+  groups_cn: ou=groups
+etcd::autogen_pwd_seed: 'seed'
+profile::contacts::role_contacts: []
+
+profile::mail::default_mail_relay::enabled: true
+profile::mail::default_mail_relay::template: 'profile/mail/default_mail_relay/exim4.minimal.wmcs.erb'
+
+profile::admin::managelingering: false
+profile::admin::purge_sudoers_d: false
+profile::admin::groups: []
+profile::admin::groups_no_ssh: []
+profile::admin::managehomehome: false
+
+# All labs instances have internet connectivity, so do not bother with proxies
+profile::base::certificates::puppet_ca_content: {}
+profile::base::certificates::include_bundle_jks: false
+profile::base::certificates::include_bundle_p12: false
+
+profile::apt::use_proxy: false
+
+profile::apt::purge_sources: false
+profile::apt::purge_preferences: false
+profile::apt::manage_apt_source: false
+profile::apt::install_audit_installed: false
+profile::apt::mirror: 'mirrors.wikimedia.org'
+
+profile::base::netbase::manage_etc_services: true
+profile::base::netbase::extra_services: {}
+
+profile::resolving::disable_dhcpupdates: true
+profile::resolving::disable_resolvconf: true
+profile::resolving::timeout: 1
+profile::resolving::ndots: 1
+profile::resolving::attempts: 3
+profile::resolving::domain_search:
+  - "%{facts.networking.domain}"
+profile::resolving::nameservers:
+  - "%{lookup('labsdnsconfig.recursor')}"
+  - "%{lookup('labsdnsconfig.recursor_secondary')}"
+
+profile::base::puppet::interval: 30
+profile::base::puppet::environment: production
+profile::base::puppet::serialization_format: pson
+profile::base::puppet::certificate_revocation: ~
+profile::base::puppet::dns_alt_names: []
+
+profile::puppet::client_bucket::ensure: absent
+profile::puppet::client_bucket::file_age: 14
+profile::puppet::client_bucket::max_size: 100M
+
+profile::base::legacy_cloud_search_domain: ~
+profile::base::enable_contacts: false
+profile::base::core_dump_pattern:  '/var/tmp/core/core.%h.%e.%p.%t'
+puppet_ca_server: ''
+manage_puppet_ca_file: false
+
+profile::cumin::monitor_agentrun: false
+
+profile::base::labs::unattended_wmf: 'present'
+profile::base::labs::unattended_distro: 'present'
+
+profile::ci::package_builder::extra_packages: []
+
+profile::debmonitor::client::ssl_ca: 'puppet'
+profile::debmonitor::client::ssl_ca_label: ~
+
+profile::debmonitor::server::settings_module: debmonitor.settings.test
+profile::debmonitor::server::ssl_certs: puppet
+profile::debmonitor::server::django_log_db_queries: true
+profile::debmonitor::server::django_require_login: false
+# Only scap3 is a valid deployment method anything else is noop
+profile::debmonitor::server::app_deployment: 'NONE'
+profile::debmonitor::server::enable_logback: false
+profile::debmonitor::server::enable_monitoring: false
+# Empty groups resolves to valid-user
+profile::debmonitor::server::required_groups: []
+profile::debmonitor::server::trusted_ca_source: '/etc/ssl/certs/Puppet_Internal_CA.pem'
+
+profile::gitlab::runner::ensure: present
+profile::gitlab::runner::access_level: not_protected
+profile::gitlab::runner::concurrent: 1
+profile::gitlab::runner::description: WMF GitLab runner
+profile::gitlab::runner::docker_image: docker-registry.wikimedia.org/buster:latest
+profile::gitlab::runner::docker_volume: false
+profile::gitlab::runner::docker_volume_min: 40
+profile::gitlab::runner::docker_volume_max: 200
+profile::gitlab::runner::docker_settings: {}
+profile::gitlab::runner::docker_version: '18.09.1+dfsg1-7.1+deb10u3'
+profile::gitlab::runner::gitlab_url: https://gitlab.wikimedia.org/
+profile::gitlab::runner::locked: false
+# profile::gitlab::runner::registration_token: private
+profile::gitlab::runner::run_untagged: true
+profile::gitlab::runner::tags: []
+
+profile::mail::mx::gmail_smtp_server: aspmx.l.google.com
+
+profile::netbox::authentication_provider: 'ldap'
+profile::netbox::cas_rename_attributes:
+  cn: 'first_name'
+  mail: 'email'
+profile::netbox::cas_group_attribute_mapping: {}
+profile::netbox::cas_group_mapping: {}
+profile::netbox::cas_group_required: []
+profile::netbox::cas_server_url: ~
+profile::netbox::cas_username_attribute: ~
+
+profile::nginx::ensure: 'present'
+profile::nginx::managed: true
+profile::nginx::variant: 'light'
+profile::nginx::tmpfs_size: '1g'
+
+profile::puppetdb::gc_interval: 20
+profile::puppetdb::node_ttl: '7d'
+profile::puppetdb::node_purge_ttl: '14d'
+profile::puppetdb::report_ttl: '1d'
+
+profile::puppetdb::database::users:
+  puppetdb@localhost:
+    user: puppetdb
+    password: "%{alias('puppetdb::password::rw')}"
+    database: puppetdb
+    cidr: "%{facts.networking.ip}/32"
+  puppetdb_ro@localhost:
+    user: puppetdb_ro
+    password: "%{alias('puppetdb::password::ro')}"
+    database: puppetdb
+    cidr: "%{facts.networking.ip}/32"
+    privileges:
+      table: 'SELECT'
+  prometheus@localhost:
+    user: 'prometheus'
+    database: 'postgres'
+    type: 'local'
+    method: 'peer'
+profile::puppetdb::database::shared_buffers: '768MB'
+profile::puppetdb::database::replication_lag_crit: 16777216
+profile::puppetdb::database::replication_lag_warn: 1048576
+profile::puppetdb::database::log_line_prefix: '%t '
+profile::puppetdb::database::log_min_duration_statement: ~
+profile::puppetdb::database::log_autovacuum_min_duration: ~
+profile::puppetdb::database::ssldir: ~
+profile::puppetdb::jvm_opts: '-Xmx256m'
+profile::puppetdb::slaves: []
+profile::puppetdb::log_level: info
+profile::puppetdb::tmpfs_stockpile_queue: false
+profile::puppetdb::clean_stockpile: false
+profile::puppetdb::facts_blacklist: []
+profile::puppetdb::facts_blacklist_type: 'literal'
+profile::envoy::ensure: present
+profile::tlsproxy::envoy::sni_support: 'no'
+profile::tlsproxy::envoy::tls_port: 443
+profile::tlsproxy::envoy::websockets: false
+profile::tlsproxy::envoy::upstream_response_timeout: 65.0
+profile::tlsproxy::envoy::floc_opt_out: false
+profile::tlsproxy::envoy::ssl_provider: 'sslcert'
+profile::tlsproxy::envoy::cfssl_options: {}
+profile::tlsproxy::envoy::access_log: false
+profile::tlsproxy::envoy::retries: true
+profile::tlsproxy::envoy::use_remote_address: false
+profile::tlsproxy::envoy::services:
+  - server_names: ['*']
+    port: 80
+profile::tlsproxy::envoy::upstream_addr: "%{facts.fqdn}"
+profile::tlsproxy::envoy::capitalize_headers: false
+profile::tlsproxy::envoy::listen_ipv6: false
+profile::tlsproxy::envoy::global_cert_name: ~
+profile::tlsproxy::envoy::idle_timeout: ~
+profile::tlsproxy::envoy::ferm_srange: ~
+profile::tlsproxy::envoy::max_requests: ~
+profile::tlsproxy::envoy::cfssl_label: ~
+
+# Firewall logging
+profile::base::firewall::enable_logging: true
+profile::base::firewall::log::log_rate: 1/second
+profile::base::firewall::log::log_burst: 5
+profile::base::firewall::log::separate_file: false
+
+prometheus_nodes:
+  - prometheus01.metricsinfra.eqiad.wmflabs
+
+# We don't want prometheus scraping NFS on the clients, it locks up
+prometheus::node_exporter::ignored_fs_types: '^(overlay|autofs|binfmt_misc|cgroup|configfs|debugfs|devpts|devtmpfs|fusectl|hugetlbfs|mqueue|nfs.*|nsfs|proc|procfs|pstore|rpc_pipefs|securityfs|sysfs|tracefs)$'
+profile::prometheus::icinga_exporter::label_teams_config: {}
+
+# We don't use these feature on VMs.
+profile::backup::enable: false
+profile::backup::ferm_directors: []
+profile::backup::pool: ''
+profile::backup::director: 'backup.example.com'
+profile::backup::days: []
+
+puppetmaster::locale_servers: {}
+profile::puppetmaster::frontend::secure_private: true
+profile::puppetmaster::frontend::ssl_ca_revocation_check: chain
+profile::puppetmaster::frontend::config: {}
+profile::puppetmaster::frontend::web_hostname: puppet
+profile::puppetmaster::frontend::prevent_cherrypicks: true
+profile::puppetmaster::frontend::allow_from:
+  - '*.wikimedia.org'
+  - '*.eqiad.wmnet'
+  - '*.ulsfo.wmnet'
+  - '*.esams.wmnet'
+  - '*.codfw.wmnet'
+  - '*.eqsin.wmnet'
+  - '*.drmrs.wmnet'
+  - '*.wmflabs'
+  - '*.wikimedia.cloud'
+profile::puppetmaster::frontend: chain
+puppetmaster::servers: {}
+profile::puppetmaster::frontend::extra_auth_rules: ''
+profile::puppetmaster::frontend::canary_hosts: []
+profile::puppetmaster::frontend::monitor_signed_certs: false
+profile::puppetmaster::frontend::signed_certs_warning: 2419200  # 4 weeks
+profile::puppetmaster::frontend::signed_certs_critical: 604800  # 1 weeks
+profile::puppetmaster::common::puppetdb_hosts: []
+profile::puppetmaster::common::command_broadcast: false
+profile::puppetmaster::common::ssl_verify_depth: 1
+profile::puppetmaster::common::reports:
+  - puppetdb
+
+profile::base::firewall::block_abuse_nets: false
+profile::base::firewall::default_reject: false
+
+profile::backup::director_seed: changeme
+profile::debdeploy::client::exclude_mounts: []
+profile::debdeploy::client::exclude_filesystems: []
+profile::idp::ldap_schema: ldap
+# We set this to true so one has to consciously disable it
+profile::idp::ldap_start_tls: true
+profile::idp::idp_nodes:
+  - "%{facts.fqdn}"
+profile::idp::memcached::ensure: present
+profile::idp::memcached::idp_nodes: []
+profile::idp::memcached::mcrouter_cluster: idp
+profile::idp::memcached::enable_tls: false
+profile::idp::memcached::ssl_cert: "%{facts.puppet_config.hostcert}"
+profile::idp::memcached::ssl_key: "%{facts.puppet_config.hostprivkey}"
+profile::idp::u2f_jpa_enable: false
+profile::idp::u2f_jpa_username: cas
+# Needs to go in secret repo
+#profile::idp::u2f_jpa_password: changeme
+profile::idp::u2f_jpa_server: 127.0.0.1
+profile::idp::u2f_jpa_db: cas
+profile::idp::u2f_token_expiry_days: 3650
+profile::idp::client::httpd::cookie_path: /var/cache/apache2/mod_auth_cas
+profile::idp::client::httpd::certificate_path: /etc/ssl/certs
+profile::idp::client::httpd::apache_owner: www-data
+profile::idp::client::httpd::apache_group: www-data
+profile::idp::client::httpd::sites: {}
+profile::idp::max_session_length: 604800
+profile::idp::actuators: []
+profile::idp::server_name: "https://%{facts.fqdn}"
+profile::idp::is_staging_host: false
+profile::idp::memcached_enable: true
+profile::idp::enable_cors: false
+profile::idp::cors_allow_credentials: false
+profile::idp::cors_allowed_origins: []
+profile::idp::cors_allowed_headers: []
+profile::idp::cors_allowed_methods:
+  - 'GET'
+profile::idp::ldap_attributes:
+  - cn
+  - memberOf
+  - mail
+  - uid
+profile::idp::envoy_termination: false
+# Service proxy
+profile::services_proxy::envoy::listen_ipv6: false
+profile::services_proxy::envoy::listeners: []
+profile::services_proxy::envoy::enabled_listeners: []
+graphite_host: localhost
+profile::prometheus::memcached_exporter::arguments: ''
+profile::prometheus::mcrouter_exporter::mcrouter_port: 11213
+profile::prometheus::mcrouter_exporter::listen_port: 9151
+profile::prometheus::pushgateway_host: 'invalid'
+profile::mediawiki::mcrouter_wancache::use_onhost_memcached: false
+profile::mediawiki::mcrouter_wancache::use_onhost_memcached_socket: false
+profile::mediawiki::mcrouter_wancache::prometheus_exporter: false
+profile::mediawiki::mcrouter_wancache::timeouts_until_tko: 10
+profile::mediawiki::mcrouter_wancache::gutter_ttl: 60
+profile::mediawiki::mcrouter_wancache::port: 11213
+profile::mediawiki::mcrouter_wancache::memcached_tls_port: 11214
+profile::mediawiki::mcrouter_wancache::num_proxies: 1
+profile::mediawiki::mcrouter_wancache::shards:
+  gutter:
+    eqiad: {}
+  wancache:
+    eqiad: {}
+  proxies:
+    eqiad: {}
+profile::java::java_packages: []
+profile::java::extra_args: ~
+profile::java::hardened_tls: false
+profile::java::egd_source: '/dev/random'
+profile::java::trust_puppet_ca: false
+profile::java::enable_dbg: false
+profile::thanos::httpd::query_port: 16902
+profile::thanos::httpd::maxconn: 10
+profile::icinga::logs_keep_days: 780
+profile::thanos::httpd::enable_sso: false
+profile::thanos::query_frontend::memcached_hosts: []
+profile::thanos::rule_hosts: {}
+
+profile::gerrit::ipv6: ~
+profile::gerrit::enable_monitoring: true
+
+profile::alertmanager::irc::host: 'example.net'
+profile::alertmanager::irc::port: 6697
+profile::alertmanager::irc::nickname: 'jinxer-wm'
+profile::alertmanager::irc::realname: 'I jinx things at WMF'
+profile::alertmanager::irc::channel: 'wikimedia-observability-spam'
+profile::alertmanager::web::vhost: 'alerts.%{facts.domain}'
+profile::alertmanager::api::ro: []
+profile::alertmanager::api::rw: []
+profile::restbase::aqs_uri: http://aqs.svc.eqiad.wmnet:7232/analytics.wikimedia.org/v1
+profile::graphite::base::cluster_servers: []
+profile::graphite::base::uwsgi_processes: 8
+
+profile::swift::storagehosts: []
+profile::swift::proxyhosts: []
+profile::swift::storage::statsd_port: 8125
+profile::swift::storage::object_replicator_interval: ~
+profile::swift::storage::servers_per_port: ~
+profile::swift::storage::statsd_host: ~
+profile::swift::storage::container_replicator_interval: ~
+profile::swift::storage::container_replicator_concurrency: 1
+profile::swift::storage::object_server_default_workers: 12
+profile::swift::storage::object_replicator_concurrency: 1
+profile::swift::storage::replication_limit_memory_percent: 0
+profile::swift::storage::loopback_device_size: 2G
+profile::swift::storage::loopback_device_count: 0
+profile::swift::stats_reporter::ensure: present
+profile::swift::stats_reporter::statsd_host: ~
+profile::swift::stats_reporter::statsd_port: 8125
+profile::swift::proxy::use_tls: false
+profile::swift::proxy::statsd_host: ~
+profile::swift::proxy::statsd_port: 8125
+profile::swift::proxy::dispersion_account: ~
+profile::swift::proxy::rewrite_account: ~
+profile::swift::proxy::thumborhost: ~
+profile::swift::proxy::inactivedc_thumborhost: ~
+profile::swift::proxy::enable_swiftrepl: false
+
+profile::memcached::enable_16: false
+profile::memcached::threads: ~
+profile::memcached::version: 'present'
+profile::memcached::growth_factor: 1.05
+profile::memcached::min_slab_size: 48
+profile::memcached::max_seq_reqs: 200
+profile::memcached::size: ~
+profile::memcached::extended_options: []
+profile::memcached::port: 11211
+profile::memcached::enable_tls: false
+profile::memcached::notls_port: ~
+profile::memcached::ssl_cert: ~
+profile::memcached::ssl_key: ~
+
+
+# Only added to make CI happy. cloud has no LVS
+profile::lvs::realserver::poolcounter_backends: ~
+profile::lvs::realserver::use_conftool: false
+
+# Mariadb sections: needed for proxy setup
+profile::mariadb::section_ports:
+  s1: 3311
+  s2: 3312
+  s3: 3313
+  s4: 3314
+  s5: 3315
+  s6: 3316
+  s7: 3317
+  s8: 3318
+
+profile::query_service::username: blazegraph
+
+profile::druid::turnilo::port: 9091
+profile::druid::turnilo::monitoring_enabled: false
+profile::druid::turnilo::contact_group: 'analytics'
+
+profile::logoutd::owner: root
+profile::logoutd::group: root
+profile::logoutd::scripts: {}
+
+profile::pki::server::names:
+  - organisation: Wikimedia Foundation, Inc
+    organisational_unit: Cloud Services
+    locality: San Francisco
+    state: California
+    country: US
+profile::pki::server::key_params:
+  algo: ecdsa
+  size: 521
+profile::pki::server::gen_csr: false
+profile::pki::server::db_driver: sqlite3
+profile::pki::server::db_user: pki
+profile::pki::server::db_name: pki
+profile::pki::server::db_host: localhost
+profile::pki::server::root_ca_profiles: {}
+profile::pki::server::default_profiles: {}
+profile::pki::server::vhost: "%{facts.networking.fqdn}"
+profile::pki::root_ca::enable_backups: false
+
+profile::pki::client::root_ca_cn: WMF_TEST_CA
+profile::pki::client::intermediate_cas:
+  - deployment-prep_eqiad1_wikimedia_cloud
+  - WMF_test_intermediate_ca
+profile::pki::client::ensure: absent
+profile::pki::client::signer_host: pki-intermediate.pki.eqiad1.wikimedia.cloud
+profile::pki::client::signer_port: 443
+profile::pki::client::enable_proxy: false
+profile::pki::client::listen_addr: 127.0.0.1
+profile::pki::client::listen_port: 8888
+profile::pki::client::mutual_tls_client_cert: "%{facts.puppet_config.hostcert}"
+profile::pki::client::mutual_tls_client_key: "%{facts.puppet_config.hostprivkey}"
+profile::pki::client::tls_remote_ca: '/etc/ssl/localcerts/pki_api_CA.pem'
+profile::pki::client::tls_remote_ca_source: 'puppet:///modules/profile/pki/cloud/pki_api_ca.pem'
+profile::pki::client::certs: {}
+
+profile::ceph::osd::bootstrap_keyring: BOOTSRAP_KEYRING_DEFAULT_PLACEHOLDER
+profile::ceph::osd::disk_models_without_write_cache:
+  - DISK_MODEL_DEFAULT_PLACEHOLDER
+profile::ceph::osd::disks_io_scheduler: DISKS_IO_SCHEDULER_PLACEHOLDER
+profile::ceph::osd::os_disks: []
+
+# MediaWiki apache configuration. Sites shared by all installations
+mediawiki::common_sites:
+  # Catchall for any domain-name not caught by virtualhosts below.
+  - name: nonexistent
+    priority: 0
+    source: mediawiki/apache/sites/nonexistent.conf
+  - name: wwwportals
+    priority: 1
+    template: mediawiki/apache/sites/wwwportals.conf.erb
+
+profile::rsyslog::kafka_shipper::enable: false
+profile::rsyslog::kafka_queue_enabled_sites: []
+profile::rsyslog::kafka_shipper::kafka_brokers:
+  - localhost:9093
+
+profile::syslog::centralserver::log_retention_days: 90
+
+profile::openstack::base::radosgw::service_user: 'swift'
+profile::openstack::base::radosgw::service_user_project: 'swift'
+profile::openstack::base::radosgw::api_bind_port: '18080'
+
+# To be overridden in Pontoon stacks
+public_domain: "%{::labsproject}.wmcloud.org"
+
+profile::trafficserver::backend::trusted_ca_path: '/etc/ssl/certs/ats_trusted_ca.pem'
+profile::trafficserver::backend::trusted_ca_source: "%{facts.puppet_config.localcacert}"
+
+profile::tcpircbot::irc::host: 'irc.libera.chat'
+profile::tcpircbot::irc::port: 6697
+
+profile::debdeploy::client::ensure: absent
+profile::debdeploy::client::filter_services:
+  qemu-system-x86:
+    - '*'
+
+# Will be overridden in toolforge
+docker::registry: ""
+
+# profile::tlsproxy::instance defaults
+profile::tlsproxy::instance::bootstrap_protection: false
+profile::tlsproxy::instance::nginx_variant: full
+profile::tlsproxy::instance::nginx_client_max_body_size: '100m'
+profile::tlsproxy::instance::nginx_tune_for_media: false
+profile::tlsproxy::instance::nginx_ssl_dyn_rec: false
+profile::tlsproxy::instance::ssl_compatibility_mode: compat
+
+# Profile::monitoring::host defaults
+profile::monitoring::hardware_monitoring: 'present'
+profile::monitoring::contact_group: "%{alias('contactgroups')}"
+profile::monitoring::mgmt_contact_group: "%{alias('mgmt_contactgroups')}"
+# the -A -i ... part is a gross hack to workaround Varnish partitions
+# that are purposefully at 99%. Better ideas are welcome.
+profile::monitoring::nrpe_check_disk_options: '-w 6% -c 3% -W 6% -K 3% -l -e -A -i "/srv/sd[a-b][1-3]" -i "/srv/nvme[0-9]n[0-9]p[0-9]" --exclude-type=fuse.fuse_dfs --exclude-type=tracefs'
+profile::monitoring::nrpe_check_disk_critical: false
+profile::monitoring::raid_check_interval: 10
+profile::monitoring::raid_retry_interval: 10
+profile::monitoring::check_smart: true
+profile::monitoring::notifications_enabled: true
+profile::monitoring::is_critical: false
+profile::monitoring::monitor_systemd: true
+profile::monitoring::monitor_screens: true
+profile::monitoring::monitoring_hosts: "%{alias('monitoring_hosts')}"
+profile::monitoring::raid_check: true
+profile::monitoring::raid_write_cache_policy: ~
+
+profile::auto_restarts::with_debdeploy: false
+
+profile::environment::ls_aliases: false
+profile::environment::custom_bashrc: 'base/environment/bash.bashrc.erb'
+profile::environment::custom_skel_bashrc: 'base/environment/skel/bashrc.erb'
+profile::environment::editor: 'use_default'
+profile::environment::profile_scripts:
+  field.sh: 'puppet:///modules/base/environment/field.sh'
+
+profile::systemd::timesyncd::ensure: present
+profile::systemd::timesyncd::ntp_servers: []
+
+# puppetboard
+profile::puppetboard::ng::ensure: present
+profile::puppetboard::ng::puppetdb_host: 'localhost'
+profile::puppetboard::ng::puppetdb_port: 8080
+profile::puppetboard::ng::puppetdb_ssl_verify: true
+profile::puppetboard::ng::puppetdb_cert: ~
+profile::puppetboard::ng::puppetdb_key: ~
+profile::puppetboard::ng::puppetdb_proto: ~
+profile::puppetboard::ng::vhost: "%{facts.networking.fqdn}"
+profile::puppetboard::ng:page_title: 'Puppetboard'
+profile::puppetboard::ng::localise_timestamp: false
+profile::puppetboard::ng::enable_catalog: false
+profile::puppetboard::ng::graph_type: 'pie'
+profile::puppetboard::ng::graph_facts_override: []
+profile::puppetboard::ng::secret_key: ~
+profile::puppetboard::ng::inventory_facts_override: {}
+
+# defaults for cloud (mostly deployment prep)
+profile::base::production::enable: false
+profile::base::production::enable_ip6_mapped: false
+
+profile::cumin::master::email_alerts: false
+
+profile::ceph::auth::load_all::enabled: false
+profile::ceph::auth::load_all::configuration: {}
+
+profile::ceph::auth::deploy::enabled: false
+profile::ceph::auth::deploy::selected_creds: []
+profile::ceph::auth::deploy::configuration: {}

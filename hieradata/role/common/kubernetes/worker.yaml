@@ -1,0 +1,77 @@
+cluster: kubernetes
+profile::docker::storage::physical_volumes: "/dev/md1"
+profile::docker::storage::vg_to_remove: 'todelete'
+profile::docker::engine::version: "18.06.3~ce~3-0~debian"
+profile::docker::engine::packagename: "docker-ce"
+profile::docker::engine::declare_service: true
+profile::kubernetes::master_fqdn: "kubemaster.svc.%{::site}.wmnet"
+profile::kubernetes::master_hosts:
+- kubemaster1001.eqiad.wmnet
+- kubemaster1002.eqiad.wmnet
+- kubemaster2001.codfw.wmnet
+- kubemaster2002.codfw.wmnet
+profile::kubernetes::infra_pod: 'docker-registry.discovery.wmnet/pause'
+profile::kubernetes::use_cni: true
+profile::kubernetes::node::packages_from_future: true
+# Enable the IPv6DualStack feature gate for kubelet only, see I54a042731f60dc02494907022cb8115fae052c50
+profile::kubernetes::node::kubelet_ipv6: true
+# Use Kernel 4.19 - T262527
+profile::base::linux419::enable: true
+profile::docker::engine::settings:
+  bridge: none
+  iptables: false
+  ip-masq: false
+  log-opts:
+    max-size: 100m
+  live-restore: true
+profile::monitoring::nrpe_check_disk_options: -w 10% -c 5% -W 6% -K 3% -l -e -A -i '/(var/lib|run)/(docker|kubelet)/*' --exclude-type=tracefs
+profile::calico::kubernetes::calico_version: '3'
+# Tokens for the calico kubernetes users in private repo at:
+#profile::calico::kubernetes::calico_cni::token
+#profile::calico::kubernetes::calicoctl::token
+profile::kubernetes::node::masquerade_all: false
+# Defined in the private repo
+#profile::kubernetes::node::kubelet_token:
+# Defined in the private repo
+#profile::kubernetes::node::kubeproxy_token:
+# Defined in the private repo
+#profile::kubernetes::node::docker_kubernetes_user_password
+profile::kubernetes::node::kubeproxy_metrics_bind_address: 0.0.0.0
+profile::rsyslog::kubernetes::enable: true
+# We don't need conftool safe restart scripts on k8s.
+profile::lvs::realserver::use_conftool: false
+profile::lvs::realserver::pools:
+  mathoid: {}
+  zotero: {}
+  blubberoid: {}
+  eventgate-analytics: {}
+  eventgate-main: {}
+  eventgate-logging-external: {}
+  eventgate-analytics-external: {}
+  citoid: {}
+  cxserver: {}
+  sessionstore: {}
+  termbox: {}
+  wikifeeds: {}
+  echostore: {}
+  eventstreams: {}
+  eventstreams-internal: {}
+  proton: {}
+  mobileapps: {}
+  mwdebug: {}
+  api-gateway: {}
+  push-notifications: {}
+  recommendation-api: {}
+  apertium: {}
+  shellbox: {}
+  shellbox-constraints: {}
+  shellbox-media: {}
+  shellbox-syntaxhighlight: {}
+  shellbox-timeline: {}
+  similar-users: {}
+  toolhub: {}
+  linkrecommendation: {}
+  tegola-vector-tiles: {}
+prometheus::node_exporter::collectors_extra:
+  - processes
+profile::contacts::role_contacts: ['ServiceOps SREs']

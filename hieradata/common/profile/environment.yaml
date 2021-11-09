@@ -1,0 +1,8 @@
+profile::environment::ls_aliases: true
+profile::environment::custom_bashrc: null
+profile::environment::custom_skel_bashrc: null
+profile::environment::editor: 'vim'
+profile::environment::profile_scripts:
+  field.sh: 'puppet:///modules/base/environment/field.sh'
+  mysql-ps1.sh: 'puppet:///modules/base/environment/mysql-ps1.sh'
+  bash_autologout.sh: 'puppet:///modules/base/environment/bash_autologout.sh'

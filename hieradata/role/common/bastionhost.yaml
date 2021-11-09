@@ -1,0 +1,12 @@
+cluster: bastion
+profile::resolving::domain_search:
+  - wikimedia.org
+  - eqiad.wmnet
+  - codfw.wmnet
+  - esams.wmnet
+  - ulsfo.wmnet
+  - eqsin.wmnet
+  - drmrs.wmnet
+profile::admin::groups:
+  - all-users
+profile::contacts::role_contacts: ['Infrastructure Foundations SREs']

@@ -1,0 +1,57 @@
+profile::admin::groups:
+  - mailman3-roots
+profile::base::firewall::block_abuse_nets: true
+profile::mail::default_mail_relay::enabled: false
+mailman::lists_servername: 'lists.wikimedia.org'
+mtail::logs:
+  - /var/log/exim4/mainlog
+  - /var/log/mailman/smtp
+  - /var/log/mailman/subscribe
+# NOTE: this is what enables mtail to read the files in the exim4 log directory
+mtail::group: 'adm'
+profile::lists::primary_host: 'lists1001.wikimedia.org'
+#profile::lists::standby_host: ''
+
+profile::lists::acme_chief_cert: lists
+
+profile::lists::db_host: m5-master.eqiad.wmnet
+profile::lists::db_name: mailman3
+profile::lists::db_user: mailman3
+#profile::lists::db_password -- set in private repo
+profile::lists::web::db_name: mailman3web
+profile::lists::web::db_user: mailman3web
+#profile::lists::web::db_password -- set in private repo
+
+#profile::lists::api_password -- set in private repo
+#profile::lists::web::secret -- set in private repo
+#profile::lists::archiver_key -- set in private repo
+
+profile::lists::renamed_lists:
+  boardexec:            board-l
+  foundation-l:         wikimedia-l
+  museum-l:             glam
+  mediawiki-cvs:        mediawiki-commits
+  wsor:                 wmfresearch
+  chaptercommittee-l:   affcom
+  allhands:             wmfreqs
+  research-team:        research-internal
+  wikidata-l:           wikidata
+  pywikipedia-l:        pywikibot
+  pywikipedia-announce: pywikibot-announce
+  pywikipedia-bugs:     pywikibot-bugs
+  education-coop:       education-collab
+  advocacy_advisors:    publicpolicy
+  wikimedia-search:     discovery
+  wikimedia-search-private: discovery-private
+  labs-admin:           cloud-admin
+  labs-announce:        cloud-announce
+  labs-l:               cloud
+  tool-labs-standards-committee: toolforge-standards-committee
+  wmfcc-l:              movecom
+  ri-team:              product-infrastructure
+  wikimediamy:          wikimedia-my
+  multimedia-team:      structured-data-team
+  wikilambda:           Abstract-Wikipedia
+  eliso:                wikimedia-eo
+  eliso-anoncoj:        wikimedia-eo-anoncoj
+  langcom-l:            langcom-internal

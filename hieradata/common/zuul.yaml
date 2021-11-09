@@ -1,0 +1,3 @@
+zuul::common:
+    gerrit_server: gerrit.wikimedia.org
+    gerrit_user: jenkins-bot

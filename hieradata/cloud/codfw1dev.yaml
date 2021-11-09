@@ -1,0 +1,65 @@
+# BEWARE: this file has been added to the production-realm
+# hieradata, but it's not really for it; it is used by a different realm instead
+# and the lookup logic is different than everywhere else.
+# Because we love clarity and consistency.
+
+puppetmaster: "puppet"
+labs_puppet_master: "puppetmaster.cloudinfra-codfw1dev.codfw1dev.wmcloud.org"
+
+labsdnsconfig:
+  recursor: 'ns-recursor0.openstack.codfw1dev.wikimediacloud.org'
+  recursor_secondary: 'ns-recursor1.openstack.codfw1dev.wikimediacloud.org'
+
+sudo_flavor: 'sudoldap'
+
+labsldapconfig:
+  hostname: "cloudservices2002-dev.wikimedia.org"
+  secondary_hostname: "cloudservices2002-dev.wikimedia.org"
+
+ldap:
+  ro-server: ldap-ro.codfw.wikimedia.org
+  ro-server-fallback: ldap-ro.eqiad.wikimedia.org
+  ro-server: ldap-labs.codfw.wikimedia.org
+  ro-server-fallback: ldap-labs.eqiad.wikimedia.org
+
+labs_site: "codfw1dev"
+
+profile::systemd::timesyncd::ntp_servers:
+    - 'ntp-1.cloudinfra.codfw1dev.wikimedia.cloud'
+ntp_peers:
+    eqiad: []
+    codfw:
+    - 'ntp-1.cloudinfra.codfw1dev.wikimedia.cloud'
+    ulsfo: []
+    eqsin: []
+    drmrs: []
+    esams: []
+
+# VM instances require these keys because they are looked up by observerenv and
+# observerenv is present in every VM instance. Can't place this in horizon.
+# The eqiad1 counterparts are in hieradata/labs.yaml. I think this is a more
+# suitable place for this.. perhaps.
+profile::openstack::codfw1dev::observer_user: 'novaobserver'
+profile::openstack::codfw1dev::observer_project: 'observer'
+profile::openstack::base::observer_user: 'novaobserver'
+profile::openstack::base::observer_project: 'observer'
+profile::openstack::codfw1dev::region: 'codfw1dev-r'
+profile::openstack::codfw1dev::keystone_host: 'openstack.codfw1dev.wikimediacloud.org'
+profile::openstack::codfw1dev::observer_password: 'lt-RiBeyokCO81bVvcX'
+profile::openstack::codfw1dev::version: 'victoria'
+
+profile::openstack::codfw1dev::cumin::project_masters: []
+profile::openstack::codfw1dev::cumin::project_pub_key: undef
+
+puppet_ca_source: puppet:///files/puppet/ca.labs.codfw1dev.pem
+
+bastion_hosts:
+- 172.16.128.14 # bastion-codfw1dev-01.bastioninfra-codfw1dev.codfw1dev.wikimedia.cloud
+- 172.16.128.19 # bastion-codfw1dev-02.bastioninfra-codfw1dev.codfw1dev.wikimedia.cloud
+
+profile::mariadb::cloudinfra::puppetmasters:
+- puppetmaster-01.cloudinfra-codfw1dev.codfw1dev.wikimedia.cloud
+profile::mariadb::cloudinfra::cloudinfra_dbs:
+- cloudinfra-db-01.cloudinfra-codfw1dev.codfw1dev.wikimedia.cloud
+
+profile::openstack::codfw1dev::keystone_api_fqdn: 'openstack.codfw1dev.wikimediacloud.org'

@@ -1,0 +1,35 @@
+cluster: kubernetes
+profile::kubernetes::node::packages_from_future: true
+profile::calico::kubernetes::calico_version: '3'
+profile::docker::storage::physical_volumes: "/dev/md1"
+profile::docker::storage::vg_to_remove: 'todelete'
+profile::docker::engine::version: "18.06.3~ce~3-0~debian"
+profile::docker::engine::packagename: "docker-ce"
+profile::docker::engine::declare_service: true
+profile::kubernetes::infra_pod: 'docker-registry.discovery.wmnet/pause'
+profile::kubernetes::use_cni: true
+profile::docker::engine::settings:
+  bridge: none
+  iptables: false
+  ip-masq: false
+  log-opts:
+    max-size: 100m
+  live-restore: true
+profile::monitoring::nrpe_check_disk_options: -w 10% -c 5% -W 6% -K 3% -l -e -A -i '/(var/lib|run)/(docker|kubelet)/*' --exclude-type=tracefs
+# Tokens for the calico kubernetes users in private repo at:
+#profile::calico::kubernetes::calico_cni::token
+#profile::calico::kubernetes::calicoctl::token
+profile::kubernetes::node::masquerade_all: false
+profile::kubernetes::node::kubelet_cluster_domain: 'cluster.local'
+# Defined in the private repo
+#profile::kubernetes::node::kubelet_token:
+# Defined in the private repo
+#profile::kubernetes::node::kubeproxy_token:
+profile::kubernetes::node::kubeproxy_metrics_bind_address: 0.0.0.0
+profile::rsyslog::kubernetes::enable: true
+# Define in the private repo
+# profile::rsyslog::kubernetes::token
+# Use Kernel 4.19 - T262527
+profile::base::linux419::enable: true
+profile::kubernetes::node::kubelet_ipv6: true
+profile::contacts::role_contacts: ['ServiceOps SREs']

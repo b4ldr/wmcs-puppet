@@ -1,0 +1,8 @@
+profile::admin::groups:
+  - wmcs-roots
+
+puppetmaster::hiera_config: labs
+labs_puppet_master: puppetmaster.cloudinfra.wmflabs.org
+profile::puppetmaster::common::storeconfigs: none
+profile::conftool::master::sync_dir: "/etc/conftool/data"
+profile::puppetmaster::backend::prevent_cherrypicks: false

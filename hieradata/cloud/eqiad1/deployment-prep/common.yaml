@@ -1,0 +1,639 @@
+---
+classes:
+  - profile::beta::motd
+
+profile::base::remote_syslog:
+  - "deployment-logstash03.deployment-prep.eqiad.wmflabs:10514"
+profile::apt::purge_sources: true
+# No LVS nor etcd-based load-balancing here
+has_lvs: false
+profile::lvs::realserver::use_conftool: false
+"puppetmaster::scripts::keep_reports_minutes": 360
+puppetmaster::autosigner: true
+service::configuration::mwapi_host: http://deployment-mediawiki11.deployment-prep.eqiad1.wikimedia.cloud
+service::configuration::restbase_uri: http://deployment-restbase03.deployment-prep.eqiad.wmflabs:7231
+#service::configuration::http_proxy:
+service::configuration::statsd_host: cloudmetrics1001.eqiad.wmnet
+service::configuration::logstash_host: deployment-logstash03.deployment-prep.eqiad.wmflabs
+profile::cache::purge::kafka_cluster_name: main-deployment-prep
+# T286502
+profile::trafficserver::backend::ram_cache_size: 134217728
+# T247147
+profile::envoy::ensure: absent
+# Used to sync the setting between all Kafka clusters and clients.
+kafka_message_max_bytes: 4194304
+# AQS
+aqs_hosts:
+  - deployment-aqs01.deployment-prep.eqiad.wmflabs
+  - deployment-aqs02.deployment-prep.eqiad.wmflabs
+  - deployment-aqs03.deployment-prep.eqiad.wmflabs
+aqs::cassandra_default_consistency: localOne
+# END AQS
+# Parsoid
+profile::parsoid::port: 8001
+# Restbase (profile::restbase)
+profile::restbase::salt_key: secretkey
+profile::restbase::logging_label: restbase
+profile::restbase::cassandra_datacenters:
+    - "datacenter1"
+profile::restbase::cassandra_local_dc: "datacenter1"
+profile::restbase::parsoid_uri: http://deployment-parsoid12.deployment-prep.eqiad1.wikimedia.cloud/w/rest.php
+profile::restbase::mobileapps_uri: http://deployment-docker-mobileapps01.deployment-prep.eqiad1.wikimedia.cloud:8888
+profile::restbase::mathoid_uri: http://deployment-docker-mathoid01.deployment-prep.eqiad.wmflabs:10044
+profile::restbase::aqs_uri: https://wikimedia.org/api/rest_v1/metrics
+profile::restbase::event_service_uri: http://deployment-eventgate-3.deployment-prep.eqiad.wmflabs:8292/v1/events
+profile::restbase::proton_uri: http://deployment-docker-proton01.deployment-prep.eqiad1.wikimedia.cloud:3030
+profile::restbase::citoid_uri: http://deployment-docker-citoid01.deployment-prep.eqiad.wmflabs:1970
+profile::restbase::cxserver_uri: http://deployment-docker-cxserver01.deployment-prep.eqiad.wmflabs:8080
+profile::restbase::recommendation_uri: http://deployment-sca01.deployment-prep.eqiad.wmflabs:9632
+profile::restbase::wikifeeds_uri: http://deployment-wikifeeds01.deployment-prep.eqiad.wmflabs:8889
+
+profile::restbase::cassandra_user: cassandra
+profile::restbase::cassandra_password: cassandra
+profile::restbase::monitor_domain: en.wikipedia.org
+profile::restbase::cassandra_tls: {}
+profile::restbase::hosts:
+  - deployment-restbase03.deployment-prep.eqiad.wmflabsq
+profile::restbase::seeds_ng:
+  - deployment-restbase03.deployment-prep.eqiad.wmflabs
+# Cassandra (profile::cassandra)
+graphite_host: cloudmetrics1001.eqiad.wmnet
+profile::cassandra::allow_analytics: false
+profile::cassandra::rack: rack1
+profile::cassandra::instances:
+  "deployment-restbase03.deployment-prep.eqiad.wmflabs": {}
+profile::cassandra::settings:
+  listen_address: '%{::ipaddress}'
+  logstash_host: deployment-logstash03.deployment-prep.eqiad.wmflabs
+  target_version: '3.x'
+  additional_jvm_opts:
+    - '-javaagent:/usr/share/java/prometheus/jmx_prometheus_javaagent.jar=7800:/etc/cassandra/prometheus_jmx_exporter.yaml'
+  default_instance_params:
+    rpc_address: '%{::ipaddress}'
+# end cassandra
+udp2log_aggregator: deployment-mwlog01.deployment-prep.eqiad1.wikimedia.cloud:8420
+logstash_host: deployment-logstash03.deployment-prep.eqiad.wmflabs
+logstash_syslog_port: 10514
+logstash_gelf_port: 12201
+# TCP json_lines input
+logstash_json_lines_port: 11514
+# UDP logback/json input
+logstash_logback_port: 11514
+
+profile::memcached::version: 'present'
+profile::memcached::growth_factor: 1.05
+profile::memcached::max_seq_reqs: 200
+profile::memcached::threads: ~
+profile::memcached::min_slab_size: 5
+profile::memcached::size: 3000
+profile::memcached::extended_options:
+  - 'slab_reassign'
+profile::memcached::port: 11211
+profile::memcached::enable_tls: false
+profile::memcached::notls_port: ~
+profile::memcached::ssl_cert: ~
+profile::memcached::ssl_key: ~
+"keyholder::trusted_groups":
+   - wikidev
+profile::base::core_dump_pattern: '/data/project/cores/%{facts.hostname}-core.%h.%e.%p.%t'
+
+"role::cxserver::cxserver_port": 8080
+"misc::syslog-server::basepath": /data/project/syslog
+"profile::cxserver::apertium_uri": http://apertium-beta.wmflabs.org
+role::deployment::mediawiki::key_fingerprint: f0:54:06:fa:17:27:97:a2:cc:69:a0:a7:df:4c:0a:e3
+# Enable php-fpm
+profile::mediawiki::php::enable_fpm: true
+profile::php_fpm::fcgi_port: 8000
+
+statsd: cloudmetrics1001.eqiad.wmnet:8125
+# Enable forensic logging
+profile::mediawiki::httpd::enable_forensic_log: true
+
+profile::mediawiki::jobrunner::runners:
+  basic: 5
+  gwt: 1
+profile::mediawiki::jobrunner::expose_endpoint: true
+"hhvm::base_jit_size": 183500800
+"role::logging::mediawiki::log_directory": /data/project/logs
+"beta::syncsiteresources::user": www-data
+"profile::url_downloader::url_downloader_port": 8080
+
+"zotero::http_proxy": deployment-urldownloader02.deployment-prep.eqiad.wmflabs:8080
+deployment_server: deployment-deploy01.deployment-prep.eqiad.wmflabs
+"scap::deployment_server": deployment-deploy01.deployment-prep.eqiad.wmflabs
+
+scap::dsh::scap_masters:
+    - deployment-deploy01.deployment-prep.eqiad.wmflabs
+    - deployment-deploy03.deployment-prep.eqiad1.wikimedia.cloud
+scap::dsh::groups:
+    mediawiki-installation:
+        hosts:
+            - deployment-jobrunner04.deployment-prep.eqiad1.wikimedia.cloud
+            - deployment-mediawiki11.deployment-prep.eqiad1.wikimedia.cloud
+            - deployment-snapshot02.deployment-prep.eqiad1.wikimedia.cloud
+            - deployment-snapshot03.deployment-prep.eqiad1.wikimedia.cloud
+            - deployment-deploy01.deployment-prep.eqiad.wmflabs
+            - deployment-deploy03.deployment-prep.eqiad1.wikimedia.cloud
+            - deployment-mwmaint02.deployment-prep.eqiad1.wikimedia.cloud
+            - deployment-parsoid12.deployment-prep.eqiad1.wikimedia.cloud
+    mediawiki-appserver-canaries:
+        hosts:
+            - deployment-mediawiki11.deployment-prep.eqiad1.wikimedia.cloud
+    mediawiki-api-canaries:
+        hosts: []
+    restbase-betacluster:
+        hosts:
+          - deployment-restbase03.deployment-prep.eqiad.wmflabs
+    librenms:
+        hosts:
+          - deployment-netbox.deployment-prep.eqiad.wmflabs
+    webperf:
+        hosts:
+          - deployment-webperf11.deployment-prep.eqiad.wmflabs
+    arclamp:
+        hosts:
+          - deployment-webperf12.deployment-prep.eqiad.wmflabs
+
+
+# Etcd client global configuration
+etcd_client_srv_domain: "conftool.deployment-prep.eqiad.wmflabs"
+etcd_host: ~
+etcd_port: ~
+
+"profile::etcd::tlsproxy::read_only": false
+profile::etcd::tlsproxy::listen_port: 2379
+profile::etcd::tlsproxy::upstream_port: 2378
+profile::etcd::tlsproxy::tls_upstream: false
+# NOTE: these elasticsearch settings will need to be overloaded on a per-host
+# basis for the Logstash Elasticsearch cluster.
+profile::elasticsearch::version: '6.5'
+profile::elasticsearch::config_version: '6'
+profile::elasticsearch::cirrus::ferm_srange: ''
+profile::elasticsearch::cirrus::expose_http: false
+profile::elasticsearch::cirrus::storage_device: dm-0
+profile::elasticsearch::rack: ''
+profile::elasticsearch::row: ''
+profile::elasticsearch::instances:
+    beta-search:
+      cluster_name: beta-search
+      short_cluster_name: chi
+      heap_memory: 2G
+      http_port: 9200
+      tls_port: 9243
+      transport_tcp_port: 9300
+    beta-search-omega:
+      cluster_name: beta-search-omega
+      short_cluster_name: omega
+      heap_memory: 1G
+      http_port: 9400
+      tls_port: 9443
+      transport_tcp_port: 9500
+    beta-search-psi:
+      cluster_name: beta-search-psi
+      short_cluster_name: psi
+      heap_memory: 1G
+      http_port: 9600
+      tls_port: 9643
+      transport_tcp_port: 9700
+profile::elasticsearch::dc_settings: {}
+profile::elasticsearch::common_settings:
+    auto_create_index: '+apifeatureusage-*,-*'
+    expected_nodes: 3
+    minimum_master_nodes: 2
+    recover_after_nodes: 3
+    bulk_thread_pool_executors: 5
+    awareness_attributes: ''
+    unicast_hosts:
+      - deployment-elastic05.deployment-prep.eqiad.wmflabs
+      - deployment-elastic06.deployment-prep.eqiad.wmflabs
+      - deployment-elastic07.deployment-prep.eqiad.wmflabs
+    cluster_hosts:
+      - deployment-elastic05.deployment-prep.eqiad.wmflabs
+      - deployment-elastic06.deployment-prep.eqiad.wmflabs
+      - deployment-elastic07.deployment-prep.eqiad.wmflabs
+    reindex_remote_whitelist: ''
+    search_shard_count_limit: 1000
+    # Increase the per-node cache for compiled LTR models from default 10MB
+    ltr_cache_size: '100mb'
+
+profile::logstash::apifeatureusage::targets:
+  - deployment-elastic05.deployment-prep.eqiad.wmflabs
+nfs_mounts:
+  project: false
+  home: false
+  scratch: false
+  dumps: false
+mediawiki::web::sites::domain_suffix: "beta.wmflabs.org"
+
+
+# NOTE: The production keyholder_agents and sources used by
+# the scap server are in role/common/deployment_server.yaml.
+# These override the production ones for deployment-prep in labs.
+
+# deployment-prep keyholder::agent declarations.  These are created
+# by the profile::keyholder::server class.  Each agent listed here
+# will be present and useable by scap on the scap deploy server.
+profile::keyholder::server::agents:
+  mwdeploy:
+    trusted_groups:
+      - wikidev
+      - mwdeploy
+
+  phabricator:
+    trusted_groups:
+      - project-%{::labsproject}
+
+  eventlogging:
+    trusted_groups:
+      - project-%{::labsproject}
+
+  deploy-service:
+    trusted_groups:
+      - wikidev
+
+  dumpsdeploy:
+    trusted_groups:
+      - project-%{::labsproject}
+
+  analytics_deploy:
+    trusted_groups:
+      - project-%{::labsproject}
+
+# deployment-prep scap::source declarations.  These are created
+# by the role deployment::server.  Each source listed here
+# will be cloned on the scap deploy server.
+scap::sources:
+  3d2png/deploy: {}
+
+  phabricator/deployment:
+    repository: phabricator/deployment
+
+  # eventlogging/analytics is the original EventLogging server deployment.
+  eventlogging/analytics:
+    repository: eventlogging
+    scap_repository: eventlogging/scap/analytics
+
+  # Public EventStreams service
+  eventstreams/deploy:
+    repository: mediawiki/services/eventstreams/deploy
+
+  # Superset
+  analytics/superset/deploy:
+    repository: analytics/superset/deploy
+
+  # Superset
+  analytics/turnilo/deploy:
+    repository: analytics/turnilo/deploy
+
+  # IEG grant review
+  iegreview/iegreview:
+    repository: iegreview
+    origin: phabricator
+
+  # webperf
+  statsv/statsv:
+    repository: analytics/statsv
+  performance/coal:
+    repository: performance/coal
+  performance/navtiming:
+    repository: performance/navtiming
+
+  # RESTBase
+  restbase/deploy:
+    repository: mediawiki/services/restbase/deploy
+
+  # Cassandra logback encoder for Logstash
+  cassandra/logstash-logback-encoder:
+    repository: operations/software/logstash-logback-encoder
+
+  # Time-window compaction strategy for Cassandra
+  cassandra/twcs:
+    repository: operations/software/cassandra-twcs
+
+  # Wikimania scholarships app
+  scholarships/scholarships:
+    repository: wikimedia/wikimania-scholarships
+
+  # Xml/sql dumps
+  dumps/dumps:
+    repository: operations/dumps
+    scap_repository: operations/dumps/scap
+
+prometheus_nodes:
+  - deployment-prometheus02.deployment-prep.eqiad.wmflabs
+
+arclamp_host: deployment-webperf12.deployment-prep.eqiad.wmflabs
+
+profile::recommendation_api::wdqs_uri: http://wdqs-test.wmflabs.org
+
+profile::kubernetes::deployment_server::git_owner: trebuchet
+profile::kubernetes::deployment_server::git_group: wikidev
+
+profile::maps::apps::tilerator_enable: true
+profile::maps::apps::wikidata_query_service: https://query.wikidata.org/bigdata/namespace/wdq/sparql
+
+# MediaWiki web setup: beta has:
+# - no tls
+# - lvs
+profile::mediawiki::webserver::has_tls: false
+profile::mediawiki::php::php_version: "7.2"
+profile::mediawiki::vhost_feature_flags: {}
+
+# Beta Cluster has no mwdebug servers or X-Wikimedia-Debug routing,
+# so make sure tideways is installed on its main app server for now,
+# so that XWD works as expected (e.g. to record profiles to XHGui).
+# - T180761.
+profile::mediawiki::php::enable_request_profiling: true
+
+wikimail_smarthost:
+- 'deployment-mx02.deployment-prep.eqiad.wmflabs'
+
+deployment_hosts:
+- '172.16.4.18' # deployment-deploy01.deployment-prep.eqiad1.wikimedia.cloud
+- '172.16.4.233' # deployment-deploy03.deployment-prep.eqiad1.wikimedia.cloud
+
+profile::rsyslog::kafka_destination_clusters:
+  eqiad: logging-eqiad
+profile::rsyslog::kafka_shipper::kafka_brokers:
+  - 'deployment-logstash03.deployment-prep.eqiad.wmflabs:9093'
+
+cache::nodes:
+    text:
+        eqiad:
+          - 'deployment-cache-text05.deployment-prep.eqiad.wmflabs'
+    upload:
+        eqiad:
+          - 'deployment-cache-upload05.deployment-prep.eqiad.wmflabs'
+
+## Swift settings
+# Beta requires slower replication - T160990
+# Container server
+profile::swift::storage::object_replicator_concurrency: 1
+profile::swift::storage::object_replicator_interval: 1800 # seconds
+# Object server
+profile::swift::storage::object_server_default_workers: 12
+
+profile::swift::storage::container_replicator_concurrency: 1
+profile::swift::storage::container_replicator_interval: 1200 # seconds
+
+profile::swift::cluster: deployment-prep
+profile::swift::hash_path_suffix: abcdef
+profile::swift::proxyhosts:
+  - deployment-ms-fe03
+profile::swift::storagehosts:
+  - deployment-ms-be05
+  - deployment-ms-be06
+profile::swift::stats_reporter_host: somenonexistenthost
+swift_aux_partitions: []
+swift_storage_drives:
+  - lv-a
+profile::swift::accounts:
+  mw_media:
+    access: .admin
+    account_name: AUTH_mw
+    auth: http://deployment-ms-fe03.deployment-prep.eqiad.wmflabs
+    user: mw:media
+  mw_thumbor:
+    access: ''
+    account_name: AUTH_mw
+    auth: http://deployment-ms-fe03.deployment-prep.eqiad.wmflabs
+    stats_enabled: 'no'
+    user: mw:thumbor
+  netbox_attachments:
+    access: .admin
+    account_name: AUTH_netbox
+    auth: http://deployment-ms-fe03.deployment-prep.eqiad.wmflabs
+    stats_enabled: 'no'
+    user: netbox:attachments
+  pagecompilation_zim:
+    access: .admin
+    account_name: AUTH_pagecompilation
+    auth: http://deployment-ms-fe03.deployment-prep.eqiad.wmflabs
+    user: pagecompilation:zim
+  performance_arclamp:
+    access: .admin
+    account_name: AUTH_performance
+    auth: http://deployment-ms-fe03.deployment-prep.eqiad.wmflabs
+    user: performance:arclamp
+  phabricator_files:
+    access: .admin
+    account_name: AUTH_phab
+    auth: http://deployment-ms-fe03.deployment-prep.eqiad.wmflabs
+    user: phabricator:files
+  swift_dispersion:
+    access: .admin
+    account_name: AUTH_dispersion
+    auth: http://deployment-ms-fe03.deployment-prep.eqiad.wmflabs
+    stats_enabled: 'no'
+    user: swift:dispersion
+profile::swift::replication_accounts:
+  mw_media:
+    cluster_codfw: http://deployment-ms-fe03.deployment-prep.eqiad.wmflabs/v1/
+
+profile::swift::proxy::private_container_list: []
+profile::swift::proxy::shard_container_list:
+  - global-data-math-render
+  - wikipedia-commons-local-public
+  - wikipedia-commons-local-temp
+  - wikipedia-commons-local-thumb
+  - wikipedia-commons-local-transcoded
+  - wikipedia-de-local-public
+  - wikipedia-de-local-temp
+  - wikipedia-de-local-thumb
+  - wikipedia-de-local-transcoded
+  - wikipedia-en-local-public
+  - wikipedia-en-local-temp
+  - wikipedia-en-local-thumb
+  - wikipedia-en-local-transcoded
+  - wikipedia-fi-local-public
+  - wikipedia-fi-local-temp
+  - wikipedia-fi-local-thumb
+  - wikipedia-fi-local-transcoded
+  - wikipedia-fr-local-public
+  - wikipedia-fr-local-temp
+  - wikipedia-fr-local-thumb
+  - wikipedia-fr-local-transcoded
+  - wikipedia-he-local-public
+  - wikipedia-he-local-temp
+  - wikipedia-he-local-thumb
+  - wikipedia-he-local-transcoded
+  - wikipedia-hu-local-public
+  - wikipedia-hu-local-temp
+  - wikipedia-hu-local-thumb
+  - wikipedia-hu-local-transcoded
+  - wikipedia-id-local-public
+  - wikipedia-id-local-temp
+  - wikipedia-id-local-thumb
+  - wikipedia-id-local-transcoded
+  - wikipedia-it-local-public
+  - wikipedia-it-local-temp
+  - wikipedia-it-local-thumb
+  - wikipedia-it-local-transcoded
+  - wikipedia-ja-local-public
+  - wikipedia-ja-local-temp
+  - wikipedia-ja-local-thumb
+  - wikipedia-ja-local-transcoded
+  - wikipedia-ro-local-public
+  - wikipedia-ro-local-temp
+  - wikipedia-ro-local-thumb
+  - wikipedia-ro-local-transcoded
+  - wikipedia-ru-local-public
+  - wikipedia-ru-local-temp
+  - wikipedia-ru-local-thumb
+  - wikipedia-ru-local-transcoded
+  - wikipedia-th-local-public
+  - wikipedia-th-local-temp
+  - wikipedia-th-local-thumb
+  - wikipedia-th-local-transcoded
+  - wikipedia-tr-local-public
+  - wikipedia-tr-local-temp
+  - wikipedia-tr-local-thumb
+  - wikipedia-tr-local-transcoded
+  - wikipedia-uk-local-public
+  - wikipedia-uk-local-temp
+  - wikipedia-uk-local-thumb
+  - wikipedia-uk-local-transcoded
+  - wikipedia-zh-local-public
+  - wikipedia-zh-local-temp
+  - wikipedia-zh-local-thumb
+  - wikipedia-zh-local-transcoded
+
+profile::swift::proxy::statsd_host: localhost
+profile::swift::proxy::memcached_servers:
+  - deployment-ms-fe03
+profile::swift::proxy::proxy_service_host: deployment-ms-fe03.deployment-prep.eqiad.wmflabs
+profile::swift::proxy::rewrite_account: mw_media
+profile::swift::proxy::thumborhost: deployment-imagescaler03.eqiad.wmflabs:8800
+profile::swift::storage::statsd_host: localhost
+
+logstash::heap_memory: 1G
+logstash::pipeline_batch_size: 1000
+
+profile::mediawiki::deployment::server::rsync_host: deployment-deploy01.deployment-prep.eqiad.wmflabs
+profile::mediawiki::apc_shm_size: 128M
+profile::mediawiki::mcrouter_wancache::prometheus_exporter: true
+profile::mediawiki::mcrouter_wancache::shards:
+  gutter:
+    eqiad: {}
+  proxies:
+    eqiad: {}
+  wancache:
+    eqiad:
+      shard01:
+        host: deployment-memc08
+        port: 11211
+      shard02:
+        host: deployment-memc09
+        port: 11211
+      shard03:
+        host: deployment-memc10
+        port: 11211
+
+profile::query_service::federation_user_agent: 'Wikimedia Commons Query Service; test'
+profile::prometheus::memcached_exporter::arguments: ''
+
+# Somehow missing value on deployment-prep / labs
+etcd::autogen_pwd_seed: ''
+# MediaWiki apache configuration
+mediawiki::sites:
+  - name: beta-specific
+    source: mediawiki/apache/beta/sites/beta_specific.conf
+    priority: 1
+  - name: main
+    source: mediawiki/apache/beta/sites/main.conf
+    priority: 1
+  # the sites in beta are now organized like in production
+  # this is slightly more complicated but ultimately worth it.
+  - name: beta_sites
+    priority: 2
+    defaults:
+      docroot: "/srv/mediawiki/docroot/standard-docroot"
+      legacy_rewrites: false
+      public_rewrites: true
+      short_urls: false
+      declare_site: false
+      domain_suffix: "beta.wmflabs.org"
+      variant_aliases:
+        [
+          "sr",
+          "sr-ec",
+          "sr-el",
+          "zh",
+          "zh-hans",
+          "zh-hant",
+          "zh-cn",
+          "zh-hk",
+          "zh-sg",
+          "zh-tw",
+        ]
+    vhosts:
+      - name: wikibooks
+        params:
+          server_aliases: ["*.wikibooks.beta.wmflabs.org"]
+      - name: wikipedia
+        params:
+          docroot: "/srv/mediawiki/docroot/wikipedia.org"
+          server_aliases: ["*.wikipedia.beta.wmflabs.org"]
+          additional_rewrites:
+            early: []
+            late:
+              [
+                "    RewriteRule ^/data/(.*)/(.*)$ /wiki/Special:PageData/$1/$2 [R=303,QSA]",
+              ]
+      - name: wikidata
+        params:
+          server_aliases:
+            ["wikidata.beta.wmflabs.org", "*.wikidata.beta.wmflabs.org"]
+          additional_rewrites:
+            early: []
+            late:
+              [
+                "    # https://meta.wikimedia.org/wiki/Wikidata/Notes/URI_scheme",
+                '    Include "sites-enabled/wikidata-uris.incl"',
+              ]
+      - name: wikisource
+        params:
+          server_aliases: ["*.wikisource.beta.wmflabs.org"]
+      - name: wikiversity
+        params:
+          server_aliases: ["*.wikiversity.beta.wmflabs.org"]
+      - name: wikiquote
+        params:
+          server_aliases: ["*.wikiquote.beta.wmflabs.org"]
+      - name: wiktionary
+        params:
+          server_aliases: ["*.wiktionary.beta.wmflabs.org"]
+      - name: wikinews
+        params:
+          server_aliases: ["*.wikinews.beta.wmflabs.org"]
+      - name: loginwiki
+        params:
+          server_name: "login.wikimedia.beta.wmflabs.org"
+          variant_aliases: []
+      - name: wikimedia
+        params:
+          server_name: "misc-sites"
+          server_aliases:
+            [
+              "commons.wikimedia.beta.wmflabs.org",
+              "meta.wikimedia.beta.wmflabs.org",
+              "api.wikimedia.beta.wmflabs.org",
+              "vote.wikimedia.beta.wmflabs.org",
+	      "foundation.wikimedia.beta.wmflabs.org"
+            ]
+          variant_aliases: []
+      - name: wikivoyage
+        params:
+          server_aliases: ["*.wikivoyage.beta.wmflabs.org"]
+          variant_aliases:
+            [
+              "zh",
+              "zh-hans",
+              "zh-hant",
+              "zh-cn",
+              "zh-hk",
+              "zh-mo",
+              "zh-my",
+              "zh-sg",
+              "zh-tw",
+            ]

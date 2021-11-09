@@ -1,0 +1,182 @@
+profile::backup::director_seed: changeme
+
+profile::resolving::domain_search:
+  - eqiad.wmflabs
+  - codfw.wmflabs
+
+# Phabricator
+profile::mail::default_mail_relay::enabled: false
+phabricator_logmail: false
+phabricator_deploy_user: 'deploy-devtools'
+phabricator::tools::dump: false
+
+docker::registry: 'localhost'
+
+profile::phabricator::main::manage_scap_user: false
+
+profile::phabricator::main::http_srange: '($DEPLOYMENT_HOSTS $CACHES)'
+
+profile::phabricator::main::rate_limits:
+# Number of requests per minute for logged out users (per client IP)
+# logged in users are permitted 4x the request rate of logged-out users
+  request: 0
+# This is the number of concurrent connections per client IP:
+  connection: 0
+
+profile::phabricator::main::phd_service_ensure: running
+phabricator_phd_taskmasters: 4
+phabricator_domain: phab.wmflabs.org
+phabricator_altdomain: phab-prod-usercontent.wmflabs.org
+
+profile::envoy::ensure: present
+profile::tlsproxy::envoy::services:
+  - server_names: ['*']
+    port: 80
+profile::tlsproxy::envoy::sni_support: "no"
+profile::tlsproxy::envoy::websockets: true
+
+phabricator_cluster_search:
+- hosts:
+  - host: localhost
+    protocol: http
+    roles:
+      read: true
+      write: true
+  path: /phabricator
+  port: 9200
+  type: elasticsearch
+  version: 5
+
+# Deployment server, scap, acme-chief
+
+deployment_hosts:
+- '172.16.0.238'
+deployment_server: deploy-1002.devtools.eqiad.wmflabs
+scap::deployment_server: deploy-1002.devtools.eqiad.wmflabs
+
+has_lvs: false
+has_tls: false
+
+profile::kubernetes::deployment_server::git_group: wikidev
+profile::kubernetes::deployment_server::git_owner: trebuchet
+profile::mediawiki::apc_shm_size: 128M
+profile::mediawiki::deployment::server::rsync_host: deploy1001.devtools.eqiad.wmflabs
+profile::mediawiki::php::enable_fpm: true
+profile::mediawiki::php::php_version: '7.2'
+profile::rsyslog::kafka_shipper::kafka_brokers: []
+redis::shards:
+  sessions:
+    eqiad:
+      shard01:
+        host: 172.16.5.76
+        port: 6379
+      shard02:
+        host: 172.16.5.17
+        port: 6379
+      shard03:
+        host: 172.16.5.12
+        port: 6379
+      shard04:
+        host: 172.16.5.2
+        port: 6379
+scap::dsh::groups:
+  ci-docroot:
+    hosts:
+      - doc.devtools.eqiad1.wikimedia.cloud
+  librenms:
+    hosts: []
+  mediawiki-api-canaries:
+    hosts: []
+  mediawiki-appserver-canaries:
+    hosts: []
+  mediawiki-installation:
+    hosts: []
+  restbase-betacluster:
+    hosts: []
+  webperf:
+    hosts: []
+scap::sources:
+  gerrit/gerrit:
+    repository: operations/software/gerrit
+  gervert/deploy:
+    repository: operations/software/gerrit/tools/gervert/deploy
+  integration/docroot: {}
+  phabricator/deployment:
+    repository: phabricator/deployment
+
+mediawiki::sites: []
+
+# Gerrit
+
+profile::gerrit::config: 'gerrit.config.erb'
+profile::gerrit::host: 'gerrit.devtools.wmflabs.org'
+
+profile::gerrit::servers:
+- gerrit-prod-1001.devtools.eqiad.wmflabs
+
+profile::gerrit::is_replica: false
+profile::gerrit::replica_hosts: []
+
+# No IPv6 in cloud
+profile::gerrit::ipv6: ~
+
+# No replication to github from cloud
+profile::gerrit::replication: {}
+
+profile::gerrit::git_dir: /srv/gerrit/git
+profile::gerrit::ssh_host_key: ssh_host_key
+
+# Backups
+profile::gerrit::bacula: gerrit-repo-data
+
+## Java
+profile::gerrit::java_version: 8
+
+## Deployment
+profile::gerrit::scap_user: 'gerrit2'
+profile::gerrit::scap_key_name: 'gerrit'
+profile::base::ssh_server_settings:
+  authorized_keys_file:
+    - '/etc/ssh/userkeys/%u'
+    - '/etc/ssh/userkeys/%u.d/cumin'
+    - '/etc/ssh/userkeys/%u.d/gerrit-scap'
+
+## TLS
+profile::gerrit::use_acmechief: false
+profile::tlsproxy::envoy::capitalize_headers: true
+
+## Backups
+profile::gerrit::backups_enabled: false
+profile::gerrit::backup_set: 'gerrit-repo-data'
+
+## data for server migration
+profile::gerrit::migration::src_host: 'gerrit-prod-1001.devtools.eqiad.wmflabs'
+profile::gerrit::migration::dst_hosts: []
+profile::gerrit::migration::data_dir: /srv/gerrit
+
+# Cache Proxy
+cache::nodes:
+    text:
+        eqiad:
+          - 'gerrit-prod-1001.devtools.eqiad.wmflabs'
+          - 'phabricator-prod-1001.devtools.eqiad.wmflabs'
+
+# Puppet master
+
+profile::puppetdb::database::shared_buffers: 768MB
+profile::puppetdb::master: puppetmaster-1001.devtools.eqiad.wmflabs
+profile::puppetmaster::common::puppetdb_host: puppetmaster-1001.devtools.eqiad.wmflabs
+profile::puppetmaster::common::storeconfigs: puppetdb
+puppetdb::password::replication: ''
+puppetdb::password::rw: puppetdb
+puppetmaster: puppetmaster.cloudinfra.wmflabs.org
+puppetmaster::enable_geoip: false
+puppetmaster::servers:
+  puppetmaster-1001.devtools.eqiad.wmflabs:
+    - { worker: puppetmaster-1001.devtools.eqiad.wmflabs, loadfactor: 10 }
+puppetmaster::locale_servers: {}
+role::puppetmaster::standalone::autosign: 'true'
+profile::mediawiki::mcrouter_wancache::prometheus_exporter: true
+profile::mediawiki::mcrouter_wancache::use_onhost_memcached: false
+profile::mediawiki::mcrouter_wancache::use_onhost_memcached_socket: false
+

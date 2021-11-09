@@ -1,0 +1,27 @@
+cluster: graphite
+profile::admin::groups:
+  - perf-roots
+  - graphite-admins
+profile::graphite::base::uwsgi_processes: 16
+profile::tlsproxy::envoy::global_cert_name: "graphite.discovery.wmnet"
+profile::idp::client::httpd::sites:
+  'graphite.wikimedia.org':
+    vhost_content: 'profile/idp/client/httpd-graphite.erb'
+    document_root: '/usr/share/graphite-web'
+    required_groups:
+    - 'cn=ops,ou=groups,dc=wikimedia,dc=org'
+    - 'cn=wmf,ou=groups,dc=wikimedia,dc=org'
+    - 'cn=nda,ou=groups,dc=wikimedia,dc=org'
+    proxied_as_https: true
+  'staging-graphite.wikimedia.org':
+    priority: 99
+    vhost_content: 'profile/idp/client/httpd-graphite.erb'
+    document_root: '/usr/share/graphite-web'
+    required_groups:
+    - 'cn=ops,ou=groups,dc=wikimedia,dc=org'
+    - 'cn=wmf,ou=groups,dc=wikimedia,dc=org'
+    - 'cn=nda,ou=groups,dc=wikimedia,dc=org'
+    proxied_as_https: true
+    environment: staging
+    enable_monitor: false
+profile::contacts::role_contacts: ['Observability SREs']

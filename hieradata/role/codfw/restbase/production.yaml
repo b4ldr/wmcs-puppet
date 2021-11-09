@@ -1,0 +1,27 @@
+profile::restbase::seeds_ng:
+  - restbase2010-a.codfw.wmnet
+  - restbase2010-b.codfw.wmnet
+  - restbase2010-c.codfw.wmnet
+  - restbase2011-a.codfw.wmnet
+  - restbase2011-b.codfw.wmnet
+  - restbase2011-c.codfw.wmnet
+# used for rate limiting
+profile::restbase::hosts:
+  - restbase2009.codfw.wmnet
+  - restbase2010.codfw.wmnet
+  - restbase2011.codfw.wmnet
+  - restbase2012.codfw.wmnet
+  - restbase2013.codfw.wmnet
+  - restbase2014.codfw.wmnet
+  - restbase2015.codfw.wmnet
+  - restbase2016.codfw.wmnet
+  - restbase2017.codfw.wmnet
+  - restbase2018.codfw.wmnet
+  - restbase2019.codfw.wmnet
+  - restbase2020.codfw.wmnet
+  - restbase2021.codfw.wmnet
+  - restbase2022.codfw.wmnet
+  - restbase2023.codfw.wmnet
+
+lvs::realserver::realserver_ips:
+  - '10.2.1.17' # restbase.svc.codfw.wmnet

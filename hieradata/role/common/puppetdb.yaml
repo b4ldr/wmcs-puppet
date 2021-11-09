@@ -1,0 +1,78 @@
+cluster: puppet
+profile::nginx::variant: 'light'
+profile::puppetdb::jvm_opts: '-Xmx6g'
+profile::puppetdb::puppetboard_hosts:
+  - 'puppetboard1001.eqiad.wmnet'
+  - 'puppetboard2001.codfw.wmnet'
+  - 'puppetboard1002.eqiad.wmnet'
+  - 'puppetboard2002.codfw.wmnet'
+profile::puppetdb::rsyslog::elk: false
+profile::puppetdb::tmpfs_stockpile_queue: true
+profile::puppetdb::clean_stockpile: false
+profile::puppetdb::database::replication_lag_crit: 25165824 # 24MB
+profile::puppetdb::database::replication_lag_warn: 8388608 # 8MB
+profile::puppetdb::database::log_line_prefix: '%m [db:%d,sess:%c,pid:%p,vtid:%v,tid:%x] '
+profile::puppetdb::database::log_min_duration_statement: 10000 # 10secs
+profile::puppetdb::database::log_autovacuum_min_duration: 250  # 250ms
+profile::puppetdb::database::users:
+  replication@puppetdb2002-ipv4:
+    user: replication
+    password: "%{alias('puppetdb::password::replication')}"
+    database: replication
+    cidr: 10.192.0.147/32
+    attrs: REPLICATION
+  puppetdb@puppetdb2002-ipv4:
+    user: puppetdb
+    password: "%{alias('puppetdb::password::rw')}"
+    database: puppetdb
+    cidr: 10.192.0.147/32
+  puppetdb@localhost:
+    user: puppetdb
+    password: "%{alias('puppetdb::password::rw')}"
+    database: puppetdb
+    cidr: "%{facts.networking.ip}/32"
+  puppetdb_ro@puppetdb2002-ipv4:
+    user: puppetdb_ro
+    password: "%{alias('puppetdb::password::ro')}"
+    database: puppetdb
+    cidr: 10.192.0.147/32
+    privileges:
+      table: 'SELECT'
+  puppetdb_ro@localhost:
+    user: puppetdb_ro
+    password: "%{alias('puppetdb::password::ro')}"
+    database: puppetdb
+    cidr: "%{facts.networking.ip}/32"
+    privileges:
+      table: 'SELECT'
+  prometheus@localhost:
+    user: 'prometheus'
+    database: 'postgres'
+    type: 'local'
+    method: 'peer'
+profile::puppetdb::master: puppetdb1002.eqiad.wmnet
+profile::puppetdb::slaves: [puppetdb2002.codfw.wmnet]
+profile::puppetdb::tmpfs_stockpile_queue: true
+profile::puppetdb::facts_blacklist_type: 'regex'
+# The following list should only include facts which are not used by for catalog compilation
+# This is specifically because we need the facts used by compilation to be available in puppetdb
+# so we can export them to be used with PCC
+profile::puppetdb::facts_blacklist:
+  - '^ipaddress6_cali.*'
+  - '^ipaddress6_tap.*'
+  - '^macaddress_cali.*'
+  - '^macaddress_tap.*'
+  - '^mtu_cali.*'
+  - '^mtu_tap.*'
+  - '^netmask6_cali.*'
+  - '^netmask6_tap.*'
+  - '^network6_cali.*'
+  - '^network6_tap.*'
+  - '^lvm_vg_.*'
+  - '^blockdevices.*'
+  - '^block_devices.*'
+  - '^cpu_flags.*'
+  - '^mountpoints.*'  # used in cloud by cinderutils::ensure but not in production
+profile::puppetdb::node_ttl: 14d
+profile::puppetdb::node_purge_ttl: 1d
+profile::contacts::role_contacts: ['Infrastructure Foundations SREs']

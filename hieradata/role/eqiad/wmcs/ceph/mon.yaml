@@ -1,0 +1,7 @@
+profile::lvs::realserver::pools:
+  cloudceph:
+    services:
+      - cloudceph
+
+contactgroups: 'wmcs-team'
+mgmt_contactgroups: 'wmcs-team-email'

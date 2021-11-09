@@ -1,0 +1,4 @@
+# db1130
+mariadb::shard: 's5'
+profile::mariadb::mysql_role: 'master'
+mariadb::binlog_format: 'STATEMENT'

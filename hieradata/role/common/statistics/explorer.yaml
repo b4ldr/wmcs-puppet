@@ -1,0 +1,55 @@
+profile::admin::groups:
+  - analytics-privatedata-users
+  - analytics-admins
+  - gpu-users
+  # elasticsearch::analytics creates the analytics-search user and group
+  # that analytics-search-users are allowed to sudo to.  This is used
+  # for deploying files to HDFS.
+  - analytics-search-users
+  - analytics-wmde-users
+  - analytics-product-users
+  - deploy-ml-service
+profile::admin::managelingering: true
+
+cluster: analytics
+
+profile::hadoop::common::hadoop_cluster_name: 'analytics-hadoop'
+
+profile::hive::client::hive_service_name: 'analytics-hive'
+
+profile::oozie::client::oozie_service: 'analytics-oozie'
+
+profile::presto::cluster_name: analytics-presto
+profile::presto::discovery_uri: https://an-coord1001.eqiad.wmnet:8281
+profile::presto::discovery_uri: https://an-coord1001.eqiad.wmnet:8281
+
+profile::statistics::explorer::misc_jobs::hosts_with_jobs:
+  - 'stat1007'
+
+profile::debdeploy::client::exclude_mounts:
+  - /mnt/hdfs
+
+profile::kerberos::keytabs::keytabs_metadata:
+  - role: 'analytics-privatedata'
+    owner: 'analytics-privatedata'
+    group: 'analytics-privatedata'
+    filename: 'analytics-privatedata.keytab'
+  - role: 'analytics-search'
+    owner: 'analytics-search'
+    group: 'analytics-search'
+    filename: 'analytics-search.keytab'
+  - role: 'analytics-product'
+    owner: 'analytics-product'
+    group: 'analytics-product'
+    filename: 'analytics-product.keytab'
+
+# Context https://phabricator.wikimedia.org/T278353#6976509
+profile::kerberos::client::dns_canonicalize_hostname: false
+profile::kerberos::client::show_krb_ticket_info: true
+profile::kerberos::client::enable_autorenew: true
+
+profile::java::java_packages:
+  - version: '8'
+    variant: 'jdk'
+profile::java::extra_args: 'JAVA_TOOL_OPTIONS="-Dfile.encoding=UTF-8"'
+profile::contacts::role_contacts: ['Analytics SREs']

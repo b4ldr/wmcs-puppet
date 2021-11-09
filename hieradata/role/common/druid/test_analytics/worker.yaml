@@ -1,0 +1,179 @@
+profile::admin::groups:
+  - druid-admins
+
+cluster: 'druid_test_analytics'
+
+prometheus::node_exporter::collectors_extra:
+  - meminfo_numa
+
+# Avoid an explicit pin to the bigtop apt component that can
+# force packages shared between the bigtop and debian upstream distribution
+# to prefer the bigtop version (we do it only for Hadoop nodes).
+profile::bigtop::apt::pin_release: false
+
+profile::hadoop::common::hadoop_cluster_name: 'analytics-test-hadoop'
+
+# Druid nodes get their own Zookeeper cluster to isolate them
+# from the production ones.
+# Configure the zookeeper profile.
+profile::zookeeper::cluster_name: druid-analytics-test-eqiad
+# To avoid version conflics with Cloudera zookeeper package, this
+# class manually specifies which debian package version should be installed.
+profile::zookeeper::zookeeper_version: '3.4.13-2'
+profile::zookeeper::override_java_home: '/usr/lib/jvm/java-11-openjdk-amd64'
+# Tranquillity runs via Spark on the Hadoop worker nodes and needs to
+# communicate with zookeeper to discover the Druid Overlord master.
+# This should be solved in https://github.com/druid-io/tranquility/issues/251
+# for Druid >= 0.11
+profile::zookeeper::firewall::srange: '$ANALYTICS_NETWORKS'
+profile::zookeeper::prometheus_instance: 'analytics'
+
+# Deploy kerberos keytabs for Druid
+profile::kerberos::keytabs::keytabs_metadata:
+  - role: 'druid'
+    owner: 'druid'
+    group: 'druid'
+    filename: 'druid.keytab'
+
+profile::prometheus::druid_exporter::druid_version: '0.19.0'
+
+# -- Druid common configuration
+
+# The logical name of this druid cluster
+profile::druid::common::druid_cluster_name: analytics-test-eqiad
+# The logical name of the zookeeper cluster that druid should use
+profile::druid::common::zookeeper_cluster_name: druid-analytics-test-eqiad
+
+# The default MySQL Druid metadata storage database name is just 'druid'.
+# Since the analytics-eqiad Druid cluster was originally the only one,
+# We set this to the default of 'druid', just to be explicit about it.
+profile::druid::common::metadata_storage_database_name: 'druid'
+
+profile::druid::daemons_autoreload: false
+profile::druid::ferm_srange: '$ANALYTICS_NETWORKS'
+
+profile::druid::common::properties:
+  druid.metadata.storage.type: mysql
+  druid.metadata.storage.connector.host: an-test-coord1001.eqiad.wmnet
+  # druid.metadata.storage.connector.password is set in the private repo.
+  druid.storage.type: hdfs
+  druid.hadoop.security.kerberos.principal: "druid/%{::fqdn}@WIKIMEDIA"
+  druid.hadoop.security.kerberos.keytab: '/etc/security/keytabs/druid/druid.keytab'
+  druid.request.logging.type: slf4j
+  druid.request.logging.dir: /var/log/druid
+  # Historically, the analytics-eqiad Druid cluster was the only one,
+  # and as such had a deep storage directory in HDFS without
+  # the cluster name in the path.
+  # NOTE: This directory is ensured to exist by usage of the
+  # druid::bigtop::hadoop::deep_storage define included in the
+  # role::analytics_cluster::hadoop::master class.
+  druid.storage.storageDirectory: /user/druid/deep-storage
+  druid.extensions.loadList:
+    - 'druid-datasketches'
+    - 'druid-hdfs-storage'
+    - 'druid-histogram'
+    - 'druid-lookups-cached-global'
+    - 'mysql-metadata-storage'
+    - 'druid-parquet-extensions'
+    - 'druid-avro-extensions'
+    - 'druid-kafka-indexing-service'
+    - 'druid-kerberos'
+
+# -- Druid worker service configurations
+
+# --- Druid Broker
+# Broker gets a special ferm_srange since it is the frontend query interface to Druid.
+profile::druid::broker::monitoring_enabled: true
+profile::druid::broker::ferm_srange: '$ANALYTICS_NETWORKS'
+profile::druid::broker::properties:
+  druid.emitter: composing
+  druid.emitter.composing.emitters: ["logging","http"]
+  druid.emitter.http.recipientBaseUrl: "http://127.0.0.1:8000/"
+  druid.processing.numThreads: 5
+  druid.processing.buffer.sizeBytes: 10485760 # 1024 * 1024 * 10
+  # Set numMergeBuffers to use v2 groupBy engine
+  druid.processing.numMergeBuffers: 2
+  druid.server.http.numThreads: 20
+  druid.broker.http.numConnections: 20
+  druid.broker.http.readTimeout: PT5M
+  # Increase druid broker query cache size to 2G.
+  # TBD: Perhaps we should also try using memcached?
+  druid.cache.sizeInBytes: 2147483648
+  druid.sql.enable: true
+  druid.monitoring.monitors: ["org.apache.druid.client.cache.CacheMonitor", "org.apache.druid.server.metrics.QueryCountStatsMonitor"]
+profile::druid::broker::env:
+  DRUID_HEAP_OPTS: "-Xmx2g"
+  DRUID_EXTRA_JVM_OPTS: "-XX:+UseConcMarkSweepGC -XX:+PrintGCDetails -XX:+PrintGCTimeStamps"
+
+# --- Druid Coordinator
+profile::druid::coordinator::monitoring_enabled: true
+profile::druid::coordinator::ferm_srange: '$ANALYTICS_NETWORKS'
+profile::druid::coordinator::properties:
+  druid.emitter: composing
+  druid.emitter.composing.emitters: ["logging","http"]
+  druid.emitter.http.recipientBaseUrl: "http://127.0.0.1:8000/"
+profile::druid::coordinator::env:
+  DRUID_HEAP_OPTS: "-Xmx1g"
+  DRUID_EXTRA_JVM_OPTS: "-XX:+UseG1GC -XX:+PrintGCDetails -XX:+PrintGCTimeStamps"
+
+
+# --- Druid Historical
+profile::druid::historical::monitoring_enabled: true
+profile::druid::historical::properties:
+  druid.emitter: composing
+  druid.emitter.composing.emitters: ["logging","http"]
+  druid.emitter.http.recipientBaseUrl: "http://127.0.0.1:8000/"
+  druid.processing.numThreads: 5
+  druid.processing.buffer.sizeBytes: 10485760 # 1024 * 1024 * 10
+  # Set numMergeBuffers to use v2 groupBy engine
+  druid.processing.numMergeBuffers: 2
+  druid.server.http.numThreads: 5
+  druid.server.maxSize: 52428800 # 50 GB
+  druid.segmentCache.locations: '[{"path":"/srv/druid/segment-cache","maxSize"\:52428800}]'
+  # For small clusters it is reccomended to only enable caching on brokers
+  # See: http://druid.io/docs/latest/querying/caching.html
+  druid.historical.cache.useCache: false
+  druid.historical.cache.populateCache: false
+  druid.monitoring.monitors: ["org.apache.druid.server.metrics.HistoricalMetricsMonitor", "org.apache.druid.server.metrics.QueryCountStatsMonitor", "org.apache.druid.client.cache.CacheMonitor"]
+profile::druid::historical::env:
+  DRUID_HEAP_OPTS: "-Xmx2g"
+  DRUID_EXTRA_JVM_OPTS: "-XX:+UseConcMarkSweepGC -XX:+PrintGCDetails -XX:+PrintGCTimeStamps"
+
+
+# --- Druid MiddleManager
+profile::druid::middlemanager::monitoring_enabled: true
+profile::druid::middlemanager::properties:
+  druid.emitter: composing
+  druid.emitter.composing.emitters: ["logging","http"]
+  druid.emitter.http.recipientBaseUrl: "http://127.0.0.1:8000/"
+  druid.worker.ip: "%{::fqdn}"
+  druid.worker.capacity: 12
+  druid.processing.numThreads: 3
+  druid.processing.buffer.sizeBytes: 356515840
+  druid.server.http.numThreads: 20
+  druid.indexer.runner.javaOpts: "-server -Xmx2g -XX:+UseG1GC -XX:MaxGCPauseMillis=100 -XX:+PrintGCDetails -XX:+PrintGCTimeStamps -Dhadoop.mapreduce.job.classloader=true"
+profile::druid::middlemanager::env:
+  DRUID_HEAP_OPTS: "-Xmx64m -Xms64m"
+  DRUID_EXTRA_JVM_OPTS: "-XX:+UseConcMarkSweepGC -XX:+PrintGCDetails -XX:+PrintGCTimeStamps"
+
+
+# --- Druid Overlord
+# Overlord will accept indexing jobs from Hadoop nodes in the ANALYTICS_NETWORKS
+profile::druid::overlord::monitoring_enabled: true
+profile::druid::overlord::ferm_srange: '$ANALYTICS_NETWORKS'
+profile::druid::overlord::properties:
+  druid.indexer.runner.type: remote
+  druid.indexer.storage.type: metadata
+profile::druid::overlord::env:
+  DRUID_HEAP_OPTS: "-Xmx1g"
+  DRUID_EXTRA_JVM_OPTS: "-XX:+UseConcMarkSweepGC -XX:+PrintGCDetails -XX:+PrintGCTimeStamps"
+
+profile::java::java_packages:
+  - version: '8'
+    variant: 'jdk'
+  - version: '11'
+    variant: 'jdk'
+profile::java::extra_args: 'JAVA_TOOL_OPTIONS="-Dfile.encoding=UTF-8"'
+
+profile::monitoring::notifications_enabled: false
+profile::contacts::role_contacts: ['Analytics SREs']

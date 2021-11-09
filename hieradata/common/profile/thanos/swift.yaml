@@ -1,0 +1,41 @@
+profile::thanos::swift::cluster: thanos-prod
+profile::thanos::swift::proxy_service_host: 'thanos-swift.discovery.wmnet'
+profile::thanos::swift::hash_path_suffix: '2a95a2ab3b5e0195'
+profile::thanos::swift::memcached_size_mb: 128
+profile::thanos::swift::accounts:
+  thanos_prod:
+    access:       '.admin'
+    account_name: 'AUTH_thanos'
+    auth:         'https://thanos-swift.discovery.wmnet'
+    user:         'thanos:prod'
+  dispersion:
+    access:       '.admin'
+    account_name: 'AUTH_dispersion'
+    auth:         'https://thanos-swift.discovery.wmnet'
+    user:         'swift:dispersion'
+  chartmuseum_prod:
+    access:       '.admin'
+    account_name: 'AUTH_chartmuseum'
+    auth:         'https://thanos-swift.discovery.wmnet'
+    user:         'chartmuseum:prod'
+  wdqs_flink:
+    access:       '.admin'
+    account_name: 'AUTH_wdqs'
+    auth:         'https://thanos-swift.discovery.wmnet'
+    user:         'wdqs:flink'
+  mlserve_prod:
+    access:       '.admin'
+    account_name: 'AUTH_mlserve'
+    auth:         'https://thanos-swift.discovery.wmnet'
+    user:         'mlserve:prod'
+  tegola_prod:
+    access:       '.admin'
+    account_name: 'AUTH_tegola'
+    auth:         'https://thanos-swift.discovery.wmnet'
+    user:         'tegola:prod'
+
+# To be kept private
+#profile::thanos::swift::accounts_keys:
+#  thanos_prod: 'foo'
+#  dispersion: 'bar'
+#  chartmuseum_prod: 'bar'
