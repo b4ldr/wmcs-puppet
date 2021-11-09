@@ -17,7 +17,8 @@ class profile::base(
         fail("Site ${::site} not found in cluster ${cluster}")
     }
 
-    contain profile::base::puppet
+    # We installed puppet manually here for now
+    # contain profile::base::puppet
     contain profile::base::certificates
     include profile::systemd::timesyncd
     include profile::apt
