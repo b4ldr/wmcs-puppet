@@ -1,51 +1,4 @@
-require 'set'
-# create a simple object to mimic the puppet type Netbase::Service
-class Service
-  attr_reader :name, :port, :protocols, :aliases
-
-  def initialize(name, data, strict)
-    @name = name
-    @port = data['port']
-    @protocols = data['protocols']
-    @portend = data.fetch('portend', nil)
-    @aliases = data.fetch('aliases', []).to_set
-    @description = data.fetch('description', nil)
-    # This allow us to either compare via proto and port or just port
-    # it's not great having this in the object class but it allows us to
-    # abuse set comparisons
-    @strict = strict
-  end
-
-  # override ==, eq? and hash to allow use to do set comparisons
-  # == is not strictly required for set comparisons but make sense
-  # to also include this
-  def ==(other)
-    hash == other.hash
-  end
-
-  def eql?(other)
-    hash == other.hash
-  end
-
-  def hash
-    if @strict
-      "#{@port}_#{@protocols.join}".hash
-    else
-      @port.hash
-    end
-  end
-
-  def puppet_type
-    result = {
-      'protocols' => @protocols,
-      'port' => @port,
-    }
-    result['portend'] = @portend unless @portend.nil?
-    result['description'] = @description unless @description.nil?
-    result['aliases'] = @aliases.to_a unless @aliases.empty?
-    result
-  end
-end
+require_relative '../../../puppet_x/netbase.rb'
 # @summary
 #   This functions merges two Hashs of Netbase::Service's. The merge performed compares either
 #   the port or the port+protocol values (depending on the strict value) as opposed to just merging
@@ -94,8 +47,8 @@ Puppet::Functions.create_function(:'netbase::services::merge', Puppet::Functions
     results = {}
     # To make it easier to compare the values we convert the hashes into
     # Sets of `Service` objects
-    values.each { |k, v| _values.add(Service.new(k, v, strict)) }
-    overrides.each { |k, v| _overrides.add(Service.new(k, v, strict)) }
+    values.each { |k, v| _values.add(PuppetX::Netbase::Service.new(k, v, strict)) }
+    overrides.each { |k, v| _overrides.add(PuppetX::Netbase::Service.new(k, v, strict)) }
     # Merge the objects
     # As the objects are sets the will call `Service.eq?` to perform the equality test
     # This means that depending on the strict value we will only compare either the
