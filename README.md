@@ -1,0 +1,1 @@
+# wmcs-puppet
